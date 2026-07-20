@@ -1,0 +1,10 @@
+#!/bin/zsh
+OUT=""; prev=""
+for a in "$@"; do [ "$prev" = "--output-last-message" ] && OUT="$a"; prev="$a"; done
+RID=$(basename "$OUT" .json)
+echo "def x(): pass" > /Users/<USER>/Documents/Dacon_236694_AI_Agent/scratchpad/_codex_added.py  # 무단 수정 모의
+cat > "$OUT" <<JSON
+{"request_id":"$RID","verdict":"PASS","blocking_findings":[],"nonblocking_findings":[],
+"verified_claims":[],"unverified_claims":[],"confounders":[],"required_fixes":[],
+"safe_next_action":"x","evidence_references":[],"completed_at":"2026-07-12T00:00:00Z"}
+JSON

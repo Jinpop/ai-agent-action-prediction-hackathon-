@@ -1,0 +1,32 @@
+{
+  "schema_version": "3",
+  "request_id": "post_lb-20260714T101500Z-mint2v2-dualseed",
+  "created_at": "2026-07-14T10:05:00Z",
+  "stage": "post_lb",
+  "policy_version": "campaign:mint2v2-dualseed-0714",
+  "objective": "campaign mint2v2-dualseed-0714 배포 2종 LB 실측 기록 게이트 — 산술 재계산·챔피언 판정·matched 프레임·홀드 무예측·runtime·축 표현규율 내부 교차검증. Codex 미호출.",
+  "verify_items": [
+    "직접대조 delta 재계산: s79-cA=-0.0017024368, s81-cA=-0.0004094500, s81-s79=+0.0012929868, target-cA=+0.0082238488",
+    "챔피언 판정: 둘 다 cA 0.7848461512 미달 -> cA 유지, 교체 없음",
+    "matched: s79 = seed79 v1(mint2b)<->v2(mint2v2) 묶음 delta / s81 = 다른 seed draw(교란포함), s81-s79는 seed 스프레드 밴드 내",
+    "홀드 무예측 재확인: plain 홀드 s79 0.770386 > s81 0.768503 vs LB s81 0.7844 > s79 0.7831(순위반전)",
+    "runtime: 두 zip 588s<600s -> measured 승격(마진 12s)",
+    "표현규율: 'v2 축 죽음/단독효과/노이즈/seed 우위' 금지, cA 프레임·4변수 묶음·2 draw 한정 명시"
+  ],
+  "downstream_action": "none",
+  "proposed_next_action": "PASS 시 docs-ledger-writer가 실험로그 append + HANDOFF §1/§9 갱신(cA 유지). 후속 GPU/슬롯은 별도 사용자 결정.",
+  "lineage_id": "mint2v2-dualseed-0714-postlb",
+  "direct_control": "챔피언 cA[s48,k81,mint2b_s79] — mint2b_s79 슬롯을 mint2v2_s79/s81로 각각 단일교체",
+  "intended_change": "관측 대상: 배포 full-refit 멤버 교체(v2 4변수 묶음, seed79 matched + seed81 draw). 코드/데이터 변경 아님 — LB 실측 해석만.",
+  "evidence_paths": [
+    "open/coordination/results/band_eval-20260714T065503Z-mint2v2-dualseed.json",
+    "open/coordination/results/pre_launch-20260714T073000Z-mint2v2-deploy.json",
+    "open/coordination/results/plan_review-20260714T020320Z-mint2v2.json"
+  ],
+  "effective_config_path": null,
+  "known_caveats": [
+    "LB·zip SHA·채점시간은 사용자·서버 보고 — 본 감사는 Read/Grep 한정으로 zip 로컬 재측정 불가(지휘자가 artifact_sha에 zip SHA 보강).",
+    "audit_key는 internal_cross_check all-zeros placeholder(band_eval 전례).",
+    "묶음 4변수·2 draw·cA 프레임 한정 — 축 death/단독효과 단정 금지."
+  ]
+}

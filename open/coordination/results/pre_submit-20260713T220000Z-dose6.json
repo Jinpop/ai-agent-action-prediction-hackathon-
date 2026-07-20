@@ -1,0 +1,46 @@
+{
+  "request_id": "pre_submit-20260713T220000Z-dose6",
+  "stage": "pre_submit",
+  "objective": "카드4 dose6 probe zip(submit_dose6.zip) 제출대기 승격 직전 감사 — 밴드 자격·포장 무결성·matched 배포·표현규율 독립 확인.",
+  "verdict": "PASS",
+  "auditor_model": "data-auditor (claude-opus subagent, read-only)",
+  "completed_at": "2026-07-14T06:45:00Z",
+  "blocking_findings": [],
+  "verified_claims": [
+    {"claim": "zip SHA256·크기 = 요청서 기재값", "evidence": "shasum -a256 = 5cb5ba5434cc3c9d96dad3ec7ffb149273e0a76b680e7e1fe18de1c0f95f645d, size=982,197,615B 완전일치. <1e9, 마진 17,802,385B."},
+    {"claim": "밴드 산술 독립 재현 — probe in-band Y", "evidence": "dose6_band.py 재실행: 챔피언 plain=0.773710(recon 앵커 일치), 하한 0.767910, probe 0.773437 ≥ 하한 → IN-BAND Y(sess-eq도 Y). margin +0.005527. 단일멤버 0.759016(−0.006014). 블렌드 델타 −0.000274. idx==hidx same_order=True."},
+    {"claim": "블렌드 계약 — 멤버별 softmax·logit/prob 혼용 없음", "evidence": "classic rowsum=1.0(재softmax 안 함), TF 멤버 전부 raw logits→멤버별 softmax. blend=0.4*classic+0.6*mean(3TF)."},
+    {"claim": "script.py diff = docstring+SEED_DIRS만(로직 불변)", "evidence": "diff 4 hunk(docstring·멤버주석·SEED_DIRS). 실행로직 변경 0."},
+    {"claim": "신규 멤버 = 배포체인 산출물(gate 혼동 없음)", "evidence": "staging model_kf768_dose6 8파일 SHA = pack_dose6dep_s79/model_sub 8/8 일치(REFIT_ONLY deploy pack)."},
+    {"claim": "신규 멤버 ≠ 구 멤버(실제 신규 학습)", "evidence": "backbone c60a3456 ≠ m2b79 5e5318ad, head 79e2c09 ≠ afca1a35. prep 동일 adb258d3 = 정상(REFIT_ONLY 동일 70k real 위 결정론적 meta scaler)."},
+    {"claim": "단일멤버 교체 무결성 — 공유멤버 챔피언 byte-identical", "evidence": "공유 9파일 stage_m2b79와 IDENTICAL. zip↔staging 28/28 SHA 일치."},
+    {"claim": "fp16/finite/head 계약 독립검증", "evidence": "backbone params 185,290,752 전부 fp16·finite, head fp32·finite, 887→256→14."},
+    {"claim": "게이트 matched-control 로컬 실증", "evidence": "dose6_fetch/effective_config_A: Stage A EPOCHS 3→6 유일변경(code 415e4c3e·EXTRA 6f866c82 동일). config_B: byte-identical(HOLDOUT_IDX=hidx e39aae25). INIT_BACKBONE_weights만 상이(dose downstream, 의도)."},
+    {"claim": "증거체인 5단계 상호 모순 없음", "evidence": "gate pre_launch → 밴드체크 → 배포 pre_launch → G5 → zip-verifier 수치·SHA 전부 로컬 교차일치."}
+  ],
+  "unverified_claims": [
+    "배포체인 matched-control은 launcher 주장(배포 run effective_config 로컬 미보유) — pre_launch-deploy PASS + staging==deploy pack로 간접 corroborate.",
+    "밴드 산출물(게이트 holdout) ≠ 배포 산출물(REFIT_ONLY full 70k) — 설계상(모든 멤버 공통), 밴드는 자격 프록시.",
+    "T4 runtime=estimated(동구조 kf768 스왑, 이 zip 미측정).",
+    "5행 E2E·verify_zip 27/27은 zip-verifier 게이트 결과(본 감사 미재실행). 포장 코어는 본 감사 독립 재현."
+  ],
+  "confounders": [
+    "게이트 홀드 델타(단일 −0.0060/블렌드 −0.000274)는 dose 개선 아님 — 홀드 무예측(§3.4). 'dose 단독효과/6ep 우위' 호칭 금지. 프레이밍='dose draw 분산 탐색'.",
+    "LB 해석은 card1 배포 대비로만(clean matched). card4 게이트 대비 해석 금지(2변수).",
+    "'노이즈' 표현 금지 — 'seed 드로우·학습 draw·처리 상호작용 범위'."
+  ],
+  "required_fixes": [],
+  "safe_next_action": "PASS — submit_dose6.zip을 아침 제출대기 2호(probe)로 승격. 실제 제출은 사용자. post_lb 게이트 후에만 로그 append·챔피언 판정. LB 미달 시 card1 유지·확장 없음.",
+  "artifact_sha": {
+    "submits/submit_dose6.zip": "5cb5ba5434cc3c9d96dad3ec7ffb149273e0a76b680e7e1fe18de1c0f95f645d",
+    "dose6 backbone/model.safetensors": "c60a345683e0292fdfa36ffc4ec24bec949395229b1a3f4f133419819a83ce02",
+    "dose6 head.pt": "79e2c09afae7844492db7bfcd692307622c83d6bd7bf70c99c4b24c2b1acfc5a",
+    "dose6 prep.pkl": "adb258d37f48ed41270aa98bf108e49e8c8cf16f195ffbcfc10afd294e90de7f",
+    "new_member_vs_deploy_pack": "8/8 identical (pack_dose6dep_s79/model_sub)",
+    "shared_members_vs_champion_card1": "9/9 byte-identical (scratchpad/stage_m2b79)",
+    "zip_vs_staging": "28/28 files SHA256 identical (scratchpad/stage_dose6)",
+    "colab_train_base2.py (gate)": "415e4c3e41b423041f55391dae018d9da7cbcb00ba20e212974ab46933e5692f",
+    "feat.py": "91c419d634a85ad912d3dc43b9c802ddf0f1a31b0a203345cb38779b30b05ca8",
+    "data/hidx.npy": "e39aae253087b4ac08f2550005e08421584a2dbc273adf64c692a6b0f1b0feae"
+  }
+}

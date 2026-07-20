@@ -1,0 +1,14 @@
+{
+ "kind": "raw_logits",
+ "shape": [
+  14000,
+  14
+ ],
+ "class_order": "feat.ACTIONS",
+ "split": "hidx",
+ "source_run": "run_kf768_ec_omit",
+ "seed": 74,
+ "env": "exact-core A/B 대조군: pretext(2314, META omit) -> real-only stage B",
+ "holdout_macro_f1": 0.7482,
+ "created": "2026-07-11T23:00 KST"
+}

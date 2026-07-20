@@ -1,0 +1,63 @@
+{
+  "schema_version": "3",
+  "request_id": "post_lb-20260715T024500Z-metawave1-metatsweep",
+  "audit_key": "0000000000000000000000000000000000000000000000000000000000000000",
+  "lineage_id": "official-meta-wave1-blendw-post_lb",
+  "stage": "post_lb",
+  "policy_version": "campaign:official-meta-wave1",
+  "objective": "official-meta-wave1 후속 post_lb: metaT 프레임 BLEND_W 스윕(0.60/0.62/0.64) LB 해석. delta 재계산·within-frame matched(단일 스칼라)·챔피언 미세교체(metaT→metaT_w062)·전이가설 반증·§6 blend-w 소진 정정·시간벽·프레이밍 규율 내부 교차검증. read-only, Codex 미호출.",
+  "gate_state": "PASS",
+  "action_state": "WAITING_USER",
+  "downstream_action": "none",
+  "verdict_source": "internal_cross_check",
+  "auditor_model": "claude-opus-4-8 (lb-interpreter internal cross-check, read-only)",
+  "cache_hit": false,
+  "attempt": 0,
+  "started_at": "2026-07-15T02:30:00Z",
+  "completed_at": "2026-07-15T02:45:00Z",
+  "runner_recorded": {
+    "request_id": "post_lb-20260715T024500Z-metawave1-metatsweep",
+    "model": "claude-opus-4-8",
+    "reasoning": "lb-interpreter read-only post_lb (no Codex). LB는 사용자 보고, 산술·matched는 로컬 문서·선행 레코드 대조.",
+    "started_at": "2026-07-15T02:30:00Z",
+    "completed_at": "2026-07-15T02:45:00Z",
+    "attempt": 0,
+    "cache_hit": false,
+    "raw_request_id": null
+  },
+  "raw_result_ref": null,
+  "nonblocking_findings": [
+    {"id": "target-gap-inconsistency", "summary": "F 목표차 '12등(0.79307)=+0.0064025129' 내부 불일치: 챔피언 0.7866974871 기준 ref 0.79307이면 gap +0.0063725129, gap +0.0064025129이면 ref 0.7931.", "evidence": "0.79307-0.7866974871=0.0063725129; 0.7931-0.7866974871=0.0064025129. docs 기록 전 현 리더보드 12등 스코어 확정 후 일관쌍 사용."}
+  ],
+  "verified_claims": [
+    {"claim": "w062-metaT=+0.0000437974, w064-metaT=-0.0001462650, w062-w064=+0.0001900624", "evidence": "LB 0.7866974871/0.7865074247 vs 0.7866536897 소수점 전체 뺄셈, 사용자 검산 일치"},
+    {"claim": "metaT_w062(0.7866974871)=최고 LB → 자동채택 신챔피언, 단 metaT(0.6) 대비 +0.0000438 near-zero(유의미 개선 아님·노이즈 아님)", "evidence": "3제출 최고값이 w062, delta +4.4e-5는 결정론적 실차이이나 전략적 이득 0 수렴"},
+    {"claim": "w062·w064·metaT는 BLEND_W 단일 스칼라만 다름 → within-frame matched(동일 멤버·프레임·재학습 없음·draw0)", "evidence": "선행 metant 감사(results/post_lb-20260714T150000Z-metawave1-metant.json)·blendw 감사가 프레임·멤버 확립 + 런타임 근접 600/599/598s(멤버 동일 방증)"},
+    {"claim": "곡선 argmax=0.62, 0.60-0.62 사실상 평탄(+4.4e-5), 0.64 과튜닝(-1.9e-4 vs 0.62)", "evidence": "0.7866536897→0.7866974871→0.7865074247 n=3"},
+    {"claim": "직전 blendw 레코드의 'metaT 0.62 적용시 +0.0010 전이·~0.7877 신챔피언' 가설 반증", "evidence": "실측 metaT_w062=0.7866974871 ≪ 0.7877, metaN 0.62 gain +0.0010037485 vs metaT 0.62 gain +0.0000437974 (≈23배 작음)"},
+    {"claim": "시간벽: metaT_w062 600s(정각·T4한계)·w064 599s·metaT 598s, runtime measured·마진≈0", "evidence": "제출 채점시간 사용자 보고, 600s=T4 배포 한계"}
+  ],
+  "unverified_claims": [
+    "진 blend-w 피크 위치([0.60,0.62] 연속구간) — n=3 이산점이라 argmax 0.62로만 확정, 정점 국소값 미확정",
+    "'남은 +0.006대는 비율튜닝 불가·큰 카드 필요'는 전략적 추론(전 프레임 블렌드가중 소진 관측 기반이나 미래 실측 아님)"
+  ],
+  "confounders": [
+    "D '23배 작음'은 cross-frame(metaN vs metaT 멤버·베이스 구성 상이) gain 비교 → '0.62 스칼라' 단일변수 아님, frame 교란 포함. within-frame 곡선만 clean matched",
+    "'왜 metaT가 평탄한가' 기전(metaT 베이스 0.6에서 이미 near-optimal)은 묶음 — 관측은 지지, 기전은 미분리",
+    "w062/w064 zip 독립 byte-diff 미수행(스테이징 정리) → matched는 문서·선행감사·런타임 근접으로 뒷받침",
+    "runtime measured지만 600s 벽 마진≈0, 동일 zip도 서버 채점시간 ±수초 변동(598↔600) → 시간중립 레버라도 프레임이 벽에 붙음"
+  ],
+  "required_fixes": [],
+  "safe_next_action": "docs-ledger-writer가 실험로그 EOF append + HANDOFF §1(챔피언 metaT_w062 0.7866974871, near-zero 주석)·§6(블렌드가중 레버 '챔피언 프레임서 사실상 소진 +0.00004'로 정정, frame-specific 크기까지)·§9(스냅샷·슬롯·목표차 — ★현 12등 스코어 확정 후 일관쌍) 갱신. (권고, 실행권 아님) blend-w 추가 스윕 자원 지양, 주력은 큰 카드(신규 non-kf 백본). 발사·제출은 사용자 명시 승인.",
+  "escalated": false,
+  "evidence_references": [
+    "open/coordination/results/post_lb-20260715T013000Z-metawave1-blendw.json",
+    "open/coordination/results/post_lb-20260714T150000Z-metawave1-metant.json",
+    "open/docs/HANDOFF.md",
+    "open/docs/checklists/60_post_submit.md"
+  ],
+  "artifact_sha": {
+    "submits/submit_metaT_w062.zip": "2bdd24e93a17c635822f9e657a4dbe4f6cc3a30a3451d3522a2705552d4b8b08",
+    "submits/submit_metaT_w064.zip": "32cd1bfd13c4864d39496323ba809d430b7cd41ed221cd62af567652849a74c6"
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "request_id": "post_lb-20260714T014500Z-round3",
+  "stage": "post_lb",
+  "objective": "distill·dose6 probe LB 결과 기록 직전 게이트 — 산술 재계산·zip SHA 실측·프레임 해석(카드1 프레임 그대로 제출)·축 판정 표현규율·잔여 후보 결과기반 판정.",
+  "verdict": "PASS",
+  "auditor_model": "data-auditor (claude-opus subagent, read-only)",
+  "completed_at": "2026-07-14T02:05:00Z",
+  "blocking_findings": [],
+  "verified_claims": [
+    "zip SHA 로컬 실측 완전일치: submit_dose6.zip = 5cb5ba54…f645d(982,197,615B), submit_distill.zip = c450aeeb…1bc6(982,200,110B) — 각 pre_submit artifact_sha와 byte 일치 → 제출된 zip이 감사받은 그 zip.",
+    "★distill SHA 정정: round3 요청서의 '…80e7e…' fragment는 부정확 전사, 권위값 = 로컬 실측 c450aeebc6ac94b5e77e6918089f919335480e5fb5ef0048a36f9e40330a1bc6(pre_submit 기록과 일치). zip 무영향.",
+    "산술 10자리 일치: dose6−card1=−0.0003998653, dose6−cA=−0.0010895275, dose6−v58=−0.0003198716; distill−card1=−0.0019202116, distill−cA=−0.0026098738; dose6−distill=+0.0015203463.",
+    "서열: cA > card1 > v58 > dose6 > distill → 챔피언 무변경(cA 0.7848461512 유지).",
+    "프레임 해석: 두 zip은 카드1 프레임 단일교체 → 카드1 대비 clean 단일슬롯 probe. cA 대비 2슬롯차(round2 pre-flag 성립).",
+    "dose6 = matched control LB datapoint(seed79·split·배포체인 고정, 유일변수 Stage A EPOCHS 3→6). distill = confounded datapoint(KD + 코드버전차 혼합).",
+    "홀드 델타 대조: dose6 홀드 δ−0.000274 → LB −0.0004(동부호·near-zero), distill 홀드 δ+0.0013 → LB −0.0019(부호반전).",
+    "슬롯: 오늘(07-14) 2/10."
+  ],
+  "표현규율_강제": [
+    "①dose 축: 허용='dose6 단일-seed matched probe가 카드1 대비 −0.0003998653, draw 분산 폭 내 — 이 프레임서 dose 확장 근거 없음'. 금지='dose 축 종결/6ep가 3ep보다 나쁘다'(n=1 seed·margin < seed 스프레드 +0.0014934781).",
+    "②distill 축: 허용='probe 1장 계획대로 종료, confounded −0.0019202116, v26 death와 합쳐 증류로 챔피언 개선 못 함 재확인(전략수준) — 확장 종료'. 금지='증류가 −0.0019만큼 해롭다/순수 KD 반납'(코드버전차 confound로 인과 분리 불가).",
+    "③홀드 무예측 재확인: distill 부호반전 = 직접 반례, dose6 동부호 = near-zero 우연. '홀드가 방향 맞췄다' 금지.",
+    "④'노이즈' 전면금지 — 'seed 드로우·학습 draw·처리 상호작용 범위'.",
+    "⑤챔피언 판정 LB로만 — cA 유지."
+  ],
+  "unverified_claims": [
+    "업로드↔LB↔로컬 zip 링크는 서버측·사용자 로그 신뢰(로컬 SHA는 완전검증). timestamp·채점시간은 사용자 보고치.",
+    "runtime: 두 zip 서버 채점 완주(9:45/9:46 사용자 보고)로 사실상 measured 승격 가능 — 시간보고 확정 시 measured 라벨.",
+    "20_oof_distill 구성검증은 pre_submit 게이트 결과(본 감사 재실행 안 함 — 적절)."
+  ],
+  "confounders": [
+    "distill 코드버전차(v1 s48 vs 44aa810b) — 인과 분리 불가.",
+    "dose6 n=1 seed — 축 death 단정 불가.",
+    "cA 대비 2슬롯차 — cA 프레임 격리 불가(round2 pre-flag).",
+    "스테이징 오염 재확인(stage_cA~cF 전부 cF 내용) — 재zip 금지."
+  ],
+  "required_fixes": [],
+  "safe_next_action": "PASS — append-only 로그 + HANDOFF §9 갱신(cA 유지·2/10). 표현규율 ①~⑤ 그대로. 후속 GPU/슬롯 배정은 별도 결정(이 감사는 발사 승인 아님).",
+  "후속_방향": {
+    "cA프레임_재포장": "기대가치 낮음(두 멤버 다 자기 프레임서 미달·distill은 confounded 멤버) — 슬롯 소모 대비 marginal.",
+    "cC~cF": "LB 단독멤버 prior 전부 하향(m2b81 약draw·dv3ko −0.005~−0.007). cE가 가장 champion-like이나 하향 prior. 미측정·조합 상호작용은 예측 불가 — 투입 여부는 사용자 전략(기대 하향 명시).",
+    "mint2b_74_78": "근거는 factually 정확하나 §slot-strategy '비주력 seed증산' — 치타 무료 A5000 idle + 더 큰 카드 부재 시의 값싼 병행 gate로만(gate-only 0슬롯), 주력 금지·자동발사 금지·사용자 승인 대기."
+  },
+  "checklist_60_post_submit": {
+    "item1": "PASS", "item2": "PASS(cA 유지)", "item3": "지휘자 이행", "item4": "2/10 기록", "item5": "N/A", "item6": "N/A"
+  },
+  "artifact_sha": {
+    "submits/submit_dose6.zip (LB 0.7837566237)": "5cb5ba5434cc3c9d96dad3ec7ffb149273e0a76b680e7e1fe18de1c0f95f645d",
+    "submits/submit_distill.zip (LB 0.7822362774)": "c450aeebc6ac94b5e77e6918089f919335480e5fb5ef0048a36f9e40330a1bc6",
+    "submits/submit_cA.zip (챔피언)": "e09abe215431283ca77ff076391e6cbd7371df3a9814a399ffdfdeb092de6204"
+  },
+  "evidence_references": [
+    "submits/submit_dose6.zip · submit_distill.zip (shasum 실측)",
+    "results/pre_submit-20260713T220000Z-dose6.json · pre_submit-20260713T180500Z-distill.json",
+    "results/post_lb-20260714T000000Z-round2.json",
+    "scratchpad/build_combos.py · stage_c{A..F}/script.py"
+  ]
+}

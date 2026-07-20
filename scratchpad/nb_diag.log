@@ -1,0 +1,5 @@
+[with-SRC word|char] maxdiff=6.0486 mean=0.051961 frac<0.01=0.2656
+   word블록 mean=0.065765  char블록 mean=0.034706
+[swap char|word] maxdiff=7.7458 mean=1.377375 frac<0.01=0.0045
+[no-SRC word|char] maxdiff=7.7659 mean=0.072373 frac<0.01=0.1956
+DONE

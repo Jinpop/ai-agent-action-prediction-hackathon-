@@ -1,0 +1,36 @@
+{
+  "schema_version": "3",
+  "request_id": "post_lb-20260715T024500Z-metawave1-metatsweep",
+  "created_at": "2026-07-15T02:30:00Z",
+  "stage": "post_lb",
+  "policy_version": "campaign:official-meta-wave1",
+  "objective": "official-meta-wave1 후속: metaT 프레임 BLEND_W 스윕(0.60/0.62/0.64) LB 실측 기록 게이트 — delta·within-frame matched·챔피언 미세교체·전이가설 반증·§6 blend-w 소진 정정·시간벽·프레이밍 규율 내부 교차검증. Codex 미호출.",
+  "verify_items": [
+    "delta: w062-metaT=+0.0000437974, w064-metaT=-0.0001462650, w062-w064=+0.0001900624",
+    "matched: w062·w064·metaT within-frame BLEND_W 단일 스칼라(동일 멤버·프레임·draw0)",
+    "챔피언: metaT_w062 0.7866974871=최고 LB → 자동채택, 단 +0.0000438 near-zero(유의미 개선 아님)",
+    "전이 반증: metaN 0.62 +0.0010 vs metaT 0.62 +0.0000438 (≈23배, cross-frame 교란) → ~0.7877 전이 가설 반증",
+    "축 정정: §6 블렌드가중 레버 '챔피언 프레임서 사실상 소진(+0.00004)', frame-specific(방향+크기)",
+    "시간벽: metaT_w062 600s·w064 599s·metaT 598s, measured 마진≈0",
+    "프레이밍: '노이즈' 금지, near-zero 명시, 큰 카드 필요까지 근거충분"
+  ],
+  "downstream_action": "none",
+  "proposed_next_action": "PASS 시 docs-ledger-writer가 실험로그 append + HANDOFF §1(챔피언 metaT_w062)·§6(blend-w 소진 정정)·§9 갱신. 발사·제출은 별도 사용자 승인.",
+  "lineage_id": "official-meta-wave1-blendw-post_lb",
+  "direct_control": "metaT(BLEND_W 0.6, 0.7866536897) — 동일 metaT 프레임 멤버·transcript, BLEND_W만 0.62/0.64로 변경",
+  "intended_change": "관측 대상: metaT 프레임 BLEND_W 스윕 서버 LB 곡선. 코드/데이터/멤버 변경 아님 — LB 해석만.",
+  "evidence_paths": [
+    "open/docs/실험로그.md",
+    "open/coordination/results/post_lb-20260715T013000Z-metawave1-blendw.json",
+    "submits/submit_metaT_w062.zip",
+    "submits/submit_metaT_w064.zip"
+  ],
+  "effective_config_path": null,
+  "known_caveats": [
+    "LB·채점시간은 사용자·서버 보고.",
+    "audit_key는 internal_cross_check all-zeros placeholder.",
+    "w062/w064 zip 독립 byte-diff 미수행(스테이징 정리) → 문서·선행감사·런타임 근접으로 matched 뒷받침.",
+    "target_gap ref(12등 스코어)는 리더보드 변동값 — 기록 전 현 스코어 확정 필요.",
+    "D 23배는 cross-frame 교란비교."
+  ]
+}

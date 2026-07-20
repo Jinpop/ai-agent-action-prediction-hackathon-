@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dacon236694/coordination/infra_error.schema.json",
+  "title": "infra error record v3 (2026-07-14 재설계). ★러너/인프라 실패(exit≠0·timeout·400·스키마부적합·경로탈출·승인누락·파일수정 등)는 가짜 NEEDS_HUMAN 감사 결과로 변환하지 않고 이 레코드로 기록한다(#7,#10). gate_state=INFRA_ERROR, action_state=WAITING_USER. 이 레코드는 절대 audit verdict(PASS/BLOCK/NEEDS_HUMAN)로 승격되지 않는다.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "request_id",
+    "stage",
+    "gate_state",
+    "action_state",
+    "error_kind",
+    "error_detail",
+    "codex_called",
+    "attempt",
+    "audit_key",
+    "recorded_at",
+    "runner_recorded",
+    "safe_next_action"
+  ],
+  "properties": {
+    "schema_version": { "const": "3" },
+    "request_id": { "type": "string" },
+    "stage": { "type": "string" },
+    "gate_state": { "const": "INFRA_ERROR" },
+    "action_state": { "const": "WAITING_USER" },
+    "error_kind": {
+      "type": "string",
+      "enum": [
+        "request_schema_invalid",
+        "sha_format_invalid",
+        "evidence_sha_mismatch",
+        "path_escape",
+        "approval_missing",
+        "approval_mismatch",
+        "already_executed",
+        "lock_conflict",
+        "codex_exit_nonzero",
+        "codex_timeout",
+        "codex_http_error",
+        "result_missing",
+        "result_schema_invalid",
+        "result_rid_mismatch",
+        "codex_modified_files",
+        "internal_error"
+      ]
+    },
+    "error_detail": { "type": "string" },
+    "codex_called": {
+      "type": "boolean",
+      "description": "이 실패 전에 Codex subprocess가 실제로 기동됐는지(회계·재현 감사용)."
+    },
+    "attempt": { "type": ["integer", "null"] },
+    "audit_key": { "type": ["string", "null"], "pattern": "^([0-9a-f]{64})?$" },
+    "recorded_at": { "type": "string" },
+    "runner_recorded": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "reasoning", "started_at", "ended_at"],
+      "properties": {
+        "model": { "type": ["string", "null"] },
+        "reasoning": { "type": ["string", "null"] },
+        "started_at": { "type": ["string", "null"] },
+        "ended_at": { "type": ["string", "null"] }
+      }
+    },
+    "modified_files": { "type": "array", "items": { "type": "string" } },
+    "added_files": { "type": "array", "items": { "type": "string" } },
+    "safe_next_action": {
+      "type": "string",
+      "description": "권고문. 위험단계(launch/kill/포장/제출) 진행 금지. 재감사는 새 request_id + 새 사용자 승인 필요."
+    }
+  }
+}

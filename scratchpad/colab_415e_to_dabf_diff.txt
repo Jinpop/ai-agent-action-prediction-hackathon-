@@ -1,0 +1,75 @@
+--- scratchpad/colab_415e4c3e_ref.py	2026-07-14 11:31:38
++++ open/scripts/colab_train_base2.py	2026-07-14 10:58:25
+@@ -76,6 +76,7 @@
+ SESSION_EQUAL = os.environ.get("SESSION_EQUAL", "0") == "1" # 세션 균등가중(서버=세션당1스텝 정렬)
+ AU_BOOST = float(os.environ.get("AU_BOOST", 1.0))           # au 세션 가중 배수
+ TARGET_BALANCE = os.environ.get("TARGET_BALANCE", "0") == "1"  # mint2 balanced: target_key별 총가중=1 (window 과표집 제거)
++TB_V2 = os.environ.get("TB_V2", "0") == "1"  # 07-14 외부감사 수정: ①배치독립 가중손실((per*wt).mean, WT 전역 mean=1 전제 — 기존 배치별 wt.sum() 재정규화는 target 기여가 배치구성 의존, 재현 max/min≈1.9배) ②클래스가중을 target가중 반영으로(bincount weights=WT — 기존 raw 행수는 rolling/exact 간 multiplier 0.70~0.98배 요동)
+ HOLDOUT_IDX = os.environ.get("HOLDOUT_IDX", "")            # 고정 홀드아웃 idx npy(hidx). 미지정시 GroupKFold-fold0
+ 
+ if SIBLING_ONLY:
+@@ -142,7 +143,7 @@
+         "PRETEXT": PRETEXT, "PRETEXT_META": PRETEXT_META, "MASK_MINT_META": MASK_MINT_META,
+         "EXTRA_DATA": EXTRA_DATA, "INIT_BACKBONE": INIT_BACKBONE, "COARSE_AUX": COARSE_AUX,
+         "LABEL_SMOOTH": LABEL_SMOOTH, "SESSION_EQUAL": SESSION_EQUAL, "AU_BOOST": AU_BOOST,
+-        "TARGET_BALANCE": TARGET_BALANCE, "HOLDOUT_IDX": HOLDOUT_IDX,
++        "TARGET_BALANCE": TARGET_BALANCE, "TB_V2": TB_V2, "HOLDOUT_IDX": HOLDOUT_IDX,
+         "SOFT_TARGET": _SOFT_PATH, "SKIP_REFIT": SKIP_REFIT, "REFIT_ONLY": REFIT_ONLY,
+         "SIBLING_ONLY": SIBLING_ONLY, "N_LIMIT": N_LIMIT,
+         "DISTILL_T": DISTILL_T, "DISTILL_ALPHA": DISTILL_ALPHA,
+@@ -238,7 +239,12 @@
+ # 자기증류 soft target 로드 (SOFT_TARGET=경로). oof_ids로 현재 train 순서에 정렬.
+ SOFT = None
+ if _SOFT_PATH:
+-    _sd = np.load(_SOFT_PATH)  # dict-like npz: 'probs'(N,14) + 'ids'(N)
++    _sd = np.load(_SOFT_PATH)  # dict-like npz: 'probs'(N,14) + 'ids'(N) + 'temperature'
++    if "temperature" in getattr(_sd, "files", []):   # ★07-13 v26 버그방지: teacher/student KD 온도 일치 강제
++        _sT = float(_sd["temperature"])
++        assert abs(_sT - DISTILL_T) < 1e-6, \
++            f"soft npz temperature {_sT} != DISTILL_T {DISTILL_T} — teacher/student KD 온도 불일치(v26 버그). make_soft_target --T {DISTILL_T}로 재생성"
++        print(f"[DISTILL] temperature matched: teacher T={_sT} == DISTILL_T")
+     _probs, _sids = _sd["probs"], _sd["ids"]  # npz lazy 접근은 1회만 (반복 접근 금물)
+     _sid2row = {i: r for r, i in enumerate(_sids)}
+     SOFT = _probs[[_sid2row[i] for i in ids]].astype(np.float32)
+@@ -290,8 +296,14 @@
+                  batched=True, remove_columns=["text"])
+ 
+ 
+-def sqrt_weights(yy):
+-    counts = np.bincount(yy, minlength=len(ACTIONS)).astype(np.float64)
++def sqrt_weights(yy, wt=None):
++    # TB_V2(07-14): wt 주어지면 클래스 카운트를 가중 행수(= target 등가 수)로 — raw window 행수는
++    # rolling/exact 간 클래스 multiplier를 0.70~0.98배 요동시킴(외부감사 지적).
++    if wt is not None:
++        counts = np.bincount(yy, weights=np.asarray(wt, dtype=np.float64),
++                             minlength=len(ACTIONS)).astype(np.float64)
++    else:
++        counts = np.bincount(yy, minlength=len(ACTIONS)).astype(np.float64)
+     w = np.sqrt(counts.sum() / (len(ACTIONS) * np.maximum(counts, 1)))
+     return torch.tensor((w / w.mean()).astype(np.float32))
+ 
+@@ -359,7 +371,13 @@
+             if wt is not None:                         # 샘플 가중 CE (세션균등/au부스트)
+                 per = F.cross_entropy(logits, labels, weight=self.cw,
+                                       reduction="none", label_smoothing=LABEL_SMOOTH)
+-                loss = (per * wt.float()).sum() / wt.float().sum().clamp(min=1e-8)
++                if TB_V2:
++                    # 배치독립 가중손실(07-14): WT 전역 mean=1(:234) 전제, 행 기여 = wt_i/B로
++                    # 배치 구성과 무관하게 고정. 기존 sum/wt.sum()은 배치별 재정규화로
++                    # target 기여가 함께 들어간 배치에 의존(재현 max/min≈1.9배).
++                    loss = (per * wt.float()).mean()
++                else:
++                    loss = (per * wt.float()).sum() / wt.float().sum().clamp(min=1e-8)
+             else:
+                 loss = F.cross_entropy(logits, labels, weight=self.cw,
+                                        label_smoothing=LABEL_SMOOTH)
+@@ -383,7 +401,8 @@
+     ds_tr = make_ds(idx_tr, scaler)
+     ds_va = make_ds(idx_va, scaler) if idx_va is not None else None
+     set_seed(SEED)   # 재현성 교정(07-11 §9): 모델 생성 전 시드 고정 — head 초기화까지 seed 제어
+-    model = HybridNet(MODEL_NAME, M.shape[1], len(ACTIONS), sqrt_weights(y[idx_tr]))
++    model = HybridNet(MODEL_NAME, M.shape[1], len(ACTIONS),
++                      sqrt_weights(y[idx_tr], WT[idx_tr] if TB_V2 else None))
+     if GRAD_CKPT:
+         model.backbone.gradient_checkpointing_enable()
+     args = TrainingArguments(

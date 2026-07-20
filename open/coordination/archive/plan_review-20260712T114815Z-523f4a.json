@@ -1,0 +1,43 @@
+{
+  "request": {
+    "stage": "plan_review",
+    "timeout_sec": 1200,
+    "objective": "H100 seed83/84 direct-mint 후보를 v58 챔피언 프레임(s48+k79+신멤버)으로 밴드 통과 시 포장·제출하는 계획 감사",
+    "direct_control": "v58(s48+k79+k81)에서 k81 슬롯을 H100 seed83/84로 단일 교체",
+    "intended_change": "kf768 3번째 슬롯 멤버(seed only, H100 training draw)",
+    "artifact_paths": [
+      "open/docs/checklists/50_per_candidate.md"
+    ],
+    "code_sha256": {},
+    "data_sha256": {},
+    "effective_config_path": null,
+    "evidence_paths": [
+      "open/docs/HANDOFF.md",
+      "open/docs/checklists/50_per_candidate.md"
+    ],
+    "known_caveats": [
+      "H100 산출물은 A5000 정확재현 아님(training draw)",
+      "밴드는 자격필터 sanity(hidx∩va 2825행)",
+      "seed79v2는 refit 안 함(홀드아웃만)"
+    ],
+    "proposed_next_action": "홀드아웃 완주 후 밴드 통과분만 refit→회수→포장(비위험). 제출은 사용자 승인.",
+    "user_approval_required": false,
+    "request_id": "plan_review-20260712T114815Z-523f4a",
+    "created_at": "2026-07-12T11:48:15Z",
+    "deadline": "2026-07-12T12:08:15Z"
+  },
+  "result": {
+    "request_id": "plan_review-20260712T114815Z-523f4a",
+    "verdict": "NEEDS_HUMAN",
+    "blocking_findings": [],
+    "nonblocking_findings": [],
+    "verified_claims": [],
+    "unverified_claims": [],
+    "confounders": [],
+    "required_fixes": [],
+    "safe_next_action": "Codex 감사 미완 — 위험단계(launch/kill/포장/제출) 진행 금지, 모니터링만",
+    "evidence_references": [],
+    "completed_at": "2026-07-12T11:50:27Z",
+    "_gate_note": "signal 15 수신 — 게이트 중단(fail-closed)"
+  }
+}

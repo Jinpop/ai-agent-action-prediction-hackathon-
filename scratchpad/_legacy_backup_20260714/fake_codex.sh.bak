@@ -1,0 +1,30 @@
+#!/bin/zsh
+# dry-run 전용 Codex 에뮬레이터: `exec ... --output-last-message <file> ...` 형태를 파싱해
+# request_id를 반향하는 스키마 유효 audit_result JSON을 기록. FAKE_VERDICT/FAKE_FID로 제어.
+# 실제 Codex 대신 CODEX_GATE_BIN로 주입해 게이트 파이프라인 전체를 결정론적으로 검증한다.
+set -e
+OUT=""
+prev=""
+for a in "$@"; do
+  [ "$prev" = "--output-last-message" ] && OUT="$a"
+  prev="$a"
+done
+[ -z "$OUT" ] && { echo "fake_codex: --output-last-message 없음" >&2; exit 2; }
+[ -n "$FAKE_SLEEP" ] && sleep "$FAKE_SLEEP"
+RID=$(basename "$OUT" .json)
+[ -n "$FAKE_RID" ] && RID="$FAKE_RID"   # stale/불일치 테스트용
+V="${FAKE_VERDICT:-PASS}"
+FID="${FAKE_FID:-demo_finding}"
+if [ "$V" = "BLOCK" ]; then
+  BF="[{\"id\":\"$FID\",\"summary\":\"dry-run 모의 BLOCK\",\"evidence\":\"fake\"}]"
+  RF="[\"모의 수정\"]"
+else
+  BF="[]"; RF="[]"
+fi
+cat > "$OUT" <<JSON
+{"request_id":"$RID","verdict":"$V","blocking_findings":$BF,"nonblocking_findings":[],
+"verified_claims":["dry-run 검증"],"unverified_claims":[],"confounders":[],
+"required_fixes":$RF,"safe_next_action":"dry-run",
+"evidence_references":["AGENTS.md"],"completed_at":"2026-07-12T00:00:00Z"}
+JSON
+exit 0

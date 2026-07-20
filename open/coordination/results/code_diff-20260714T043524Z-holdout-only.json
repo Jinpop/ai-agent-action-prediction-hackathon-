@@ -1,0 +1,96 @@
+{
+ "schema_version": "3",
+ "request_id": "code_diff-20260714T043524Z-holdout-only",
+ "audit_key": "66be9ebd1545b5459aa56f08cb84ed0b235d4b388076ab9cd446d273925151c7",
+ "lineage_id": "code_diff-holdout-only-flag",
+ "stage": "pre_launch",
+ "policy_version": "2026-07-14",
+ "objective": "HOLDOUT_ONLY=1 신규 플래그 코드 diff 내부 교차검증(로컬 전용, Codex 없음). 후보 colab_train_base2.py(ec60a75) vs 대조군 colab_dabf455d_ref.py(dabf455d): 선언된 4개 삽입점 외 미선언 부수변경 0, HOLDOUT_ONLY=0 런타임 동일(inert), 종료블록 위치/SKIP_REFIT 불변/신규 SHA 실측.",
+ "gate_state": "PASS",
+ "action_state": "WAITING_USER",
+ "downstream_action": "none",
+ "verdict_source": "internal_cross_check",
+ "auditor_model": "Claude Opus 4.8 (claude-opus-4-8) — code-diff internal cross-check, read-only",
+ "cache_hit": false,
+ "attempt": 0,
+ "started_at": "2026-07-14T04:33:00Z",
+ "completed_at": "2026-07-14T04:36:40Z",
+ "runner_recorded": {
+  "request_id": "code_diff-20260714T043524Z-holdout-only",
+  "model": "claude-opus-4-8",
+  "reasoning": "internal_cross_check (no Codex; 로컬 전용 read-only, 원격 미접속)",
+  "started_at": "2026-07-14T04:33:00Z",
+  "completed_at": "2026-07-14T04:36:40Z",
+  "attempt": 0,
+  "cache_hit": false
+ },
+ "raw_result_ref": null,
+ "nonblocking_findings": [
+  {
+   "id": "N1",
+   "summary": "line 150 effective_config에 'HOLDOUT_ONLY': HOLDOUT_ONLY 추가는 HOLDOUT_ONLY=0에서도 effective_config.json 출력에 키(값 false)를 1개 추가한다. 학습/refit/zip 런타임 경로에는 영향 없으며, effective_config가 diff를 반영해야 한다는 하네스 요구(재현성 manifest)와 정합 — confounder 아님, 의도된 config 반영.",
+   "evidence": "open/scripts/colab_train_base2.py:150"
+  },
+  {
+   "id": "N2",
+   "summary": "HOLDOUT_ONLY와 PRETEXT 동시지정을 막는 assert는 없으나, PRETEXT=1이면 line 437에서 먼저 sys.exit(0)하므로 홀드아웃 섹션(line 463~)에 도달하지 못해 HOLDOUT_ONLY 블록은 무해하게 미도달. 배포 refit만 스킵하며 PRETEXT train_model(line 431)과 간섭 없음.",
+   "evidence": "open/scripts/colab_train_base2.py:429-437 (PRETEXT block+exit), :463-482 (holdout+HOLDOUT_ONLY)"
+  }
+ ],
+ "verified_claims": [
+  {
+   "claim": "A: diff가 정확히 4개 삽입 hunk(56a57, 66a68, 147a150, 472a476,482)뿐 — 전부 add('a'), change/delete hunk 0. 삽입 10줄, 삭제 0줄. 라인수 619→629(+10=1+1+1+7).",
+   "evidence": "diff scratchpad/colab_dabf455d_ref.py open/scripts/colab_train_base2.py → 4 hunk 모두 'NaNN' add형; grep -c '^>'=10, '^<'=0; wc -l 619 vs 629"
+  },
+  {
+   "claim": "B: HOLDOUT_ONLY=0 기본값일 때 dabf455d와 런타임 동일(inert). line 57 파싱은 부작용 없이 False 대입; line 68 assert는 not(False and REFIT_ONLY)=True로 항상 통과; line 150 config는 출력 키만 추가(런타임 무영향); line 476-482 종료블록은 if HOLDOUT_ONLY 가드로 스킵.",
+   "evidence": "open/scripts/colab_train_base2.py:57(파싱),:68(assert),:150(config),:476(if HOLDOUT_ONLY 가드). test_holdout_only.py HOLDOUT_ONLY=0 도달콜=[train(tr,va),predict,save probs3,save idx3,train FULL,build SUB_DIR,save script/reqs,build zip] — 대조군 경로와 동일"
+  },
+  {
+   "claim": "C: 종료블록(476-482)이 holdout npy 저장(474 probs3/475 idx3) 직후, 배포 full-refit(model_full 대입 line 493) 전, zip(ZipFile line 616/619) 전에 위치. GATE_DONE 기록(477-478)+print(479-481)+sys.exit(0)(482) 포함. else 블록(REFIT_ONLY의 else, line 466) 내부라 홀드아웃 branch에서만 동작. PRETEXT train_model(431)은 별개 블록(437 exit)이라 혼동 없음 — 배포 refit(493)만 스킵.",
+   "evidence": "open/scripts/colab_train_base2.py:466(else),:474-475(np.save),:476-482(HOLDOUT_ONLY 종료),:493(train_model FULL),:616-619(zip). test C2(482<493) C3(493<616) PASS"
+  },
+  {
+   "claim": "D: SKIP_REFIT 의미 불변. HOLDOUT_ONLY 종료(line 482)가 SKIP_REFIT 분기(line 485-493) 이전이라 SKIP_REFIT 로직은 손대지 않음 — 대조군과 동일. HOLDOUT_ONLY=0이면 482를 통과해 기존대로 SKIP_REFIT 분기 진입.",
+   "evidence": "open/scripts/colab_train_base2.py:485-493(SKIP_REFIT if/else 무변경, diff에 미포함). test E9(skiprefit_skips_full_train)/E10(skiprefit_still_zips) PASS"
+  },
+  {
+   "claim": "E: 후보 SHA256 = ec60a75381b4d6f97fde5bd34e35e3ba572803649d0849b73940bef2748e0abd(앞 ec60a75381b4d6f9 일치), 대조군 = dabf455d3cc93f21...(frozen ref 일치).",
+   "evidence": "shasum -a 256 open/scripts/colab_train_base2.py / scratchpad/colab_dabf455d_ref.py"
+  },
+  {
+   "claim": "제어흐름 테스트 22/22 ALL PASS 독립 재현 — C2/C3(위치), D1(예상밖 추가 [])·D2(삭제 []), E1-E10(HOLDOUT_ONLY=1은 밴드 npy 저장 후 GATE_DONE+exit·full train/model_sub/script/reqs/zip 미도달; 기본값은 full refit·zip 도달; SKIP_REFIT 보존).",
+   "evidence": "python3 scratchpad/test_holdout_only.py → '전체: ALL PASS' (라인번호 holdout_save=475 HOLDOUT_ONLY_exit=482 full_refit=493 zip=616)"
+  }
+ ],
+ "unverified_claims": [
+  "체크리스트 open/docs/checklists/10_pre_training.md의 절차 항목(#1 실험로그 사전등록·#13 ETA+완료감시)은 발사 절차 항목으로 본 코드-diff 감사 범위 밖 — 미확인.",
+  "이 감사는 로컬 스크립트 정적 diff/제어흐름만 검증. HOLDOUT_ONLY=1 실제 실행 시 GATE_DONE 내용·홀드 F1·npy 저장은 발사 후 산출물로만 최종 확인 가능(미실행).",
+  "원격(치타)에는 후보 스크립트가 업로드되지 않았음 — 로컬 전용 감사. 원격 상태는 확인/변경하지 않음."
+ ],
+ "confounders": [
+  "선언 밖 미선언 변경은 발견되지 않음 — 4개 삽입은 전부 선언된 intended_change 범위. 따라서 '단일 신규 플래그 추가'라는 호칭은 정정 불필요(묶음 아님). 단, effective_config에 키 1개가 추가되는 부수효과(N1)는 의도된 manifest 반영으로, HOLDOUT_ONLY=0에서 effective_config.json 파일 내용은 대조군과 1키 차이가 있음(런타임 동작은 동일).",
+  "정규화·재가중·배치처리·시드·경로 관련 라인 변경 0 — diff의 4 hunk 어디에도 loss/weight/normalization/seed/path 수정 없음(플래그 파싱·assert·config 키·guarded 종료블록뿐)."
+ ],
+ "required_fixes": [],
+ "safe_next_action": "PASS — 후보 ec60a75는 대조군 dabf455d 대비 선언된 4개 삽입점(플래그 파싱·상호배타 assert·config 키·guarded 종료블록)만 추가, 삭제 0, 미선언 부수변경 0. HOLDOUT_ONLY=0에서 런타임 inert(대조군 경로 동일), SKIP_REFIT 의미 불변, 종료블록 위치·sys.exit(0) 정합, 신규 SHA 확인. ★판정만 — 발사·업로드·제출 권한 아님(action_state=WAITING_USER). 실제 학습 발사는 사용자 명시 승인 필요.",
+ "escalated": false,
+ "evidence_references": [
+  "open/scripts/colab_train_base2.py:57",
+  "open/scripts/colab_train_base2.py:68",
+  "open/scripts/colab_train_base2.py:150",
+  "open/scripts/colab_train_base2.py:466",
+  "open/scripts/colab_train_base2.py:474",
+  "open/scripts/colab_train_base2.py:476",
+  "open/scripts/colab_train_base2.py:482",
+  "open/scripts/colab_train_base2.py:485",
+  "open/scripts/colab_train_base2.py:493",
+  "open/scripts/colab_train_base2.py:616",
+  "scratchpad/colab_dabf455d_ref.py",
+  "scratchpad/test_holdout_only.py"
+ ],
+ "artifact_sha": {
+  "open/scripts/colab_train_base2.py": "ec60a75381b4d6f97fde5bd34e35e3ba572803649d0849b73940bef2748e0abd",
+  "scratchpad/colab_dabf455d_ref.py": "dabf455d3cc93f2185ae9c4bd3733e3adc7690f4defab040ac29d3214fd4e8c3"
+ }
+}

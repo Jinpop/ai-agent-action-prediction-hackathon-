@@ -1,0 +1,110 @@
+{
+ "schema_version": "3",
+ "request_id": "code_diff-20260714T105146Z-metawave1",
+ "audit_key": "65f33d724d82f15bf1ccc11d7cc37304436380649c3991c02bdd4e02aee6d32e",
+ "lineage_id": "official-meta-wave1-codediff",
+ "stage": "plan_review",
+ "policy_version": "campaign:official-meta-wave1",
+ "objective": "campaign official-meta-wave1 Part B 3파일 코드 diff 내부 교차검증(META-N feat·META-T colab·verify_zip meta-dim 일반화). 선언 변경뿐+하위호환 여부 실측. ★Codex 미호출.",
+ "gate_state": "PASS",
+ "action_state": "WAITING_USER",
+ "downstream_action": "launch",
+ "verdict_source": "internal_cross_check",
+ "auditor_model": "Claude Opus 4.8 (claude-opus-4-8) — code-diff internal cross-check, read-only",
+ "cache_hit": false,
+ "attempt": 0,
+ "started_at": "2026-07-14T10:35:00Z",
+ "completed_at": "2026-07-14T10:52:00Z",
+ "runner_recorded": {
+  "request_id": "code_diff-20260714T105146Z-metawave1",
+  "model": "claude-opus-4-8",
+  "reasoning": "internal_cross_check (no Codex). diff·python 실행·ast.parse 로컬 실측, read-only.",
+  "started_at": "2026-07-14T10:35:00Z",
+  "completed_at": "2026-07-14T10:52:00Z",
+  "attempt": 0,
+  "cache_hit": false,
+  "raw_request_id": null
+ },
+ "raw_result_ref": null,
+ "nonblocking_findings": [
+  {
+   "id": "N1",
+   "summary": "feat +6키는 dict 중간(langpref_mixed idx39) 삽입이지만 reindex가 이름 기준+META_COLS 동적이라 무해.",
+   "evidence": "python new@1 index('langpref_mixed')=39; feat line242-250 reindex(columns=..., fill_value=0.0)"
+  },
+  {
+   "id": "N2",
+   "summary": "colab SUBMIT_SCRIPT(참고 제출 템플릿) 내 2번째 build_transcript(line552)는 ref와 byte-identical=META-T 미인지. 배포는 '로컬 포장'(주석)이라 실제 추론 스크립트 정합은 packaging 소관.",
+   "evidence": "new line533 SUBMIT_SCRIPT=r'''; line552 def build_transcript; line562-565 [META] 원본; 주석 line532 'v17 스태킹은 로컬 포장'"
+  },
+  {
+   "id": "N3",
+   "summary": "train 경로는 META-T-aware 빌더 사용 확인: line231 texts=[build_transcript(s)...]는 line108 정의(수정본)에 바인딩(line552 재정의는 이후 실행이라 학습엔 미적용).",
+   "evidence": "colab line108(def build_transcript, 수정) → line231(train 호출) → line552(SUBMIT_SCRIPT 내 재정의)"
+  }
+ ],
+ "verified_claims": [
+  {
+   "claim": "SHA 동결 일치: 6파일 sha256 전부 선언 frozen값과 일치(ref feat 91c419d6 / new feat f65e9d91 / ref colab ec60a75 / new colab 592ed8d6 / ref verify_zip 6b3f68fe / new verify_zip a29c49f6).",
+   "evidence": "shasum -a 256 6파일 → 전부 선언값 매치"
+  },
+  {
+   "claim": "A(선언 변경뿐): 3 diff hunk가 정확히 선언대로. feat: 10a11 `import os`; 14a16-21 META_NUM_EXT 상수+META_N_EXTRA_LANGS; 102a110-113 build_meta_row `if META_NUM_EXT:` 가드(+5 lang_ +langpref_mixed). colab: 62a63-65 두 플래그; 121-124c124-138 [META] if META_TRANS_EXT/else; 145a160 effective_config 2키. verify_zip: 132c132-133 exp_in=hidden+119 → hidden+len(prep[meta_columns]) (119 fallback). 그 외 라인 변경 0.",
+   "evidence": "diff scratchpad/feat_orig_ref.py open/scripts/feat.py; diff colab; diff verify_zip — 위 hunk만 출력"
+  },
+  {
+   "claim": "미선언 부수변경 0(정규화/재가중/배치/시드/경로 무변): feat build_meta_frame diff exit=0(reindex fill_value=0.0 불변)·LANGS/CI_STATUSES/TIERS 불변. colab는 os를 ref line23에서 이미 import(신규 import 없음)·META_COLS=list(meta_df.columns) line273·meta_df=build_meta_frame(train) line272 불변. verify_zip은 SPEC/MEMBER_SPECS/chk 로직 불변.",
+   "evidence": "diff build_meta_frame(feat) exit=0; grep '^import os' colab ref line23 & new line23; LANGS ref==new"
+  },
+  {
+   "claim": "B1(feat 하위호환 실증·독립 재현): META_NUM_EXT=0 build_meta_row = ref build_meta_row와 byte-identical(119키·동일 순서·동일 값, dict==True). =1 → 정확히 +6키 ['lang_kt','lang_vue','lang_swift','lang_ipynb','lang_tf','langpref_mixed'], removed 0, 119 base 값 불변. LANGS(20개)에 kt/vue/swift/ipynb/tf 부재 → 진짜 +6(덮어쓰기 아님).",
+   "evidence": "python3 실행: ref==new@0 dict True(keycount 119); new@1 keycount 125, added=[6키], removed=[]; LANGS grep no overlap"
+  },
+  {
+   "claim": "B2(colab 하위호환 실증): META_TRANS_EXT=0 else분기(new line135-138) = ref [META](line121-124)와 strip-match True(f-string 리터럴 byte-identical). =1 if분기(line127-133)만 langpref/budget/elapsed/loc/langmix 추가. 숫자메타(feat) 경로 무관.",
+   "evidence": "sed 추출 new[134:138] vs ref[120:124] strip 비교 True; diff hunk 121-124c124-138"
+  },
+  {
+   "claim": "B3(verify_zip 하위호환): MEMBER_SPECS kf768/s48/dv3ko 전부 hidden=768. _meta_dim=len(prep['meta_columns']) if dict&not-None else 119 → 기존 멤버(119) exp_in=768+119=887 불변, META-N(125) exp_in=768+125=893. head 계약 (256,exp_in)/(14,256)는 동일 로직, 상수만 일반화.",
+   "evidence": "verify_zip line18-21 SPEC hidden=768; line132-133 _meta_dim/exp_in; 산술 887/893"
+  },
+  {
+   "claim": "C(구문·스코프): feat/colab/verify_zip 3파일 ast.parse OK. verify_zip prep=joblib.load(...)는 line115(모듈 스코프) 로드→line132에서 사용, 순차 실행·동일 모듈 스코프, isinstance(prep,dict) 가드로 안전. META_COLS 동적(line273)이라 head n_meta와 prep meta_columns 일관.",
+   "evidence": "ast.parse 3 OK; verify_zip sed 115(prep=joblib.load)·132(_meta_dim) 동일 스코프"
+  },
+  {
+   "claim": "D(프레이밍 정합, 학습측): META-N(feat)과 META-T(colab)는 서로 다른 플래그(META_NUM_EXT vs META_TRANS_EXT)로 독립 게이트 — 숫자메타 축과 transcript 축 분리. 두 flag 모두 default 0이라 기존 recipe(mint2v2 등 flag 미설정)·기존 멤버는 학습측 코드경로가 ref와 byte-identical.",
+   "evidence": "feat @0 dict==ref; colab @0 [META] strip-match ref; effective_config는 두 플래그를 기록만"
+  }
+ ],
+ "unverified_claims": [
+  "배포/추론 시점 정합(train↔serve parity)은 이 학습측 diff로 검증 안 됨: build_meta_frame(불변)이 추론에서 prep['meta_columns']로 reindex(fill_value=0.0)하는데, build_meta_row의 +6키는 env META_NUM_EXT=1일 때만 생성 → META-N 모델을 추론 env에 META_NUM_EXT 미설정으로 돌리면 6 공식메타 컬럼이 0.0로 채워져 train/serve skew. 배포 포장이 추론 env에도 META_NUM_EXT=1을 보장하는지는 zip-verifier/package-builder 소관.",
+  "colab 내 SUBMIT_SCRIPT(참고 제출 템플릿, r'''...''') 안의 두번째 build_transcript(new line552-571)는 ref와 byte-identical(META-T 미인지). META-T 모델의 실제 추론 transcript가 공식메타를 포함하려면 배포 추론 스크립트가 META-T-aware여야 함 — 이 참고본은 그렇지 않음(주석: 'v17 스태킹은 로컬 포장'이라 실제 배포는 로컬 포장 스크립트). 로컬 포장 추론 정합은 packaging 단계 확인 필요.",
+  "verify_zip은 레지스트리 kf768/s48/dv3ko 단일멤버 교체 계약 — META-N 실제 멤버(125d) zip을 실제로 통과시키는지는 산출물 생성 후 실행 검증 필요(정적 코드상 887→893 일반화만 확인).",
+  "effective_config.json의 META_NUM_EXT/META_TRANS_EXT 실제 반영값은 발사 후 산출물(colab line141-160이 자동 기록) — 실행 전 실측 불가."
+ ],
+ "confounders": [
+  "★학습측 diff는 clean·하위호환이지만 '완전 자기완결 단일축'은 배포시점엔 성립 안 함: META-N/META-T 둘 다 추론시점 env(META_NUM_EXT)·추론 스크립트(META-T build_transcript) 의존성을 가짐. flag가 default 0인 기존 recipe엔 무영향이나, 배포되는 META 멤버는 학습 env=추론 env 정합이 없으면 skew. '단일변수 clean'은 학습측·flag-off 경로에 한정된 서술.",
+  "META_NUM_EXT=1일 때 6 신규키는 dict 순서상 중간(langpref_mixed index 39)에 삽입됨(끝 append 아님). build_meta_frame이 이름 기준 reindex이고 META_COLS=list(meta_df.columns) 동적이라 순서는 무해하나, 위치 기준 로직이 어디에도 없어야 함(현재 없음).",
+  "SUBMIT_SCRIPT 내 build_transcript가 ref와 동일한 것은 '미선언 변경'이 아니라 '변경 안 함'(ref에도 동일 존재) — A 계약(선언변경뿐)은 충족. 다만 META-T 배포 정합의 미완결 지점."
+ ],
+ "required_fixes": [],
+ "safe_next_action": "PASS(학습측 코드 diff) — 3 diff는 정확히 선언 변경뿐이고 flag default 0에서 ref와 byte-identical(feat @0 dict==ref·119키 / colab @0 [META] strip-match ref / verify_zip 887 불변). META-N=+6키(125)·META-T=공식메타는 flag on에서만. ★단 배포 전제조건 미완결(NEEDS at packaging): ①META-N 추론 env에 META_NUM_EXT=1 보장(아니면 reindex fill 0.0 skew) ②META-T 실제 추론 build_transcript가 META-T-aware여야(SUBMIT_SCRIPT 참고본은 아님). 이는 코드-diff 위반이 아니라 zip-verifier/integration-auditor/package-builder 인계 항목. PASS는 진행 자격일 뿐 발사·배포는 campaign 승인 하 지휘자 절차·별도 사용자 명시 승인. action_state=WAITING_USER.",
+ "escalated": false,
+ "evidence_references": [
+  "open/scripts/feat.py:11,16-21,110-113,242-250,273",
+  "open/scripts/colab_train_base2.py:63-65,124-138,160,231,272-273,533,552-571",
+  "scratchpad/verify_zip.py:18-21,115,132-133",
+  "scratchpad/feat_orig_ref.py",
+  "scratchpad/colab_ec60a75_ref.py",
+  "scratchpad/verify_zip_ref.py"
+ ],
+ "artifact_sha": {
+  "open/scripts/feat.py": "f65e9d9103282e4fb9355a80624ba88656a5fcbd3aa3d3675bbf56f8720a7624",
+  "open/scripts/colab_train_base2.py": "592ed8d676578ee305b069008f0614349977b79bb15b9a59f134d6378c47d390",
+  "scratchpad/verify_zip.py": "a29c49f66055f22578fa985a9ba3cdef7810bf30e52400bafb6b18fc0c92565e",
+  "scratchpad/feat_orig_ref.py": "91c419d634a85ad912d3dc43b9c802ddf0f1a31b0a203345cb38779b30b05ca8",
+  "scratchpad/colab_ec60a75_ref.py": "ec60a75381b4d6f97fde5bd34e35e3ba572803649d0849b73940bef2748e0abd",
+  "scratchpad/verify_zip_ref.py": "6b3f68fe0f43aab70167a4fbe445fd1e886b41f1426c4431dd4f3de8d1b25620"
+ }
+}

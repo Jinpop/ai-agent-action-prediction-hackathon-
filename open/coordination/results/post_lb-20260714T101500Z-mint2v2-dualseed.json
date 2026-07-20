@@ -1,0 +1,67 @@
+{
+  "schema_version": "3",
+  "request_id": "post_lb-20260714T101500Z-mint2v2-dualseed",
+  "audit_key": "0000000000000000000000000000000000000000000000000000000000000000",
+  "lineage_id": "mint2v2-dualseed-0714-postlb",
+  "stage": "post_lb",
+  "policy_version": "campaign:mint2v2-dualseed-0714",
+  "objective": "campaign mint2v2-dualseed-0714 post_lb: 배포 2종(submit_m2v2s79/s81) 서버 LB 실측 기록 직전 내부 교차검증 — 직접대조 delta 산술 재계산·챔피언 판정(cA 유지)·matched(seed79 v1↔v2 묶음)·홀드 무예측 재확인(순위반전)·runtime measured 승격·축 프레이밍 규율. read-only. Codex 미호출(campaign 금지).",
+  "gate_state": "PASS",
+  "action_state": "WAITING_USER",
+  "downstream_action": "none",
+  "verdict_source": "internal_cross_check",
+  "auditor_model": "claude-opus-4-8 (lb-interpreter internal cross-check, read-only)",
+  "cache_hit": false,
+  "attempt": 0,
+  "started_at": "2026-07-14T10:05:00Z",
+  "completed_at": "2026-07-14T10:15:00Z",
+  "runner_recorded": {
+    "request_id": "post_lb-20260714T101500Z-mint2v2-dualseed",
+    "model": "claude-opus-4-8",
+    "reasoning": "internal_cross_check (no Codex; campaign Codex 금지 준수). LB는 사용자 보고, 산술·프레임은 로컬 read-only 대조.",
+    "started_at": "2026-07-14T10:05:00Z",
+    "completed_at": "2026-07-14T10:15:00Z",
+    "attempt": 0,
+    "cache_hit": false,
+    "raw_request_id": null
+  },
+  "raw_result_ref": null,
+  "verified_claims": [
+    {"claim": "직접대조 delta 10자리 일치: s79-cA=-0.0017024368, s81-cA=-0.0004094500, s81-s79=+0.0012929868, target(0.79307)-cA=+0.0082238488", "evidence": "cA=0.7848461512, s79=0.7831437144, s81=0.7844367012 산술 재계산"},
+    {"claim": "챔피언 무변경: 두 probe 다 cA 미달 -> 최고LB 자동채택상 cA 0.7848461512 유지, 라디오 조작 없음", "evidence": "s81 0.7844367012 < cA, s79 0.7831437144 < cA"},
+    {"claim": "matched: s79 probe는 cA[s48,k81,mint2b_s79]에서 mint2b_s79->mint2v2_s79 단일슬롯 교체, seed79 공유 -> 변수=v2 4묶음(strict+TB_V2 배치독립손실+target가중 클래스가중+메타omit). s81 probe는 다른 seed draw", "evidence": "band_eval band_results probe_members / plan_review-mint2v2 intended_change / pre_launch-deploy verified B"},
+    {"claim": "홀드 무예측 재확인(순위반전): plain 홀드 s79 0.770386 > s81 0.768503, LB는 s81 0.7844367012 > s79 0.7831437144", "evidence": "band_eval band_results probe_plain s79/s81"},
+    {"claim": "runtime measured 승격 근거: 두 zip 서버 588s(9:48)<600s 완주(마진 12s)", "evidence": "사용자 제출 보고 9분48초 x2"}
+  ],
+  "unverified_claims": [
+    "LB 값·채점시간(588s)·업로드 링크는 사용자·서버 보고치(서버 오라클 결정론 전제).",
+    "s81-s79 +0.0012929868의 seed-draw 귀속은 관측 seed 스프레드(±0.0015) 대비 밴드 내라는 정황일 뿐 — v2 seed 간 인과 우열 아님."
+  ],
+  "confounders": [
+    "v2 = 4변수 묶음 -> 어느 보정이 -0.0017을 만들었는지 분리 불가('단독효과' 금지)",
+    "s79 matched는 seed79 n=1 -> 'mint2v2 축 죽음/v2 실패' 단정 불가",
+    "s81은 seed draw + v2 묶음 동시 상이(matched 아님) -> 'seed 우위' 금지",
+    "s81-s79 +0.0012929868은 seed 스프레드(±0.0015) 밴드 내 -> v2 seed81/79 우열 결론 금지",
+    "cA 프레임 단일슬롯 probe 1종 — 타 프레임/블렌드 상호작용 미측정",
+    "runtime measured지만 마진 12s(얇음) — 5행 E2E/여유마진과 동일시 금지"
+  ],
+  "required_fixes": [],
+  "safe_next_action": "PASS — docs-ledger-writer가 실험로그 EOF append + HANDOFF §1(cA 유지)·§9 스냅샷 갱신. 표현규율: 'v2 보정이 cA 프레임서 v1 대비 서버개선 없음(-0.0004~-0.0017)'까지만, '축 죽음/단독효과/노이즈' 금지, 홀드 순위반전 명시. 후속 GPU/슬롯 배정은 별도 사용자 결정(이 감사는 발사·제출 승인 아님, action_state=WAITING_USER).",
+  "escalated": false,
+  "evidence_references": [
+    "open/coordination/results/band_eval-20260714T065503Z-mint2v2-dualseed.json",
+    "open/coordination/results/pre_launch-20260714T073000Z-mint2v2-deploy.json",
+    "open/coordination/results/plan_review-20260714T020320Z-mint2v2.json",
+    "open/coordination/results/post_lb-20260714T014500Z-round3.json"
+  ],
+  "artifact_sha": {
+    "open/scripts/colab_train_base2.py": "ec60a75381b4d6f97fde5bd34e35e3ba572803649d0849b73940bef2748e0abd",
+    "open/scripts/feat.py": "91c419d634a85ad912d3dc43b9c802ddf0f1a31b0a203345cb38779b30b05ca8",
+    "remote-deploy-data:train_mint2_balanced_v2.jsonl": "17d753527a406085dcb6fa50f6f708b0a265a3d43a1727dde9386f225811022e",
+    "remote-deploy-labels:train_mint2_balanced_v2_labels.csv": "aea580d3655f4a4c9250e1986b84eb861f958d486e45d337360fce3299fd3bd1",
+    "scratchpad/harvest_mint2v2/s79/holdout_probs3.npy": "8d93cc855db16a461985d1e4f779d153e6d3bf24c747dcb8a55f8e88344220a4",
+    "scratchpad/harvest_mint2v2/s81/holdout_probs3.npy": "c8103444a5b70facd99a55f19d9dd270d6a724eecc391f50da4b415a7f265881",
+    "submits/submit_m2v2s79.zip": "ce42b4774afc19dfd752100cbfaf4ed2c62c91b45f742da3223cf052ccaa36f4",
+    "submits/submit_m2v2s81.zip": "24d46d82675f308b18bcb63518b670b4e46c63b8d50434b4f45a530fcae50865"
+  }
+}

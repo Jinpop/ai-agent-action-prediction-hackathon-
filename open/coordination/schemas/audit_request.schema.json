@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dacon236694/coordination/audit_request.schema.json",
+  "title": "audit request v3 (2026-07-14 하네스 재설계). Codex 외부 감사 = 사용자 명시 승인 시에만. 내부 교차검증(Claude)과 외부 감사(Codex)를 같은 요청 계약으로 준비하되, 호출은 execute 승인 단계에서만.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "request_id",
+    "created_at",
+    "stage",
+    "policy_version",
+    "objective",
+    "verify_items",
+    "downstream_action",
+    "proposed_next_action"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "3",
+      "description": "머신 판독용 계약 버전. 신규 기록은 반드시 '3'. 미표기 = pre-versioning legacy(legacy_manifest.json으로만 관용)."
+    },
+    "request_id": {
+      "type": "string",
+      "description": "고유 ID: <stage>-<UTC타임스탬프>-<slug>. 파일명과 일치. 재사용 금지.",
+      "pattern": "^[a-z_]+-[0-9]{8}T[0-9]{6}Z-[a-z0-9-]{4,}$"
+    },
+    "created_at": {
+      "type": "string",
+      "description": "ISO8601 UTC — 실제 작성 시각(파일 mtime과 모순 금지, 추정·라운딩 기입 금지)"
+    },
+    "stage": {
+      "type": "string",
+      "enum": ["plan_review", "pre_launch", "anomaly_review", "post_gate",
+               "post_training", "pre_submit", "post_lb"]
+    },
+    "policy_version": {
+      "type": "string",
+      "description": "요청 작성 시점의 하네스 정책 버전(예: 2026-07-14). audit_key 계산에 포함."
+    },
+    "objective": { "type": "string", "description": "감사 목적 한 줄" },
+    "verify_items": {
+      "type": "array", "items": { "type": "string" }, "minItems": 1,
+      "description": "감사자가 독립 확인할 항목. audit_key 계산에 포함."
+    },
+    "downstream_action": {
+      "type": "string",
+      "enum": ["none", "launch", "stop", "kill", "paid_gpu", "delete", "submit", "package", "other"],
+      "description": "이 감사 뒤에 이어질 실제 부작용 행동. AUDIT_PASS와 무관하게 none 이외는 모두 별도 사용자 명시 승인 필요(action_state=WAITING_USER 유지)."
+    },
+    "proposed_next_action": {
+      "type": "string",
+      "description": "감사자에게 알리는 계획된 다음 행동(권고 대상). 실행 권한 아님."
+    },
+    "lineage_id": {
+      "type": "string",
+      "description": "재감사 묶음 식별자. 같은 우려의 fix→재감사가 이 값을 공유해야 finding 승격이 lineage 안에서만 누적된다. 미지정 시 러너가 (stage+verify_items) 해시로 파생."
+    },
+    "direct_control": { "type": "string", "description": "직접 대조군(무엇 대비 무엇)" },
+    "intended_change": { "type": "string", "description": "변경 변수(1변수면 명시, 묶음이면 묶음이라 명시)" },
+    "artifact_paths": {
+      "type": "array", "items": { "type": "string" },
+      "description": "감사 대상 산출물(repo-relative). 러너가 realpath로 repo 내부 regular file 여부 검증."
+    },
+    "evidence_paths": {
+      "type": "array", "items": { "type": "string" },
+      "description": "근거 파일(repo-relative). 러너가 realpath 검증."
+    },
+    "code_sha256": {
+      "type": "object",
+      "description": "{repo-relative 경로: 64-hex sha256}. ★값은 실측 SHA만. 미측정/설명은 sha_notes에.",
+      "additionalProperties": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+    },
+    "data_sha256": {
+      "type": "object",
+      "description": "{repo-relative 경로: 64-hex sha256}. ★값은 실측 SHA만.",
+      "additionalProperties": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+    },
+    "sha_notes": {
+      "type": "object",
+      "description": "SHA를 아직 못 구했거나 상태 설명이 필요한 경로의 자유서술. SHA 필드와 분리(#5).",
+      "additionalProperties": { "type": "string" }
+    },
+    "effective_config_path": { "type": ["string", "null"] },
+    "known_caveats": { "type": "array", "items": { "type": "string" } },
+    "deadline": { "type": "string" },
+    "timeout_sec": { "type": "integer" },
+    "backfilled": {
+      "type": "boolean",
+      "description": "true = 원 요청이 채팅으로만 존재해 소급 생성된 기록. 정직 표기 — 신규 감사에 사용 금지."
+    },
+    "backfill_note": { "type": "string" }
+  }
+}

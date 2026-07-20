@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+"""감사 요청/결과 스키마 검증기 (07-14 외부 감사 지적으로 신설).
+
+run_codex_gate.py의 validate()가 필수필드+verdict만 보던 한계를 보완:
+- jsonschema 전체 검증(타입·enum·additionalProperties·패턴)
+- 결과↔짝 request 존재 대조
+- request_id ↔ 파일명 일치
+- created_at/completed_at vs 파일 mtime 시계 정합(미래 기입 검출, 허용오차 10분)
+
+사용: open/.venv/bin/python scratchpad/validate_audits.py
+종료코드: 0=전부 통과, 1=위반 존재 (신규 감사 저장 직후 1회 실행 규약 — CLAUDE.md §감사게이트)
+"""
+import json, os, sys, glob
+from datetime import datetime, timezone
+
+ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "open", "coordination")
+ROOT = os.path.normpath(ROOT)
+
+try:
+    import jsonschema
+    HAVE_JS = True
+except ImportError:
+    HAVE_JS = False
+
+def load(p):
+    with open(p) as f:
+        return json.load(f)
+
+def iso(ts):
+    try:
+        return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    except Exception:
+        return None
+
+# v2 스키마·시각규율 발효 시점(07-14 외부감사 반영). 이전 mtime 파일의 위반은
+# 소급 수정하지 않고(append-only 정신) legacy 경고로만 보고 — 이후분은 강제(exit 1).
+LEGACY_CUTOFF = datetime(2026, 7, 14, 3, 0, tzinfo=timezone.utc)
+
+def main():
+    req_schema = load(os.path.join(ROOT, "schemas", "audit_request.schema.json"))
+    res_schema = load(os.path.join(ROOT, "schemas", "audit_result.schema.json"))
+    problems = []
+    legacy = []
+    reqs = {os.path.basename(p): p for p in glob.glob(os.path.join(ROOT, "requests", "*.json"))}
+    ress = {os.path.basename(p): p for p in glob.glob(os.path.join(ROOT, "results", "*.json"))}
+
+    for name, path in sorted(list(reqs.items()) + list(ress.items())):
+        kind = "request" if path in reqs.values() and "requests" in path else "result"
+        schema = req_schema if kind == "request" else res_schema
+        mtime = datetime.fromtimestamp(os.path.getmtime(path), tz=timezone.utc)
+        sink = legacy if mtime < LEGACY_CUTOFF else problems
+        try:
+            doc = load(path)
+        except Exception as e:
+            sink.append(f"[{kind}] {name}: JSON 파싱 실패 — {e}")
+            continue
+        # 1) 스키마 전체 검증
+        if HAVE_JS:
+            for err in sorted(jsonschema.Draft202012Validator(schema).iter_errors(doc), key=str)[:5]:
+                sink.append(f"[{kind}] {name}: 스키마 위반 — {'/'.join(map(str, err.path)) or '(root)'}: {err.message[:140]}")
+        # 2) request_id ↔ 파일명
+        rid = doc.get("request_id", "")
+        if rid and rid != name[:-5]:
+            sink.append(f"[{kind}] {name}: request_id '{rid}' ≠ 파일명")
+        # 3) 시계 정합 (기입 시각이 파일 mtime보다 10분 이상 미래면 의심)
+        ts = doc.get("completed_at") if kind == "result" else doc.get("created_at")
+        t = iso(ts) if ts else None
+        if t and (t - mtime).total_seconds() > 600:
+            sink.append(f"[{kind}] {name}: 기입시각 {ts}가 파일 mtime {mtime.isoformat()}보다 미래(>10분) — 추정 기입 의심")
+
+    # 4) 결과 ↔ 짝 request
+    for name in sorted(ress):
+        if name not in reqs and name.replace("results", "requests") not in reqs:
+            if name not in reqs:
+                problems.append(f"[pair] results/{name}: 짝 request 없음")
+
+    if not HAVE_JS:
+        problems.append("[env] jsonschema 미설치 — 전체 스키마 검증 생략됨 (open/.venv에 설치 필요)")
+
+    print(f"요청 {len(reqs)}건 / 결과 {len(ress)}건 검사")
+    if legacy:
+        print(f"\n[legacy 경고 — v2 발효(07-14) 이전 파일, 소급 수정 안 함] {len(legacy)}건:")
+        for p in legacy:
+            print(" ~", p)
+    if problems:
+        print(f"\n★위반(발효 이후 — 수정 필수) {len(problems)}건:")
+        for p in problems:
+            print(" -", p)
+        return 1
+    print("\n발효 이후 파일 전부 통과")
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main())

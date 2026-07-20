@@ -1,0 +1,32 @@
+{
+  "schema_version": "3",
+  "request_id": "post_lb-20260715T231500Z-longshot-dual",
+  "created_at": "2026-07-14T23:10:00Z",
+  "stage": "post_lb",
+  "policy_version": "campaign:longshot-dual-0715",
+  "objective": "campaign longshot-dual-0715 post_lb: Card A(metaT_s81 0.7857601405)·Card B(koelectra 0.7827351370) 서버 LB 기록 게이트 — delta·챔피언 불변·k81 레시피-다양성 해석. Codex 미호출.",
+  "verify_items": [
+    "delta: metaT81_w062 vs 챔피언 = -0.0009373466 (598s)",
+    "delta: koel_w062 vs 챔피언 = -0.0039623501 (578s)",
+    "챔피언 metaT_w062 0.7866974871 불변(07-15 5제출 전패)",
+    "해석: k81 가치=레시피-다양성(같은레시피 시드추가·아키텍처 탈상관 모두 미달) — 관측, n=1 draws",
+    "프레이밍: 'koelectra 죽음' 단정 금지(묶음), '노이즈' 금지"
+  ],
+  "downstream_action": "none",
+  "proposed_next_action": "docs-ledger-writer 기록. seedlotto_w062(마지막 시드복권) 제출은 사용자 결정. 잔여 슬롯 2.",
+  "lineage_id": "longshot-dual-0715-post_lb",
+  "direct_control": "챔피언 submit_metaT_w062(0.7866974871) — 두 카드 모두 k81 단일슬롯 교체(공유멤버·BLEND_W 0.62 동일)",
+  "intended_change": "관측 대상: k81 슬롯 교체 2종(metaT_s81 / koelectra)의 서버 LB. LB 해석만.",
+  "evidence_paths": [
+    "submits/submit_koel_w062.zip",
+    "submits/submit_metaT81_w062.zip",
+    "open/coordination/campaign-longshot-dual-0715.json"
+  ],
+  "effective_config_path": null,
+  "known_caveats": [
+    "LB·채점시간은 사용자·서버 보고.",
+    "audit_key는 internal_cross_check all-zeros placeholder.",
+    "마감압박으로 경량 감사 경로(지휘자 직접 산술) — nonblocking에 명시.",
+    "Card A/B 각 멤버는 다변수 묶음(레시피·seed·백본·길이) — 단독효과 금지."
+  ]
+}

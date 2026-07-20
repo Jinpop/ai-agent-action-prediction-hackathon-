@@ -1,0 +1,39 @@
+{
+ "schema_version": "3",
+ "request_id": "training_contract-20260714T043544Z-holdout-only",
+ "created_at": "2026-07-14T04:33:00Z",
+ "stage": "plan_review",
+ "policy_version": "2026-07-14",
+ "objective": "신규 HOLDOUT_ONLY=1 플래그가 '홀드아웃 밴드 자격만 계산 후 즉시 종료' 계약(요구동작 1~8)을 만족하고 기존 gate/deploy(PRETEXT StageA·기본 배포 StageB·SKIP_REFIT·REFIT_ONLY) 계약을 안 깨는지 training-contract 내부 교차검증. read-only 판정만. ★Codex 미호출·로컬 전용(원격 read-only).",
+ "verify_items": [
+  "A: HOLDOUT_ONLY=1 경로가 요구동작 1~6(홀드 학습/예측·npy 2종 저장·F1+report·GATE_DONE·즉시 exit)을 수행하고 f1/out/va가 종료블록 시점에 정의돼 있는지",
+  "B: 종료(sys.exit)가 배포 full-refit·model_sub·script.py/requirements·submit_base2.zip 이전이라 요구동작 7·8이 충족되는지",
+  "C: HOLDOUT_ONLY=0일 때 PRETEXT StageA/기본 배포 StageB/SKIP_REFIT/REFIT_ONLY가 dabf455d와 동일한지(backward-compat)",
+  "D: 상호배타 assert(HOLDOUT_ONLY∧REFIT_ONLY 금지)의 논리적 정당성",
+  "E: 밴드전용 실행 배선(gate 체인 StageB env에 HOLDOUT_ONLY=1 추가) 요구사항이 아직 미적용(원격 read-only)인지",
+  "F: 밴드체크 입력(holdout_probs3.npy=out.predictions, holdout_idx3.npy=va) 보존 충분성"
+ ],
+ "downstream_action": "launch",
+ "proposed_next_action": "PASS 시에도 발사 권한 아님. 밴드전용 gate를 돌리려면 (1) 원격 gate 체인 StageB env에 HOLDOUT_ONLY=1 배선(StageA/PRETEXT엔 금지) → (2) 사용자 명시 발사 승인. 둘 다 별도 재승인 단계.",
+ "direct_control": "scratchpad/colab_dabf455d_ref.py (dabf455d, plan-review 승인 레시피) — HOLDOUT_ONLY=0 경로가 이와 byte-identical한지",
+ "intended_change": "1변수: HOLDOUT_ONLY 플래그 신설(선언 57 + 상호배타 assert 68 + effective_config 키 150 + 홀드 else 내부 종료블록 476-482). 학습 하이퍼파라미터 무변경.",
+ "artifact_paths": [
+  "open/scripts/colab_train_base2.py",
+  "scratchpad/test_holdout_only.py"
+ ],
+ "evidence_paths": [
+  "scratchpad/colab_dabf455d_ref.py",
+  "open/docs/checklists/10_pre_training.md"
+ ],
+ "code_sha256": {
+  "open/scripts/colab_train_base2.py": "ec60a75381b4d6f97fde5bd34e35e3ba572803649d0849b73940bef2748e0abd",
+  "scratchpad/colab_dabf455d_ref.py": "dabf455d3cc93f2185ae9c4bd3733e3adc7690f4defab040ac29d3214fd4e8c3",
+  "scratchpad/test_holdout_only.py": "0fd4775eb1d82bec830d22aaaa7fa21d9701d67ec73e54a194f68d9f31560ed5",
+  "open/scripts/feat.py": "91c419d634a85ad912d3dc43b9c802ddf0f1a31b0a203345cb38779b30b05ca8"
+ },
+ "effective_config_path": null,
+ "known_caveats": [
+  "결과 파일명 prefix는 auditor 역할(training_contract)·stage 필드는 workflow enum(plan_review)로 기록(request enum이 training_contract 미포함).",
+  "원격 gate 체인 스크립트는 이 task에서 미열람(원격 read-only) — 배선 미적용은 로컬 grep(HOLDOUT_ONLY 참조 0)으로만 확인."
+ ]
+}

@@ -1,0 +1,21 @@
+{
+  "stage": "post_lb",
+  "request_id": "post_lb-20260714T014500Z-round3",
+  "created_at": "2026-07-14T01:45:00Z",
+  "timeout_sec": 1200,
+  "objective": "distill·dose6 probe LB 결과 기록 게이트 — 산술·프레임 해석(카드1 프레임 그대로 제출됨)·축 판정 표현규율.",
+  "lb_results": [
+    {"upload": "submit_dose6.zip", "zip_sha": "5cb5ba5434cc3c9d96dad3ec7ffb149273e0a76b680e7e1fe18de1c0f95f645d", "frame": "카드1 프레임 {s48, kf768_79, dose6} — m2b79→dose6 단일교체", "submitted": "2026-07-14 10:16:13", "lb": 0.7837566237, "time": "9분46초"},
+    {"upload": "submit_distill.zip", "zip_sha": "c450aeebc6ac94b5e77e6918089f919335480e7e...(c450aeeb prefix — 로컬 재확인 필요)", "frame": "카드1 프레임 {distill_s48, kf768_79, m2b79} — s48→distill 단일교체", "submitted": "2026-07-14 10:15:57", "lb": 0.7822362774, "time": "9분45초"}
+  ],
+  "reference_points": {"champion_cA": 0.7848461512, "card1": 0.784156489, "v58": 0.7840764953},
+  "verify_items": [
+    "산술: dose6 − 카드1 = −0.0003998653, dose6 − cA = −0.0010895275; distill − 카드1 = −0.0019202116, distill − cA = −0.0026098738 재계산",
+    "프레임 해석: 두 zip은 카드1 프레임 그대로 제출 → 카드1 대비로는 clean 단일슬롯 probe(감사 round2의 '2슬롯차' 우려는 cA 대비 해석에만 적용). dose6 델타는 matched dose 1변수 관찰(단 draw 분산 프레이밍), distill 델타는 KD+코드버전차 confound 관찰",
+    "축 판정 표현규율: ①dose6 −0.0004 = 'dose6 draw가 카드1 아래 안착' — dose 축 종결 선언 가능 여부(단일 seed·단일 draw) ②distill −0.0019 = probe 1장 한정 계획대로 종료 — '증류 죽음 재확인' 표현 가능 여부(코드버전차 confound 명시 조건) ③홀드아웃 예측력 데이터포인트: dose6 블렌드홀드 δ−0.000274 → LB −0.0004(방향 일치), distill 블렌드홀드 δ+0.0013 → LB −0.0019(방향 불일치 — 홀드 무예측 재확인)",
+    "슬롯 회계: 오늘(07-14) 2/10 사용",
+    "잔여 후보 함의: cA프레임 재포장(distill·dose6) 가치, cC~cF, mint2b 신규시드 GPU 제안에 대한 결과기반 판정"
+  ],
+  "proposed_next_action": "PASS 시 실험로그 append + HANDOFF §9 갱신(챔피언 cA 유지). 이후 결과기반 슬롯/GPU 계획.",
+  "user_approval_required": false
+}

@@ -1,0 +1,82 @@
+{
+  "schema_version": "3",
+  "request_id": "band_eval-20260714T065503Z-mint2v2-dualseed",
+  "audit_key": "0000000000000000000000000000000000000000000000000000000000000000",
+  "lineage_id": "mint2v2-dualseed-0714-band",
+  "stage": "band_eval",
+  "policy_version": "campaign:mint2v2-dualseed-0714",
+  "objective": "BAND_EVAL: mint2b_s79 슬롯을 mint2v2_s79/mint2v2_s81로 각각 단일교체한 probe 블렌드가 현 챔피언 cA[s48,k81,mint2b_s79] 프레임에서 밴드(champ_repro_plain-0.0058) 자격(제출해볼 자격)을 통과하는지만 판정. 밴드규칙 = probe_plain >= champ_repro_plain - 0.0058(판정=plain, sess-eq 참고). 홀드아웃=자격필터, 우열 아님.",
+  "gate_state": "PASS",
+  "action_state": "WAITING_USER",
+  "downstream_action": "none",
+  "verdict_source": "internal_cross_check",
+  "auditor_model": "claude-opus-4-8 (blend-evaluator internal cross-check, read-only)",
+  "cache_hit": false,
+  "attempt": 0,
+  "started_at": "2026-07-14T06:55:03Z",
+  "completed_at": "2026-07-14T06:56:30Z",
+  "runner_recorded": {
+    "request_id": "band_eval-20260714T065503Z-mint2v2-dualseed",
+    "model": "claude-opus-4-8",
+    "reasoning": "internal_cross_check (no Codex). 밴드 산술은 로컬 홀드 로짓 read-only 재계산.",
+    "started_at": "2026-07-14T06:55:03Z",
+    "completed_at": "2026-07-14T06:56:30Z",
+    "attempt": 0,
+    "cache_hit": false,
+    "raw_request_id": null
+  },
+  "raw_result_ref": null,
+  "verified_claims": [
+    {
+      "claim": "전 TF 멤버(s48,k81,mint2b_s79,mint2v2_s79,mint2v2_s81) raw logits → 멤버별 softmax 적용; classic OOF는 이미 확률(rowsum≈1)이라 재-softmax 안 함",
+      "evidence": "rowsum mean s48=-5.89 k81=-7.06 mint2b_s79=-7.57 mint2v2_s79=-7.58 mint2v2_s81=-7.03 (모두<1 → raw logits) / classic OOF rowsum mean=1.000000"
+    },
+    {
+      "claim": "신규 멤버 홀드 idx3 == hidx (동일 순서·동일 집합)",
+      "evidence": "mint2v2_s79 same_order=True same_set=True; mint2v2_s81 same_order=True same_set=True; 4개 idx 파일 SHA 동일(e39aae..)"
+    },
+    {
+      "claim": "단일 슬롯 교체 계약 준수(mint2b_s79 → mint2v2_*, 나머지 2멤버 s48/k81 고정, 배포 head 구조·blend 0.6/0.4 불변)",
+      "evidence": "CHAMP=[s48,k81,mint2b_s79], PROBE_s79=[s48,k81,mint2v2_s79], PROBE_s81=[s48,k81,mint2v2_s81] — 정확히 1멤버 차이"
+    },
+    {
+      "claim": "공통 split n_rows=14000 n_sess=1885 (두 probe 동일), classic OOF 70000×14 커버리지·ID 정렬 검증 통과",
+      "evidence": "inter_of 교집합=14000; oof_ids==real id @ rows 0/123/45678/69999; oof.shape=(70000,14)"
+    },
+    {
+      "claim": "mint2v2_s79 probe: plain=0.770386 (band lower 0.767164) → IN-BAND(plain judgment)=Y; sess-eq=0.774977 (lower 0.772835)=Y. n_rows=14000 n_sess=1885",
+      "evidence": "champ_repro plain=0.772964 sess-eq=0.778635; band_lower_plain=0.767164; delta plain=-0.002578 sess-eq=-0.003658; band_pass_plain=true"
+    },
+    {
+      "claim": "mint2v2_s81 probe: plain=0.768503 (band lower 0.767164) → IN-BAND(plain judgment)=Y; sess-eq=0.772422 (lower 0.772835)=N(참고, 판정 아님)",
+      "evidence": "champ_repro plain=0.772964 sess-eq=0.778635; band_lower_plain=0.767164; delta plain=-0.004461 sess-eq=-0.006213; band_pass_plain=true(plain 기준)"
+    }
+  ],
+  "unverified_claims": [
+    "홀드아웃 로짓이 해당 홀드 행을 학습하지 않은 모델에서 나왔다는 전제(upstream harvest 계약)는 이 파일들만으로 재검증 불가 — same split(idx3==hidx) 일치만 확인.",
+    "band_pass는 배포 실측(서버 LB) 자격일 뿐. 서버 LB delta·우열·챔피언 교체·어느 seed를 제출할지는 이 판정 밖(LB·전략)."
+  ],
+  "confounders": [
+    "champ 재현값(plain 0.772964)은 k81 프레임 실측이며 card1(k79) recon 0.773710과 다름 — 밴드 하한은 이 재현값 기준으로 계산(task 지시대로).",
+    "밴드 산출물은 mint2v2 4변수 묶음 probe(신규 데이터/학습 레시피 변경 다수 동반) — 단일 변수 A/B 아님.",
+    "밴드 통과=제출/배포 실측 자격일 뿐. 우열·챔피언·제출선택은 LB·전략(이 판정 밖)."
+  ],
+  "required_fixes": [],
+  "safe_next_action": "두 probe 모두 plain 기준 IN-BAND → 배포 실측(서버 LB) 자격 있음. 실제 제출·seed 선택·챔피언 교체는 사용자·전략(이 판정 밖). sess-eq는 참고치.",
+  "escalated": false,
+  "evidence_references": [
+    "scratchpad/mint2v2_band.py",
+    "open/coordination/results/pre_launch-20260714T041414Z-mint2v2-dualseed.json"
+  ],
+  "artifact_sha": {
+    "open/artifacts/hybrid/holdout_probs_s48.npy": "54fefb0e9aa456aac285db6276e5b05544c0cee9c6a22a845c2f08334e22b2c1",
+    "open/artifacts/hybrid/holdout_idx_s48.npy": "e39aae253087b4ac08f2550005e08421584a2dbc273adf64c692a6b0f1b0feae",
+    "scratchpad/hp_kf768_81.npy": "26734f9483149dd121cfda05b52c7f25d8652bf5cdb5d7384b59fbffd37f636e",
+    "scratchpad/hidx.npy": "e39aae253087b4ac08f2550005e08421584a2dbc273adf64c692a6b0f1b0feae",
+    "scratchpad/hp_mint2b_s79.npy": "d1714fe16c7c057672bad21d1ca63c6757e3a5c52a8441d1b679890bcf910644",
+    "scratchpad/harvest_mint2v2/s79/holdout_probs3.npy": "8d93cc855db16a461985d1e4f779d153e6d3bf24c747dcb8a55f8e88344220a4",
+    "scratchpad/harvest_mint2v2/s81/holdout_probs3.npy": "c8103444a5b70facd99a55f19d9dd270d6a724eecc391f50da4b415a7f265881",
+    "open/artifacts/oof/oof_classic_probs.npy": "e2cb3137e607e55aeeaa3c80960c8c2741605ea14409bc735fec136d11f40338",
+    "open/artifacts/oof/oof_classic_ids.json": "adb77d7b2018d9727920256e88df8a9e5da36ece2dc51a309fe6e353add7c156"
+  }
+}

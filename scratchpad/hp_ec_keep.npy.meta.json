@@ -1,0 +1,15 @@
+{
+ "kind": "raw_logits",
+ "shape": [
+  14000,
+  14
+ ],
+ "class_order": "feat.ACTIONS",
+ "split": "hidx",
+ "source_run": "run_kf768_ec_keep",
+ "seed": 74,
+ "env": "exact-core A/B 실험군: pretext(2314, META keep=정확 tier/ci/dirty/turn/open) -> real-only stage B",
+ "holdout_macro_f1": 0.7528,
+ "ab_verdict": "keep-omit=+0.0046 승리(23:40 기록)",
+ "created": "2026-07-12T01:40 KST"
+}

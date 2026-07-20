@@ -1,0 +1,127 @@
+{
+  "campaign_id": "all-info-h100-final-0715",
+  "approved_at": "2026-07-15T (KST, 사용자 2회 메시지로 완결)",
+  "approval_scope": {
+    "paid_gpu": "Elice H100 (유료) 명시 승인",
+    "skip": ["local holdout", "band check", "OOF", "holdout_probs/idx", "Macro-F1 계산"],
+    "auto_progress_to": "ZIP_READY",
+    "no_submission": true,
+    "no_codex": true,
+    "terminate_elice_on_verified_harvest": true
+  },
+  "goal": "파라미터 대형화가 아니라, 신뢰 가능한 모든 정보를 학습한 단일 kf-deberta-base ALL-INFO 모델. full-data 직접 학습.",
+  "time_first_ops": {
+    "no_holdout_gate_band": true,
+    "flow": "Stage A pretext 3ep → Stage B real 70k REFIT_ONLY 6ep 직진",
+    "audits": "치명 계약 검증만 발사 전(감사로 발사 지연 금지). 최소 내부 교차검증 병렬.",
+    "eta": "첫 200 step 처리량으로 재계산",
+    "watcher": "완료 워처 + ETA 백스톱 필수 부착"
+  },
+  "h100_env_contract": {
+    "keep_existing_h100_rules": true,
+    "no_hw_reason_hyperparam_change": true,
+    "kf_deberta": {"batch": 16, "grad_accum": 3, "lr": "2e-5", "grad_ckpt": 0},
+    "record_as": "H100 training draw",
+    "torch_lt_2_6_binfail_fallback": "torch/transformers 변경 금지 → 검증된 로컬 safetensors 모델 디렉터리 사용(config+tokenizer+model.safetensors 포함)",
+    "backbone_canary": {"params": 185290752, "tokenizer_vocab": 130000},
+    "prelaunch": "code/data/base model SHA를 로컬 원본과 대조 후 발사"
+  },
+  "model_contract": {
+    "backbone": "kakaobank/kf-deberta-base",
+    "max_len": 768,
+    "seed": 79,
+    "history_order": ["user.content", "assistant_action.name", "assistant_action.args(전체)", "assistant_action.result_summary(전체)"],
+    "current_prompt": "포함, [SRC] au|sim 포함",
+    "no_session_uuid": true,
+    "numeric_meta": {"META_NUM_EXT": 1, "dim": 125},
+    "transcript_meta": {"META_TRANS_EXT": 1},
+    "head": "768+125=893 → 256 → 14"
+  },
+  "stage_a_pretext": {
+    "name": "ALL-INFO stable-meta pretext",
+    "PRETEXT": 1,
+    "EPOCHS": 3,
+    "data": {"strict_dedup_target": 3162, "unique_rolling_window": 6829, "real_text_state_dup_excluded": 18},
+    "target_weight_equalized": true,
+    "transcript_stable_fields": ["user_tier", "language_pref", "workspace.loc", "workspace.language_mix", "turn_index"],
+    "language_mix_keys": "정렬 직렬화",
+    "omit_unrestorable": ["budget_tokens_remaining", "elapsed_session_sec", "CI/last_ci_status", "git_dirty", "open_files"],
+    "no_sentinel_substitution": "0/False/None/빈문자열로 대체 금지 — 생략",
+    "pretext_meta_branch": "PRETEXT_META=stable 명시적 분기 신규 구현, 실제 transcript 샘플로 증명. omit/blank로 안정메타 버리는 실행 금지.",
+    "pretext_numeric_meta_zeroed": true
+  },
+  "stage_b_real": {
+    "init_backbone": "Stage A backbone",
+    "real_train_rows": 70000,
+    "EXTRA_DATA": "",
+    "REFIT_ONLY": 1,
+    "HOLDOUT_ONLY": 0,
+    "SKIP_REFIT": 0,
+    "no_holdout_idx": true,
+    "EPOCHS": 6,
+    "seed": 79,
+    "META_NUM_EXT": 1,
+    "META_TRANS_EXT": 1,
+    "transcript_official_fields_verbatim": ["user_tier", "language_pref", "budget_tokens_remaining", "turn_index", "elapsed_session_sec", "workspace.language_mix", "workspace.loc", "git_dirty", "open_files", "last_ci_status"],
+    "numeric_meta_dim": 125,
+    "no_holdout_outputs": ["holdout_probs", "holdout_idx", "Macro-F1"]
+  },
+  "fail_closed_prelaunch_checks": [
+    "1. mint target=3162 / window=6829",
+    "2. target별 가중치 합 동일",
+    "3. real 중복 제외 + label conflict 처리 근거",
+    "4. Stage A transcript stable-meta 존재",
+    "5. Stage B transcript 공식 필드 전체 존재",
+    "6. train 70k + mint 6829 토큰 길이 전수검사",
+    "7. 768 초과 시 조용히 truncate 금지 → 즉시 보고",
+    "8. meta columns=125, 중복 없음",
+    "9. 119 대비 추가필드 정확: lang_kt, lang_vue, lang_swift, lang_ipynb, lang_tf, langpref_mixed",
+    "10. scaler.n_features_in_=125, head input=893",
+    "11. train/serve transcript byte parity",
+    "12. code/data/base model/effective_config SHA 영속화"
+  ],
+  "packaging": {
+    "A_primary": {
+      "zip": "submit_allinfo_3nn.zip",
+      "frame": "META-T 챔피언 프레임: classic + s48 + kf768_81 + ALL-INFO (metaT 멤버만 ALL-INFO로 교체)",
+      "s48_k81": "기존 transcript + 119d prep 유지",
+      "allinfo": "확장 transcript + 125d 사용",
+      "per_model_transcript_branch": true,
+      "BLEND_W": 0.6,
+      "deadline": "유지",
+      "no_member_add_or_enlarge": true
+    },
+    "B_diagnostic": {
+      "zip": "submit_allinfo_1nnc.zip",
+      "frame": "ALL-INFO 1개 + 기존 classic",
+      "blend": "0.6/0.4",
+      "no_pure_1nn_only": true
+    }
+  },
+  "verification": [
+    "zip < 1GB decimal",
+    "backbone fp16/finite/params 계약",
+    "head893/meta125/scaler125 계약",
+    "원격 pack ↔ 로컬 모델 SHA 일치",
+    "공유 멤버(s48/k81/classic) META-T 챔피언과 byte-identical",
+    "모델별 transcript 분기 + train/serve parity",
+    "verify_zip 전항목",
+    "5행 E2E: 3NN seed참여 3.00·고전단독 0 / 1NN+C seed참여 1.00·고전단독 0",
+    "3NN runtime 매우 위험 명시(META-T 서버 598s)",
+    "transcript 길이·모델 수·deadline을 META-T보다 늘리지 않음"
+  ],
+  "completion_cost_control": [
+    "1. Stage A 완료 즉시 Stage B 자동 시작",
+    "2. Stage B 완료 즉시 fp16 변환·SHA 확인·로컬 회수",
+    "3. 회수 SHA=원격 일치 시 Elice 인스턴스 즉시 종료요청",
+    "4. 종료 여부 + 총 과금시간 보고",
+    "5. 로컬 포장·검증 후 ZIP_READY 보고",
+    "6. 실제 제출 안 함"
+  ],
+  "report_points": ["H100 발진 확인 + 첫 ETA", "Stage A 완료/Stage B 시작", "BLOCKED 또는 ZIP_READY", "Elice 종료·총 사용시간"],
+  "no_epoch_alerts": true,
+  "log_discipline": "실험로그 append-only(과거 수정 금지)",
+  "stop_point": "ZIP_READY (실제 제출은 사용자 직접)",
+  "prohibited_outside_scope": ["실제 Dacon 제출", "Codex 외부감사", "manifest 밖 코드/데이터/학습법 변경", "SHA 검증 전 Elice 종료", "hw 이유 하이퍼파라미터 변경"],
+  "state": "PLANNED"
+}

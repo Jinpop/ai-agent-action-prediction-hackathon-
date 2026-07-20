@@ -1,0 +1,44 @@
+{
+ "schema_version": "3",
+ "request_id": "code_diff-20260714T105146Z-metawave1",
+ "created_at": "2026-07-14T10:50:00Z",
+ "stage": "plan_review",
+ "policy_version": "campaign:official-meta-wave1",
+ "objective": "campaign official-meta-wave1 Part B 코드 diff 내부 교차검증: META-N(feat.py 숫자메타 +6키)·META-T(colab transcript 공식메타) 3파일 변경이 선언된 것뿐이고 하위호환(flag default 0 = byte-identical)인지 실측. ★Codex 미호출(내부 교차검증 단독).",
+ "verify_items": [
+  "A: 3 diff가 정확히 선언 변경뿐(feat: import os + META_NUM_EXT/META_N_EXTRA_LANGS 상수 + build_meta_row 가드블록 / colab: META_NUM_EXT·META_TRANS_EXT 플래그 + [META] if/else + effective_config 2키 / verify_zip: exp_in 119→len(meta_columns)) · 미선언 부수변경 0",
+  "B1: feat META_NUM_EXT=0 → build_meta_row 119키 byte-identical to ref(=1 → +6키 lang_kt/vue/swift/ipynb/tf·langpref_mixed, 삭제 0)",
+  "B2: colab META_TRANS_EXT=0 → [META] else분기 원본 문자열 byte-identical(=1 → langpref/budget/elapsed/loc/langmix 추가, 숫자메타 불변)",
+  "B3: verify_zip SPEC hidden=768 → 기존 meta_columns=119 → exp_in=887 불변 / META-N 125 → 893",
+  "C: 3파일 ast.parse OK · verify_zip prep(line115 로드)가 line132 스코프 내",
+  "D: 프레이밍 — META-N=숫자메타 단일축(+6키)·META-T=transcript 단일축 독립, 기존 멤버/기존 recipe(flag 미설정) 무영향"
+ ],
+ "downstream_action": "launch",
+ "proposed_next_action": "PASS 시 지휘자가 campaign 승인 하에 META-N/META-T gate 발사(별도 사용자 명시 승인). PASS는 진행 자격일 뿐 발사 트리거 아님(action_state=WAITING_USER).",
+ "lineage_id": "official-meta-wave1-codediff",
+ "direct_control": "feat 91c419d6(ref) vs f65e9d91(new) / colab ec60a75(ref) vs 592ed8d6(new) / verify_zip 6b3f68fe(ref) vs a29c49f6(new)",
+ "intended_change": "3개 독립 축의 flag-gated 추가(단일변수 아님·2 독립축): META-N=feat build_meta_row에 META_NUM_EXT 가드로 +6 language 키(default off=119 불변, on=125) / META-T=colab build_transcript [META]를 META_TRANS_EXT if/else로 공식메타 추가(default off=원본 불변) / verify_zip meta-dim 일반화(119 하드코드→len(meta_columns), 119 fallback). 기존 recipe/멤버(flag 미설정) 무영향.",
+ "artifact_paths": [
+  "open/scripts/feat.py",
+  "open/scripts/colab_train_base2.py",
+  "scratchpad/verify_zip.py",
+  "scratchpad/feat_orig_ref.py",
+  "scratchpad/colab_ec60a75_ref.py",
+  "scratchpad/verify_zip_ref.py"
+ ],
+ "code_sha256": {
+  "open/scripts/feat.py": "f65e9d9103282e4fb9355a80624ba88656a5fcbd3aa3d3675bbf56f8720a7624",
+  "open/scripts/colab_train_base2.py": "592ed8d676578ee305b069008f0614349977b79bb15b9a59f134d6378c47d390",
+  "scratchpad/verify_zip.py": "a29c49f66055f22578fa985a9ba3cdef7810bf30e52400bafb6b18fc0c92565e",
+  "scratchpad/feat_orig_ref.py": "91c419d634a85ad912d3dc43b9c802ddf0f1a31b0a203345cb38779b30b05ca8",
+  "scratchpad/colab_ec60a75_ref.py": "ec60a75381b4d6f97fde5bd34e35e3ba572803649d0849b73940bef2748e0abd",
+  "scratchpad/verify_zip_ref.py": "6b3f68fe0f43aab70167a4fbe445fd1e886b41f1426c4431dd4f3de8d1b25620"
+ },
+ "data_sha256": {},
+ "sha_notes": {},
+ "effective_config_path": null,
+ "known_caveats": [
+  "read-only 코드 diff 실측(diff·python 실행·ast.parse). 파일 수정·발사 없음.",
+  "배포/추론 시점 파이프라인 정합(inference env·포장 script)은 zip-verifier/integration-auditor 소관 — 이 감사는 학습측 코드 diff 정합까지."
+ ]
+}

@@ -1,0 +1,34 @@
+{
+  "mint2v2_s79": {
+    "n_rows": 14000,
+    "n_sess": 1885,
+    "champ_plain": 0.7729643679733745,
+    "champ_sesseq": 0.7786351401801245,
+    "probe_plain": 0.770386489915507,
+    "probe_sesseq": 0.7749770662180681,
+    "band_lower_plain": 0.7671643679733745,
+    "band_lower_sesseq": 0.7728351401801244,
+    "delta_plain": -0.0025778780578675775,
+    "delta_sesseq": -0.0036580739620564184,
+    "in_band_plain": "Y",
+    "in_band_sesseq": "Y",
+    "same_order": true,
+    "same_set": true
+  },
+  "mint2v2_s81": {
+    "n_rows": 14000,
+    "n_sess": 1885,
+    "champ_plain": 0.7729643679733745,
+    "champ_sesseq": 0.7786351401801245,
+    "probe_plain": 0.7685030155508837,
+    "probe_sesseq": 0.7724218575363774,
+    "band_lower_plain": 0.7671643679733745,
+    "band_lower_sesseq": 0.7728351401801244,
+    "delta_plain": -0.004461352422490794,
+    "delta_sesseq": -0.006213282643747098,
+    "in_band_plain": "Y",
+    "in_band_sesseq": "N",
+    "same_order": true,
+    "same_set": true
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "request_id": "pre_submit-20260713T080000Z-mint2b",
+  "created_at": "2026-07-14T01:53:46Z",
+  "stage": "pre_submit",
+  "objective": "카드1·2(mint2b_s79/s81) zip 제출 직전 게이트 — k81 단일교체·타멤버 바이트동일·verify_zip 27검사.",
+  "verify_items": [
+    "단일멤버 교체 무결성",
+    "SHA 체인",
+    "verify_zip 전 검사"
+  ],
+  "proposed_next_action": "PASS 시 사용자 제출.",
+  "user_approval_required": true,
+  "backfilled": true,
+  "backfill_note": "원 요청은 07-13 채팅 프롬프트로만 존재 — 07-14 소급 생성."
+}

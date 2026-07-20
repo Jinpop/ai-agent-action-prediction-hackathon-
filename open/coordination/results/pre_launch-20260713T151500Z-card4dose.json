@@ -1,0 +1,89 @@
+{
+  "request_id": "pre_launch-20260713T151500Z-card4dose",
+  "stage": "pre_launch",
+  "objective": "카드4 dose(mint2b Stage A 6ep, seed79) 발사 직전 감사 — 카드1(run_mint2b_s79 gate chain) 완전 matched, 유일변수=Stage A EPOCHS 3→6 확인 + 발사 env 세트(Stage A/B) 도출.",
+  "verdict": "PASS",
+  "auditor_model": "data-auditor (claude-opus subagent, read-only)",
+  "completed_at": "2026-07-13T15:34:00Z",
+  "verified_claims": [
+    "대조군 config 실측(치타 run_mint2b_s79/effective_config_A/_B.json 직접 read): Stage A = MODEL kf-deberta-base·MAX_LEN 768·EPOCHS 3·BATCH 16·GRAD_ACCUM 3·LR 2e-5·SEED 79·GRAD_CKPT false·PRETEXT true·PRETEXT_META keep·TARGET_BALANCE true·EXTRA_DATA data/train_mint2_balanced_gate.jsonl·INIT_BACKBONE ''·HOLDOUT_IDX ''. Stage B = 동일 base/len/batch/accum/lr/seed·EPOCHS 6·PRETEXT false·EXTRA_DATA '' (real-only)·INIT_BACKBONE ./pretext_backbone·TARGET_BALANCE false·HOLDOUT_IDX data/hidx.npy. 나머지 플래그(COARSE_AUX0·LABEL_SMOOTH0·SESSION_EQUAL false·AU_BOOST1.0·MASK_MINT_META false·SOFT_TARGET''·SKIP_REFIT false·REFIT_ONLY false·SIBLING_ONLY false·N_LIMIT0·DISTILL_T2.0·DISTILL_ALPHA0.5) 전부 기본값 = card4가 그대로 상속해야 함.",
+    "데이터 무결성(치타 sha256sum 실측 = config 기록값 일치): data/train_mint2_balanced_gate.jsonl = 6f866c82…(config EXTRA_DATA 6f866c82 일치) · data/hidx.npy = e39aae25…(config HOLDOUT_IDX e39aae25 및 plan_review scratchpad/hidx.npy 일치) · gate_labels = 6839752e…(config 일치) · train.jsonl = a60ed84b…(config 일치). 데이터 미변경 확인.",
+    "코드 격리(치타 sha256sum 실측): run_mint2b_s79/colab_train_base2.py = 415e4c3e…(card1 matched 코드) · run_mint2b_s79/feat.py = 91c419d6…(일치) · run_distill_s48/colab_train_base2.py = 44aa810b…(증류코드는 distill run 안에만 격리 — root 오염 없음, 요청 검증항 충족).",
+    "GPU 배정(nvidia-smi 실측): GPU0 = 100% util·6215MiB·compute proc 1개(run_distill_chain.sh/colab_train_base2.py) = 증류 점유 / GPU1 = 0% util·1MiB·compute proc 없음 = idle. 카드4는 CUDA_VISIBLE_DEVICES=1 단독 → 자원충돌 없음(mint2b 2seed 병행 전례).",
+    "누수 불변식(config·plan_review 기준): Stage A는 gate 데이터(hidx-holdout 세션 완전제외, plan_review에서 gate window source-세션 ∩ hidx = 0 검증)·PRETEXT keep라 119d 0화(zero-sentinel 차단)·budget/elapsed 부재. Stage B는 HOLDOUT_IDX=data/hidx.npy pin(e39aae25)으로 홀드아웃을 기존 멤버 split과 통일. 카드4는 동일 데이터 SHA·동일 HOLDOUT_IDX라 landmine 불변.",
+    "matched-control 성립: card4 도출 env는 card1(run_mint2b_s79 gate chain) 대비 Stage A EPOCHS 3→6 단 하나만 상이, Stage B는 전 플래그 byte-identical. Stage A epoch 변화로 생기는 pretext_backbone(INIT_BACKBONE_weights) 차이는 의도된 dose 인과경로의 downstream(카드3 정정 논리와 동일) — confound 아님.",
+    "10_pre_training 체크리스트: (4)set_seed(415e4c3e:385)=모델생성 전 ✓ (7/8)gate mint(5097 window/2314 target) 계보 = card1과 동일 데이터 SHA ✓ (9)gate 누수0 ✓ (10)keep=정확 tier/ci/dirty/turn/open만·budget/elapsed 0 ✓ (11)Stage B EXTRA_DATA='' real-only ✓ (12)PRETEXT∧MASK_MINT_META 상호배타(Stage A PRETEXT1·MASK0, Stage B PRETEXT0·INIT_BACKBONE) ✓."
+  ],
+  "unverified_claims": [
+    "카드4 밴드 통과 여부·홀드아웃 F1(log-analyst 몫, 발사 후) — 밴드=자격필터일 뿐 우열판정 아님.",
+    "발사 후 full(6354) Stage A + refit 배포경로는 이 감사 범위 밖(밴드 통과 시 별도 게이트).",
+    "T4 600s runtime은 이 카드에 무영향(배포 시 kf768→kf768 동급교체, 카드1과 동일 프레임)이나 실측 아님(estimated)."
+  ],
+  "confounders": [
+    "★[LANDMINE — 반드시 launcher가 회피] 치타 root /home/<REMOTE_USER>/dacon/colab_train_base2.py = cb3ce5d8(H100 frozen code, HANDOFF §7)로 드리프트됨 — card1 matched 코드 415e4c3e가 아님. train-launcher가 root colab을 클론하면 코드 SHA가 2번째 변수로 들어가 matched-control 파괴. → 카드4 run 디렉터리는 반드시 run_mint2b_s79/colab_train_base2.py(415e4c3e)·feat.py(91c419d6)를 복사해서 쓸 것.",
+    "치타 디스크 100% 사용·38G 여유. 카드4 gate chain(~1.5–2G) + 증류 동시 기록 — 현재 충분하나 full-refit 겹치면 재확인."
+  ],
+  "required_fixes": [],
+  "launch_guardrails": [
+    "G1(critical): 카드4 새 run 디렉터리에 colab_train_base2.py는 run_mint2b_s79/(415e4c3e) 복사본 사용 — root(cb3ce5d8) 금지. feat.py는 91c419d6.",
+    "G2: Stage B env는 run_mint2b_s79 Stage B와 byte-identical(EPOCHS=6·HOLDOUT_IDX=data/hidx.npy·EXTRA_DATA 없음·TARGET_BALANCE 미설정). Stage B는 손대지 말 것.",
+    "G3: Stage A env는 run_mint2b_s79 Stage A에서 EPOCHS만 3→6, 그 외 전부 동일.",
+    "G4: CUDA_VISIBLE_DEVICES=1(GPU1 idle)에 발사. GPU0 증류 미간섭.",
+    "G5(발사 후 강제검증): effective_config_A.json이 EPOCHS=6 & (그 외 전 플래그·code SHA 415e4c3e·EXTRA_DATA sha 6f866c82) == card1 Stage A와 EPOCHS 외 완전일치, effective_config_B.json이 card1 Stage B와 완전일치(EPOCHS=6·HOLDOUT_IDX sha e39aae25·code 415e4c3e)인지 diff. 2번째 차이가 하나라도 나오면 즉시 중단(pkill)·재감사 — 그 경우 dose 단독변수 파괴."
+  ],
+  "launch_env_stage_A": {
+    "run_dir": "치타 신규 run(예: run_mint2b_dose6_s79), colab/feat = run_mint2b_s79 복사(415e4c3e/91c419d6)",
+    "CUDA_VISIBLE_DEVICES": "1",
+    "MODEL_NAME": "kakaobank/kf-deberta-base",
+    "MAX_LEN": "768",
+    "EPOCHS": "6  ← 유일 변경(card1=3)",
+    "BATCH": "16",
+    "GRAD_ACCUM": "3",
+    "LR": "2e-5",
+    "SEED": "79",
+    "GRAD_CKPT": "0",
+    "PRETEXT": "1",
+    "PRETEXT_META": "keep",
+    "TARGET_BALANCE": "1",
+    "EXTRA_DATA": "data/train_mint2_balanced_gate.jsonl",
+    "INIT_BACKBONE": "(미설정/빈값)",
+    "HOLDOUT_IDX": "(미설정/빈값)",
+    "output": "./pretext_backbone",
+    "note": "그 외 COARSE_AUX/LABEL_SMOOTH/SESSION_EQUAL/AU_BOOST/MASK_MINT_META/SOFT_TARGET/SKIP_REFIT/REFIT_ONLY/SIBLING_ONLY/N_LIMIT는 전부 미설정=기본값(card1 Stage A와 동일)."
+  },
+  "launch_env_stage_B": {
+    "CUDA_VISIBLE_DEVICES": "1",
+    "MODEL_NAME": "kakaobank/kf-deberta-base",
+    "MAX_LEN": "768",
+    "EPOCHS": "6  (card1 Stage B와 동일 — 변경 없음)",
+    "BATCH": "16",
+    "GRAD_ACCUM": "3",
+    "LR": "2e-5",
+    "SEED": "79",
+    "GRAD_CKPT": "0",
+    "PRETEXT": "0",
+    "EXTRA_DATA": "(빈값 — real-only)",
+    "INIT_BACKBONE": "./pretext_backbone",
+    "TARGET_BALANCE": "(미설정)",
+    "HOLDOUT_IDX": "data/hidx.npy",
+    "SKIP_REFIT": "0 (card1과 동일 — gate chain 홀드아웃+refit)",
+    "note": "run_mint2b_s79 Stage B effective_config와 EPOCHS 포함 전 플래그 byte-identical이어야 함."
+  },
+  "framing_discipline": [
+    "카드4 결과는 'dose draw 분산 탐색'으로만 기록. 'dose 단독효과' 호칭은 delta가 seed 스프레드(홀드 mint2b +0.01167 / LB +0.00149) 초과 시에만.",
+    "홀드아웃 델타(card4 gate − card1 gate 0.7650)는 matched-control 관찰치일 뿐 서열/우열 판정 아님(§3.4 홀드 무예측). 제출·우열은 LB로만.",
+    "'노이즈' 표현 금지(서버 결정론) — 대체 'seed 드로우·처리 상호작용 범위'."
+  ],
+  "safe_next_action": "PASS — train-launcher가 launch_env_stage_A/B(G1~G5 준수)로 GPU1 gate chain 발사. 발사 직후 effective_config_A/_B diff(G5)로 EPOCHS 외 2번째 차이 부재 확인. 밴드체크는 log-analyst. 실제 제출·유료GPU·원격kill은 사용자 승인 사항.",
+  "artifact_sha": {
+    "run_mint2b_s79/colab_train_base2.py (card4 MUST use)": "415e4c3e41b423041f55391dae018d9da7cbcb00ba20e212974ab46933e5692f",
+    "root colab_train_base2.py (DRIFTED cb3ce5d8 — DO NOT USE)": "cb3ce5d8522b0d115a1ec49ffae074d8706477579cfd3769d3593360bcf8a998",
+    "run_distill_s48/colab_train_base2.py (isolated distill)": "44aa810b38f033bd5cc9c4f147f3ca34a1f8b80ccb2ffbd2d61a2fd911b3ca22",
+    "feat.py": "91c419d634a85ad912d3dc43b9c802ddf0f1a31b0a203345cb38779b30b05ca8",
+    "data/train_mint2_balanced_gate.jsonl": "6f866c822b3f37059dcb97c5aee0235aaff5a59a3ca08a5bd176f94cd70369c2",
+    "data/train_mint2_balanced_gate_labels.csv": "6839752eea895f823c6f8e4be20ab3fbf94aeb040fbe8035fd61511e522d08fa",
+    "data/hidx.npy": "e39aae253087b4ac08f2550005e08421584a2dbc273adf64c692a6b0f1b0feae",
+    "data/train.jsonl": "a60ed84b75285caee237142ce97622fb55bb59c36be6b36ddee523992f83df19",
+    "card1 Stage A pretext_backbone weights (card4는 dose로 달라짐=의도)": "9265212edf5ef771aaa5b97830c98924a40a6ae53b32007b3397fb54092df73b"
+  }
+}

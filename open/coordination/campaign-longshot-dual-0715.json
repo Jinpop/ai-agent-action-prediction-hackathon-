@@ -1,0 +1,55 @@
+{
+  "campaign_id": "longshot-dual-0715",
+  "approved_at": "2026-07-15 ~05:3x KST (사용자: '1해야지~ 안되도 고~!' + '계획먼저 견고히 세우고 발사해')",
+  "context": "본선 컷 0.79591 vs 챔피언 0.7866974871 = +0.0092 필요. 남은 제출 4. 정직한 평가: 달성확률 낮음(역대 최대 단일카드 +0.0018) — 사용자 승인 하에 최고 EV 스윙 실행. 마감 10:00 KST.",
+  "approval_scope": {
+    "gpu": "치타 무료 A5000×2 (유료 아님)",
+    "skip": ["holdout gate", "band check", "OOF"],
+    "auto_progress_to": "ZIP_READY",
+    "no_submission": true,
+    "no_codex": true,
+    "deadline_kst": "2026-07-15 10:00"
+  },
+  "cards": {
+    "A_metaT_s81": {
+      "gpu": 0,
+      "run_dir": "run_metaT_s81",
+      "rationale": "챔피언 최약슬롯 k81(기여 ~0.004, 2NN 실측)을 입증된 최강 레시피(metaT, +0.0018)의 seed81 draw로 교체. matched: metaT 멤버와 SEED만 상이(pretext는 m2b_s79 동일 재사용 — metaN/metaT 선례).",
+      "recipe": {"MODEL_NAME": "kakaobank/kf-deberta-base(HF캐시)", "MAX_LEN": 768, "EPOCHS": 6, "BATCH": 16, "GRAD_ACCUM": 3, "LR": "2e-5", "SEED": 81, "GRAD_CKPT": 0, "REFIT_ONLY": 1, "INIT_BACKBONE": "~/dacon/run_mint2b_s79/pretext_backbone", "META_TRANS_EXT": 1, "META_NUM_EXT": 0, "EXTRA_DATA": ""},
+      "code_sha": "99331657 (metaT와 동일 코드 — matched)",
+      "eta_a5000": "~2.5h",
+      "deploy": "챔피언 w062 프레임에서 k81 슬롯 교체: classic+s48+metaT79+metaT81, BLEND_W=0.62. 멤버별 transcript: metaT79·metaT81 둘 다 ext 수신(META_T_DIR 2원소 확장 필요 — script.py 편집 시 ext 대상 리스트로).",
+      "zip_time_risk": "kf768 동크기 → ~598-600s(챔피언과 동일 리스크, 수용)"
+    },
+    "B_koelectra": {
+      "gpu": 1,
+      "run_dir": "run_koel_s79",
+      "rationale": "아키텍처 탈상관(ELECTRA ≠ DeBERTa/RoBERTa) 다양성 롱샷. s48(+0.011)이 유일 non-kf였던 전례.",
+      "recipe": {"MODEL_NAME": "monologg/koelectra-base-v3-discriminator(캐시됨)", "MAX_LEN": 512, "EPOCHS": 6, "BATCH": 16, "GRAD_ACCUM": 3, "LR": "2e-5", "SEED": 79, "GRAD_CKPT": 0, "EXTRA_DATA": "data/train_mint.jsonl", "META_TRANS_EXT": 0, "META_NUM_EXT": 0},
+      "notes": "MAX_LEN=512 native(위치확장 리스크 회피, s48 길이급). direct-mint 3180(=exact 1/target, TARGET_BALANCE 불필요). 발사 전 카나리 필수: AutoModel 로드·hidden768·CLS forward·params·tokenizer.",
+      "eta_a5000": "~1.5-2h",
+      "deploy": "k81 슬롯 교체: classic+s48+metaT79+koel, BLEND_W=0.62. koel은 base transcript(ext 아님) — META_T_DIR는 metaT79만.",
+      "zip_time_risk": "koel fp16 ~226MB < k81 341MB → zip ~860MB, 512-len 추론 빨라 시간 완화"
+    }
+  },
+  "mistake_proofing": [
+    "①발사·빌드 스크립트 전부 set -e + assert 실패 즉시 중단(조용한 편집실패 방지 — s48allinfo 사고)",
+    "②카드별 run_dir 분리 — effective_config 덮어쓰기 방지(ALL-INFO Stage A 사고)",
+    "③워처: 원격명령 전체를 단일 인용 문자열로(zsh EOPT 배열버그 재발 방지 — ALL-INFO 워처 사고), MARK 프로토콜 + ETA 백스톱",
+    "④발사 직후 effective_config 실측 검증(플래그 누락 조기발견 — TARGET_BALANCE 사고)",
+    "⑤zip 빌드 후 zip 내부(unzip -p) 문자열 잔존 검사(스테이징 아닌 zip이 진실)",
+    "⑥치타 디스크 20G 잔여 — 발사 전/중 df 모니터",
+    "⑦치타 colab 구버전(cb3ce5d8) → 99331657 push + SHA 게이트 후 발사"
+  ],
+  "packaging": {
+    "zips": ["submit_metaT81_w062.zip (A)", "submit_koel_w062.zip (B)"],
+    "frame": "챔피언 metaT_w062 프레임(BLEND_W 0.62)에서 k81 슬롯만 교체",
+    "verify": "빌드새니티(SEED_DIRS·문자열잔존0·AST·zip -T) + 5행 E2E(seed참여 3.00·고전단독0) + 공유멤버 byte-identical. runtime은 estimated 명시.",
+    "slots": "4슬롯 중 2 사용, 잔여 2는 결과 본 뒤 사용자 판단"
+  },
+  "report_points": ["발사 확인+ETA", "각 카드 완주", "ZIP_READY(폰 푸쉬)", "BLOCKED"],
+  "no_epoch_alerts": true,
+  "stop_point": "ZIP_READY (제출은 사용자 직접)",
+  "prohibited": ["실제 제출", "Codex", "유료 GPU", "기존 run 삭제", "레시피 변경"],
+  "state": "PREFLIGHT"
+}

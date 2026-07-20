@@ -1,0 +1,32 @@
+{
+  "stage": "pre_submit",
+  "request_id": "pre_submit-20260713T180500Z-distill",
+  "created_at": "2026-07-13T18:05:00Z",
+  "timeout_sec": 1200,
+  "objective": "카드7 증류 probe zip(submit_distill.zip) 제출대기 승격 직전 감사 — 밴드 자격·포장 무결성·표현규율 확인. probe 1장 한정.",
+  "artifact": {
+    "zip": "submits/submit_distill.zip",
+    "size_bytes": 982200110,
+    "sha256": "c450aeebc6ac94b5e77e6918089f919335480e5fb5ef0048a36f9e40330a1bc6",
+    "staging": "scratchpad/stage_distill",
+    "frame": "카드1 챔피언(classic + s48 + kf768_79 + kf768_mint2b_s79)에서 s48 → model_distill_s48 단일교체"
+  },
+  "chain_of_evidence": [
+    "plan_review PASS: open/coordination/results/plan_review-20260713T113034Z-distill.json (teacher 정렬·temperature·커버리지·1변수)",
+    "발사 게이트: colab_distill 44aa810b·soft_distillA 3b9302b8·effective_config 13항 일치·temperature matched 로그(train-launcher 실측)",
+    "밴드체크(log-analyst): 챔피언 블렌드 재현 0.773710(recon 일치)·밴드하한 0.767910 → probe 블렌드 0.775027 = in-band Y(sess-eq Y). 단일멤버 0.752099 재계산 일치. idx==hidx same_order",
+    "zip-verifier: verify_zip 27/27 PASS(member_type=s48)·치타pack→staging SHA 8/8·비복사본·script diff=SEED_DIRS+docstring만·5행 E2E(seed참여 3.00·고전단독 0)·fp16/finite"
+  ],
+  "verify_items": [
+    "증거체인 4단계가 서로 모순 없는지(SHA·수치 교차대조)",
+    "밴드 산술 독립 재확인(0.775027 ≥ 0.767910 = 0.773710−0.0058)",
+    "미해결 항목의 등급 적정성: ①T4 runtime=estimated(챔피언 동구조·+3.6MB — 9:44급 마진위험 동일 주의) ②teacher-saw-hidx 2차편향(기존 non-blocking) ③probe 1장 한정·'증류 성공' 호칭 금지 프레이밍",
+    "제출메모 문구가 표현규율 준수하는지(홀드는 자격필터로만 서술)"
+  ],
+  "known_caveats": [
+    "KD 델타(+0.0013/+0.0027 홀드 관찰치)는 s48 v1-파이프라인 draw vs distill 44aa810b 코드버전차 때문에 순수 KD A/B 아님",
+    "실제 제출은 사용자(아침), 슬롯 10장 리셋됨"
+  ],
+  "proposed_next_action": "PASS 시 submit_distill.zip을 '아침 제출대기'로 승격, 실험로그·HANDOFF 갱신. BLOCK 시 수정 후 재감사.",
+  "user_approval_required": false
+}

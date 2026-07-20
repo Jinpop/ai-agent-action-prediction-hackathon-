@@ -1,0 +1,34 @@
+Load data...
+  samples=70000  classes=14
+Fit text vectorizers (word+char)...
+  sparse dim=90000
+Fit SVD (for HGB)...
+Build meta features...
+  HGB dim=419  LogReg dim=90119
+Holdout validation (session-grouped, 20%)...
+  HGB=0.5546  LogReg=0.5813  NB=0.3083  Blend3(w=(0.4, 0.45, 0.15))=0.6089
+
+[클래스별 오류분석 — Blend3]
+                   precision    recall  f1-score   support
+
+      apply_patch      0.625     0.791     0.698       974
+         ask_user      0.494     0.499     0.496       533
+        edit_file      0.771     0.794     0.782      2178
+     glob_pattern      0.575     0.470     0.517      1061
+      grep_search      0.546     0.441     0.488      1954
+lint_or_typecheck      0.525     0.479     0.501       507
+   list_directory      0.372     0.514     0.431       845
+        plan_task      0.552     0.513     0.532       573
+        read_file      0.466     0.425     0.445      1836
+     respond_only      0.991     0.989     0.990      1054
+         run_bash      0.675     0.648     0.661       984
+        run_tests      0.603     0.722     0.657       962
+       web_search      0.427     0.427     0.427       253
+       write_file      0.882     0.916     0.899       286
+
+         accuracy                          0.616     14000
+        macro avg      0.607     0.616     0.609     14000
+     weighted avg      0.616     0.616     0.613     14000
+
+Refit on full data...
+Saved /Users/<USER>/Downloads/open/work/model/artifacts.pkl  (115.6 MB)  in 1915s

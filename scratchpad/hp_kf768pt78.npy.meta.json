@@ -1,0 +1,15 @@
+{
+ "kind": "raw_logits",
+ "shape": [
+  14000,
+  14
+ ],
+ "class_order": "feat.ACTIONS",
+ "split": "hidx",
+ "source_run": "run_kf768pt78",
+ "seed": 78,
+ "env": "pt78 = pretext78f(blank@3162) INIT + real-only full, pipeline v2",
+ "holdout_macro_f1": 0.7529,
+ "control": "kf768_78(mint주입) 0.7590 — 계열 -0.0061",
+ "created": "2026-07-12T09:45 KST"
+}

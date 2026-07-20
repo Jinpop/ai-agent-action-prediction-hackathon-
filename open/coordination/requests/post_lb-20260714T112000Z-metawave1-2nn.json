@@ -1,0 +1,32 @@
+{
+  "schema_version": "3",
+  "request_id": "post_lb-20260714T112000Z-metawave1-2nn",
+  "created_at": "2026-07-14T11:15:00Z",
+  "stage": "post_lb",
+  "policy_version": "campaign:official-meta-wave1",
+  "objective": "campaign official-meta-wave1 Part A: cA 2NN+C ablation 3종 LB 실측 기록 게이트 — 멤버 LOO 델타 재계산·ablation 공정성·챔피언·랭킹·프레이밍 규율 내부 교차검증. Codex 미호출.",
+  "verify_items": [
+    "멤버 LOO 델타 재계산: cA − drop_s48/k81/m2b79 = +0.0110543983/+0.0052044955/+0.0014236058",
+    "matched single-member ablation 공정성(1멤버 제거, blend 0.6/0.4 자동재정규화, 결정론 서버)",
+    "챔피언: 3종 다 cA 미달 → cA 유지, 2NN 진단용",
+    "랭킹: s48 다양성 레버(유일 non-kf-deberta) > k81 > m2b79(중복)",
+    "runtime 6:12~6:28 measured(2멤버라 빠름)",
+    "프레이밍: LOO는 다양성 포함(멤버품질 오독 금지), m2b79 +0.0014는 중복-한정 LOO(상한 캡 아님), '노이즈' 금지"
+  ],
+  "downstream_action": "none",
+  "proposed_next_action": "PASS 시 docs-ledger-writer가 실험로그 append + HANDOFF §9 갱신(cA 유지). 지휘자 발사보고 정정('캡'→'중복-한정 LOO'). 후속 GPU/슬롯은 별도 사용자 결정.",
+  "lineage_id": "metawave1-2nn-postlb",
+  "direct_control": "챔피언 cA[s48,k81,m2b79,classic] — 각 2NN은 seed 멤버 1개 제거(leave-one-out)",
+  "intended_change": "관측 대상: cA 내 각 멤버의 LOO 한계기여(서버 LB). 코드/데이터 변경 아님 — LB 실측 해석만.",
+  "evidence_paths": [
+    "submits/submit_2nn_drop_s48.zip",
+    "submits/submit_2nn_drop_k81.zip",
+    "submits/submit_2nn_drop_m2b79.zip"
+  ],
+  "effective_config_path": null,
+  "known_caveats": [
+    "LB·채점시간은 사용자·서버 보고 — 로컬 재측정 불가.",
+    "audit_key는 internal_cross_check all-zeros placeholder.",
+    "LOO 델타는 비가법·다양성 교란 포함 — 슬롯 교체 상한 '캡' 서술 금지."
+  ]
+}

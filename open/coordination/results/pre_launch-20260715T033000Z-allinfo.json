@@ -1,0 +1,63 @@
+{
+  "schema_version": "3",
+  "request_id": "pre_launch-20260715T033000Z-allinfo",
+  "audit_key": "0000000000000000000000000000000000000000000000000000000000000000",
+  "lineage_id": "all-info-h100-final-0715-prelaunch",
+  "stage": "pre_launch",
+  "policy_version": "campaign:all-info-h100-final-0715",
+  "objective": "campaign all-info-h100-final-0715 발사 전 내부 교차검증 종합: PRETEXT_META=stable 코드분기·ALL-INFO Stage A 데이터·A→B 체인 레시피·fail-closed 12항. 3역할(code-diff/data-lineage/training-contract) read-only 판정 종합. Codex 미호출.",
+  "gate_state": "PASS",
+  "action_state": "WAITING_USER",
+  "downstream_action": "launch",
+  "verdict_source": "internal_cross_check",
+  "auditor_model": "claude-opus-4-8 (code-diff + data-lineage + training-contract, read-only)",
+  "cache_hit": false,
+  "attempt": 0,
+  "started_at": "2026-07-15T03:00:00Z",
+  "completed_at": "2026-07-15T03:30:00Z",
+  "runner_recorded": {
+    "request_id": "pre_launch-20260715T033000Z-allinfo",
+    "model": "claude-opus-4-8",
+    "reasoning": "3 병렬 내부 교차검증(code-diff a5dd98c5 PASS / data-lineage a34aa451 PASS / training-contract a2cc4416 BLOCK→재감사 PASS). 지휘자 종합. Codex 미호출.",
+    "started_at": "2026-07-15T03:00:00Z",
+    "completed_at": "2026-07-15T03:30:00Z",
+    "attempt": 0,
+    "cache_hit": false,
+    "raw_request_id": null
+  },
+  "raw_result_ref": null,
+  "post_audit_correction": "training-contract 초기 BLOCK(Stage A TARGET_BALANCE 누락) → 지휘자가 chain.sh Stage A에 TARGET_BALANCE=1 TB_V2=1 추가 → 동일 감사자 재감사 PASS(4경로 활성 확인). fail-closed #2 해소.",
+  "verified_claims": [
+    {"claim": "PRETEXT_META=stable 코드분기 = 정확히 3 hunk(주석·assert·build_transcript), feat.py byte-identical, serve 무영향", "evidence": "code-diff-auditor: baseline 99331657 vs frozen 78af69de diff, feat f65e9d91 동일"},
+    {"claim": "ALL-INFO Stage A 데이터 6829/3162, 5필드 stable(turn_index 100% 복원·sentinel 0), 실제 frozen build_transcript로 [META] 증명", "evidence": "data-lineage-auditor PASS: 표본 8/8 turn_index 일치, 6859→6829 회계(18 target+9 window+0 conflict+3 dedup), 라벨 byte-identical"},
+    {"claim": "Stage A/B 레시피 manifest 일치: A(PRETEXT stable 3ep TARGET_BALANCE1 TB_V2 1) / B(REFIT_ONLY INIT_BACKBONE 6ep META_NUM/TRANS_EXT real-only). batch16×accum3·LR2e-5·GRAD_CKPT0·seed79 불변, 홀드아웃 산출물 미생성", "evidence": "training-contract-auditor 재감사 PASS: 4경로(균등화·wt컬럼·TB_V2손실·클래스가중) 활성, REFIT_ONLY branch 홀드아웃 스킵"},
+    {"claim": "fail-closed: #4 Stage A stable transcript / #5 Stage B 10필드 / #8 125·중복0 / #9 +6필드 / #10 head893 / #6#7 토큰 max A509 B686 초과0% / #12 SHA", "evidence": "verify_allinfo_preflight.py + training-contract 토큰 전수검사"},
+    {"claim": "backbone canary params=185,290,752 vocab=130,000, safetensors 재로드 정상(CVE 우회 번들)", "evidence": "build_kfdeberta_st.py canary assert 통과, model.safetensors SHA fea65041"}
+  ],
+  "unverified_claims": [
+    "T4 배포 runtime(3NN zip 3멤버) — metaT 프레임 598~600s 벽에 근접, 포장 후 5행 E2E는 기능스모크(measured 아님). ★manifest가 '3NN runtime 매우 위험' 명시.",
+    "train/serve byte parity(#11) — 배포 script.py의 ext-transcript가 Stage B META_TRANS_EXT와 byte일치하는지는 PACKAGING 시 zip-verifier 확인(현재 미포장).",
+    "tokenizer _is_wordpiece가 deberta라 backend 패치 스킵 — serve 로딩은 tokenizer.json 동봉으로 가능하나 zip E2E로 확인 필요."
+  ],
+  "confounders": [
+    "★ALL-INFO = 묶음 probe(단일변수 아님): 신규 stable-meta pretext + META_NUM_EXT 0→1(119→125) + META_TRANS_EXT + 5필드 데이터 + 코드 SHA 상이(99331657→78af69de) 동시변경. manifest 의도(단일 ALL-INFO 모델)라 정상이나 서버 delta '단독효과'·'순수 A/B' 호칭 금지 → '묶음 probe'로만 기록.",
+    "H100 산출물 = 'H100 training draw'(A5000 seed 정확재현 아님).",
+    "교차라벨 모호 input 2건(6829 중 0.03%, id-min tiebreak) — 미미."
+  ],
+  "required_fixes": [],
+  "safe_next_action": "SSH 접속 복구 후(사용자 인스턴스 재시작 대기 중) allinfo_launch.sh 실행 → base/데이터 업로드·SHA게이트 → A→B 체인 nohup → run-monitor 재접속 폴링 워처 부착 → 첫 200스텝 ETA 재산정. 발사는 campaign 승인 범위(유료 H100 명시승인)이나 SSH 블로커로 대기. 실제 제출은 사용자 직접(ZIP_READY 정지).",
+  "escalated": false,
+  "evidence_references": [
+    "scratchpad/allinfo_frozen/colab_train_base2.py",
+    "scratchpad/allinfo_chain.sh",
+    "scratchpad/allinfo_launch.sh",
+    "open/data/train_mint_allinfo_stable.jsonl",
+    "open/coordination/campaign-all-info-h100-final-0715.json"
+  ],
+  "artifact_sha": {
+    "scratchpad/allinfo_frozen/colab_train_base2.py": "78af69de4fe6383145da6b13f3b1686112d2c20f9f4fb80cfcda307b0ef0d0e9",
+    "scratchpad/allinfo_frozen/feat.py": "f65e9d9103282e4fb9355a80624ba88656a5fcbd3aa3d3675bbf56f8720a7624",
+    "open/data/train_mint_allinfo_stable.jsonl": "0ad353775fa2e241f7071098004847fc9f02d0befdf437c025e341cdd2ff0f00",
+    "scratchpad/kfdeberta_st/model.safetensors": "fea650417514d6f22c06f8368ce3c4f928daf77eff4cad8ec49f799c5509adc8"
+  }
+}

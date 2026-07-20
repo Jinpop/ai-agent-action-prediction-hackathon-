@@ -1,0 +1,8 @@
+{
+  "request_id": "plan_review-20260712T114815Z-523f4a",
+  "model": "gpt-5.5",
+  "reasoning": "xhigh",
+  "updated_at": "2026-07-12T11:50:27Z",
+  "phase": "signal_failclosed",
+  "signal": 15
+}

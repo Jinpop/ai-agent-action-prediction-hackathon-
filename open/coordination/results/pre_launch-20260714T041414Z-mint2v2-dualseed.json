@@ -1,0 +1,134 @@
+{
+ "schema_version": "3",
+ "request_id": "pre_launch-20260714T041414Z-mint2v2-dualseed",
+ "audit_key": "a5e85cb95f445cb67936f8ace78feee4159a562fb6abfe54cc3122b6b8b0ea42",
+ "lineage_id": "pre_launch-mint2v2-dualseed",
+ "stage": "pre_launch",
+ "policy_version": "2026-07-14",
+ "objective": "mint2v2 gate dual-seed(seed79 GPU0 run_mint2v2b_s79 / seed81 GPU1 run_mint2v2_s81_gate) 발사 직전 pre_launch 내부 교차검증 — 디스크 fire 타깃 = plan_review r2 승인 레시피(dabf455d) 여부, 미선언 drift 0, gate 누수 0, Stage B 카드1 매치드 컨트롤, 체크포인트 미재사용/GPU 분리 확인.",
+ "gate_state": "PASS",
+ "action_state": "WAITING_USER",
+ "downstream_action": "launch",
+ "verdict_source": "internal_cross_check",
+ "auditor_model": "Claude Opus 4.8 (claude-opus-4-8) — training-contract internal cross-check, read-only",
+ "cache_hit": false,
+ "attempt": 0,
+ "started_at": "2026-07-14T04:11:00Z",
+ "completed_at": "2026-07-14T04:17:03Z",
+ "runner_recorded": {
+  "request_id": "pre_launch-20260714T041414Z-mint2v2-dualseed",
+  "model": "claude-opus-4-8",
+  "reasoning": "internal_cross_check (no Codex; ★Codex 재호출 금지 지시 준수)",
+  "started_at": "2026-07-14T04:11:00Z",
+  "completed_at": "2026-07-14T04:17:03Z",
+  "attempt": 0,
+  "cache_hit": false
+ },
+ "raw_result_ref": null,
+ "nonblocking_findings": [
+  {
+   "id": "P1",
+   "summary": "체크리스트 #1(실험로그 사전등록 한 줄)·#13(ETA+완료감시) 미확인 — 발사 직전 지휘자가 별도로 닫을 것.",
+   "evidence": "open/docs/checklists/10_pre_training.md #1,#13 — 계약감사(코드/데이터/env) 범위 밖 절차 항목."
+  },
+  {
+   "id": "P2",
+   "summary": "Stage B는 'byte-identical env'이며 코드 SHA는 다르다(불활성). 기록 시 'env/수학 경로 동일'로 한정.",
+   "evidence": "plan_review-5dde0f N1과 동일 취지."
+  }
+ ],
+ "verified_claims": [
+  {
+   "claim": "A: 두 체인 colab sha256 = dabf455d(승인본), feat = 91c419d6 — 양 dir 치타 실측 일치",
+   "evidence": "ssh sha256sum run_mint2v2b_s79/{colab,feat}.py & run_mint2v2_s81_gate/{colab,feat}.py → dabf455d3cc9.../91c419d634a8... (plan_review-5dde0f artifact_sha와 동일); 로컬 open/scripts/colab_train_base2.py도 dabf455d로 일치"
+  },
+  {
+   "claim": "A: 원본 run_mint2v2_chain.sh 대비 두 파생 체인 diff는 line 4(RUN) 단 1줄 — Stage A/B/COMMON 라인 byte-identical",
+   "evidence": "치타 diff run_mint2v2_chain.sh {run_mint2v2b_chain.sh|run_mint2v2_s81gate_chain.sh} → 각각 '4c4 RUN=...' 한 hunk만. s79b 호출 79 0, s81gate 호출 81 1(SEED=$1;GPU=$2)"
+  },
+  {
+   "claim": "A: 415e4c3e→dabf455d 코드 diff는 TB_V2 env/config·SOFT_TARGET temp assert·sqrt_weights wt분기·TB_V2 loss분기·호출부뿐(scratchpad/colab_415e_to_dabf_diff.txt=f82acf59)",
+   "evidence": "로컬 diff txt sha f82acf59...(plan_review 일치), hunk @@76/142/238/290/359/383 — 전부 TB_V2 관련"
+  },
+  {
+   "claim": "B: Stage B env가 카드1(mint2b) Stage B와 동일 — EPOCHS=6·INIT_BACKBONE=./pretext_backbone·HOLDOUT_IDX=data/hidx.npy·EXTRA_DATA 없음(real-only)·COMMON(kf-deberta-base/768/16/3/2e-5/GRAD_CKPT=0) 동일",
+   "evidence": "체인 line 11 vs open/coordination/logs/mint2b/effective_config_B_s79.json; 미설정 플래그 기본값(PRETEXT=false@:58, PRETEXT_META=blank@:59, TARGET_BALANCE=false@:78, TB_V2=false@:79)이 카드1 Stage B값과 일치"
+  },
+  {
+   "claim": "B: Stage B 학습 수학 경로가 카드1과 동일(코드 SHA 차이에도 불활성) — wt 컬럼은 SESSION_EQUAL/AU_BOOST/TARGET_BALANCE 중 하나일 때만 추가(:292-293)라 Stage B는 wt=None → plain CE(else 분기), TB_V2/SOFT_TARGET 미설정으로 신규 분기·temp assert 미도달",
+   "evidence": "colab_train_base2.py:292-293(wt조건), :371-379(loss분기), :239-244(temp assert는 SOFT_TARGET일 때만)"
+  },
+  {
+   "claim": "C: gate 데이터가 hidx-holdout 세션을 완전 제외 — 독립 재현 결과 LEAKAGE=0(target_key·id 양방향)",
+   "evidence": "로컬 재현: base train 70,000행, hidx 14,000개(1,885 holdout 세션), gate 5,454행/2,542 target/1,523 세션, 교집합 0. 빌더 build_mint2_balanced_v2.py:66/142/164 assert와 일치"
+  },
+  {
+   "claim": "C: Stage B HOLDOUT_IDX=data/hidx.npy 정렬 — gate 제외에 쓰인 hidx.npy와 동일 파일(sha e39aae25)",
+   "evidence": "체인 line 11 HOLDOUT_IDX=data/hidx.npy; run_mint2v2b_s79/data/hidx.npy sha256=e39aae25...(로컬 scratchpad/hidx.npy·plan_review와 동일)"
+  },
+  {
+   "claim": "D: 두 run dir에 _ckpt/pretext_backbone/stageA.log/DONE/chain.status 없음 — 중단 partial 미재사용",
+   "evidence": "치타 ls run_mint2v2b_s79/ & run_mint2v2_s81_gate/ → colab_train_base2.py+feat.py+data 심링크뿐; DONE/chain.status/stageA.log 모두 '없음'"
+  },
+  {
+   "claim": "D: GPU0/GPU1 완전분리 — 별도 dir inode(132809041/132809042)·별도 colab inode(132795911/132795915)·CUDA_VISIBLE_DEVICES=${GPU}(79→0, 81→1); 발사 시점 GPU0/GPU1 모두 idle(1MiB/0%), colab_train_base2.py 실행 프로세스 없음",
+   "evidence": "치타 ls -di, nvidia-smi(0:1MiB 0% / 1:1MiB 0%), pgrep -af colab_train_base2.py=NONE"
+  },
+  {
+   "claim": "E: TB_V2 수학이 plan_review 검증대로 — WT 전역 mean=1 정규화(:235) 후 배치독립 loss=(per*wt).mean()(:378), 클래스가중 sqrt_weights(y,WT) bincount weights=WT(:302-304); TB_V2=0 경로는 기존 sum/wt.sum() 보존(:379)",
+   "evidence": "colab_train_base2.py:235,371-379,299-308,405 라인 확인"
+  },
+  {
+   "claim": "F: effective_config.json이 27플래그(20+요구 초과)+7 SHA(colab/feat/train/EXTRA_DATA/EXTRA_labels/INIT_BACKBONE/HOLDOUT_IDX)+6 버전(python/torch/cuda/transformers/sklearn/numpy) 자동기록, 모듈로드시 호출(:168), 체인이 스테이지별 _A/_B로 보존",
+   "evidence": "colab_train_base2.py:137-165 _dump_effective_config, :168 호출; 체인 line 9 cp→effective_config_A.json, line 12 cp→effective_config_B.json"
+  },
+  {
+   "claim": "set_seed(SEED)가 모델 생성 전 실행(pipeline-v2 RNG 계보) + PRETEXT∧MASK_MINT_META 상호배타 assert 존재",
+   "evidence": "colab_train_base2.py:403 set_seed(SEED) → :404 model=HybridNet(...); :64-65 assert not (PRETEXT and MASK_MINT_META)"
+  },
+  {
+   "claim": "G: 사전등록 프레이밍('mint2v2 4변수 묶음 × seedX training draw', 단독효과·seed우위 호칭 금지)이 실제 구성과 정합 — Stage A는 카드1 대비 ①v2 strict 데이터 ②TB_V2 배치독립 손실 ③TB_V2 target가중 클래스가중 ④PRETEXT_META omit 4변수 동시변경",
+   "evidence": "Stage A(dabf455d, PRETEXT_META=omit, TB_V2=1, v2_gate) vs 카드1 Stage A(415e4c3e, PRETEXT_META=keep, TB_V2 없음, v1 gate) — plan_review-5dde0f confounders와 일치"
+  }
+ ],
+ "unverified_claims": [
+  "체크리스트 #1(실험로그 사전등록 한 줄)·#13(ETA+완료감시 부착)은 지휘자/docs-ledger-writer/run-monitor 절차 항목 — 발사 직전 별도로 닫아야 하며 본 계약감사 범위 밖(현시점 미확인).",
+  "홀드아웃 밴드 통과·gate 홀드아웃 스코어·full refit·T4 런타임·서버 LB는 아직 발생하지 않은 결과다.",
+  "카드1(mint2b) Stage B의 seed81 직접 대응 런 존재 여부는 확인하지 않음 — seed79 Stage B는 effective_config_B_s79.json으로 직접 매치되나, 매치드 컨트롤 불변식은 레시피(env) 동일성이며 seed81은 추가 draw다.",
+  "Stage A/B 실제 실행 후 effective_config_A/B.json이 요청 env를 그대로 반영하는지는 발사 후 산출물로만 최종 확인 가능(발사 전이라 미생성)."
+ ],
+ "confounders": [
+  "이번 카드는 순수 1변수 A/B가 아니라 v2 보정 4변수 묶음 probe(①v2 strict rolling-window 데이터 ②TB_V2 배치독립 가중손실 ③TB_V2 target가중 클래스가중 ④PRETEXT_META omit) — 결과를 개별 수정의 단독효과로 귀속 금지(plan_review 확정 프레이밍).",
+  "Stage B는 env byte-identical이나 코드 SHA는 415e4c3e→dabf455d로 다르다. 추가 코드(TB_V2 분기·SOFT_TARGET temp assert·sqrt_weights wt인자)는 Stage B에서 wt=None·TB_V2=false·SOFT_TARGET 미설정으로 전부 불활성이라 수학경로는 동일하지만, 'byte-identical'은 env/수학 경로 한정(코드 바이너리 아님)으로 표기해야 한다(plan_review N1).",
+  "seed79·seed81 2개 draw뿐 — 결과 해석은 seed·학습 draw·처리 상호작용 범위로 제한, 한 seed가 더 낫다는 'seed 우위' 호칭 금지.",
+  "v2 full 데이터(17d75352)에는 holdout 세션 window가 포함(배포 Stage A용). gate 평가에는 holdout 0인 gate 파일(05fad50e)만 쓰였음이 확인됨 — 혼용 금지.",
+  "PRETEXT_META=omit + PRETEXT의 119d meta 0화로 안정 session_meta 4필드는 사실상 inert — 결과를 '메타 활용 효과'로 해석 금지(제거/오염차단으로 한정)."
+ ],
+ "required_fixes": [],
+ "safe_next_action": "PASS — 계약 정합(디스크 fire=승인 레시피, drift 0, gate 누수 0, Stage B 매치드 컨트롤, ckpt 미재사용, GPU 분리) 확인. ★발사 권한 아님(action_state=WAITING_USER): 실제 발사는 사용자 명시 승인 필요. 발사 전 체크리스트 #1(사전등록)·#13(ETA+완료감시) 닫고, 결과는 반드시 'mint2v2 4변수 묶음 × seed training draw'로만 기록.",
+ "escalated": false,
+ "evidence_references": [
+  "open/coordination/results/plan_review-20260714T023334Z-5dde0f.json",
+  "open/coordination/logs/mint2b/effective_config_A_s79.json",
+  "open/coordination/logs/mint2b/effective_config_B_s79.json",
+  "open/scripts/colab_train_base2.py:58",
+  "open/scripts/colab_train_base2.py:64",
+  "open/scripts/colab_train_base2.py:137",
+  "open/scripts/colab_train_base2.py:235",
+  "open/scripts/colab_train_base2.py:292",
+  "open/scripts/colab_train_base2.py:371",
+  "open/scripts/colab_train_base2.py:403",
+  "scratchpad/build_mint2_balanced_v2.py:66",
+  "scratchpad/colab_415e_to_dabf_diff.txt",
+  "run_mint2v2b_chain.sh (cheetah)",
+  "run_mint2v2_s81gate_chain.sh (cheetah)"
+ ],
+ "artifact_sha": {
+  "open/scripts/colab_train_base2.py": "dabf455d3cc93f2185ae9c4bd3733e3adc7690f4defab040ac29d3214fd4e8c3",
+  "open/scripts/feat.py": "91c419d634a85ad912d3dc43b9c802ddf0f1a31b0a203345cb38779b30b05ca8",
+  "open/data/train_mint2_balanced_v2_gate.jsonl": "05fad50e76545cb499e0fedaf56d8df7edb588a3aa991015575f1c5209f22466",
+  "open/data/train_mint2_balanced_v2.jsonl": "17d753527a406085dcb6fa50f6f708b0a265a3d43a1727dde9386f225811022e",
+  "scratchpad/hidx.npy": "e39aae253087b4ac08f2550005e08421584a2dbc273adf64c692a6b0f1b0feae",
+  "scratchpad/colab_415e_to_dabf_diff.txt": "f82acf59eef79fdf7dd179405cd14ca8afc308b51c201042a695dc72164737f7"
+ }
+}

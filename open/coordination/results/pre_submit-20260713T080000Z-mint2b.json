@@ -1,0 +1,46 @@
+{
+  "request_id": "pre_submit-20260713T080000Z-mint2b",
+  "objective": "카드1·2 mint2b 배포 zip(v58 k81→mint2b_s79/s81) 제출 직전 게이트 — 배포 계보·프레임·docstring·표현규율 독립 검증",
+  "verdict": "PASS",
+  "auditor_model": "data-auditor (claude-opus subagent, read-only)",
+  "completed_at": "2026-07-13T08:00:00Z",
+  "blocking_findings": [],
+  "nonblocking_findings": [
+    {
+      "id": "briefing-discipline",
+      "summary": "사용자 브리핑 필수 조건: ①홀드아웃 0.7737/0.7703은 자격필터 통과일 뿐 — 'v58보다 좋다' 호칭 금지, 우열은 LB ②runtime_status=estimated(T4 서버 measured 아님, kf768 동급교체라 v58 9:46급 추정·16초 마진 위험 동일).",
+      "evidence": "HANDOFF §3.4; runtime_status 규약"
+    },
+    {
+      "id": "doc-tidy",
+      "summary": "50_per_candidate.md 표에 m2b79/m2b81 행 미추가(문서정리, 계약결함 아님).",
+      "evidence": "checklists/50_per_candidate.md"
+    }
+  ],
+  "verified_claims": [
+    "배포 계보 기계검증: logs/mint2b_deploy A=EPOCHS3·PRETEXT·TARGET_BALANCE·EXTRA=train_mint2_balanced.jsonl(sha a8e7e7d2=6354행 full, gate 5097 아님) / B=EPOCHS6·REFIT_ONLY·EXTRA=''(real-only)·INIT_BACKBONE. code 415e4c3e·feat 91c419d6 일치. s79/s81 pretext 백본 SHA 상이(비복사)",
+    "프레임 정합: v58에서 k81 슬롯만 mint2b로 교체. model/artifacts.pkl·model_s48·model_kf768_79·feat.py·requirements.txt = v58와 전수 SHA 바이트 동일. 4번째 멤버 없음, 블렌드 0.4classic+0.6mean(3) 불변",
+    "비복사: m2b79 backbone ≠ m2b81 ≠ k79 (head·backbone SHA 상이). mint2b = 단일 model.safetensors 370.6MB(185M params fp16, kf768 계약 정합)",
+    "docstring 계보 교정: zip 내 script.py = '카드N mint2b_sXX … v58(0.7841)에서 kf768_81→mint2b' 정정, 구 v49 잔존 없음",
+    "verify_zip 계약 적용 범위: kf768→kf768 동급 단일멤버 스왑(멤버타입·개수·블렌드 불변)이라 §검증규약 unverified 클래스(비-v49/신규백본/조합변경)에 해당 안 함 — generalized verify_zip 27검사 ALL PASS로 커버",
+    "크기: 978,557,160 / 978,556,604B 둘 다 <1e9"
+  ],
+  "unverified_claims": [
+    "T4 600초 runtime = estimated(서버 제출로만 measured). kf768 동급교체라 v58 9:46급 추정·16초 마진 위험 동일",
+    "5행 E2E·fp16/finite·verify_zip 27검사는 zip-verifier 게이트에서 PASS(본 감사 재실행 안 함, previously gated)"
+  ],
+  "confounders": [],
+  "required_fixes": [],
+  "safe_next_action": "카드1·2 제출 가능(사용자 직접). 브리핑에 홀드아웃=자격필터·runtime estimated 명시. 우열은 LB 결과로.",
+  "evidence_references": [
+    "submits/submit_m2b79.zip (SHA c7180c41)",
+    "submits/submit_m2b81.zip (SHA 7b89b356)",
+    "open/coordination/logs/mint2b_deploy/effective_config_{A,B}_s{79,81}.json",
+    "submits/submit_v58.zip (대조)",
+    "open/coordination/results/plan_review-20260712T170000Z-mint2b.json"
+  ],
+  "artifact_sha": {
+    "submits/submit_m2b79.zip": "c7180c4186e89bc389a31face9e59c84eba8729124c15494f477d553c0826550",
+    "submits/submit_m2b81.zip": "7b89b356a18b43b0434e361570f7ed01aa9df8c9033271a0220982708c0f6015"
+  }
+}

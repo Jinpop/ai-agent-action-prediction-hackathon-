@@ -1,0 +1,13 @@
+Load data...
+train=56000  holdout=14000  (Colab 분할 사용)
+Fit classic base models on 80% (최초 1회, ~20분)...
+cached -> /Users/<USER>/Documents/Dacon_236694_AI_Agent/open/scripts/../artifacts/classic_holdout_probs.npz
+
+단독 성능:  HGB=0.5680  LogReg=0.5871  NB=0.3086  Hybrid=0.6520
+
+(a) 2-way 블렌드: w_hybrid=0.45  ->  0.6956
+(b) 4-way 블렌드: w(hgb,lr,nb,hyb)=(0.2, 0.2, 0.2, 0.4)  ->  0.6959
+(c) 스태킹 메타러너(CV):  fold=[0.7084, 0.6927, 0.7063, 0.7008, 0.6916]  전체=0.7006
+
+==> 최고 전략: c_stack  Macro-F1=0.7006   (v10 단독 0.6519 / v7 0.6089)
+saved -> /Users/<USER>/Documents/Dacon_236694_AI_Agent/open/scripts/../artifacts/stack_combiner.pkl

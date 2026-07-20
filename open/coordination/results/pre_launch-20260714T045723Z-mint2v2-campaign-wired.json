@@ -1,0 +1,111 @@
+{
+ "schema_version": "3",
+ "request_id": "pre_launch-20260714T045723Z-mint2v2-campaign-wired",
+ "audit_key": "65215a4065dedce01044798f8d14263efe723396fbe8f15111f7540e46cee88d",
+ "lineage_id": "mint2v2-dualseed-0714-wiring",
+ "stage": "pre_launch",
+ "policy_version": "2026-07-14",
+ "objective": "campaign mint2v2-dualseed-0714 최종 pre_launch: 실제 배선된 원격 gate config(양 seed dir의 colab SHA·체인 StageB HOLDOUT_ONLY 배선·레시피 불변·클린 상태·완주 마커)가 발사 준비됐는지 내부 교차검증. training_contract-holdout-only의 유일 UNVERIFIED(E: 원격 StageB 배선)를 닫는다. read-only 판정만. ★Codex 미호출(campaign 금지).",
+ "gate_state": "PASS",
+ "action_state": "WAITING_USER",
+ "downstream_action": "launch",
+ "verdict_source": "internal_cross_check",
+ "auditor_model": "Claude Opus 4.8 (claude-opus-4-8) — training-contract/pre_launch internal cross-check, read-only",
+ "cache_hit": false,
+ "attempt": 0,
+ "started_at": "2026-07-14T04:52:00Z",
+ "completed_at": "2026-07-14T04:59:00Z",
+ "runner_recorded": {
+  "request_id": "pre_launch-20260714T045723Z-mint2v2-campaign-wired",
+  "model": "claude-opus-4-8",
+  "reasoning": "internal_cross_check (no Codex; campaign Codex 금지 준수). 원격 read-only SSH 실측.",
+  "started_at": "2026-07-14T04:52:00Z",
+  "completed_at": "2026-07-14T04:59:00Z",
+  "attempt": 0,
+  "cache_hit": false
+ },
+ "raw_result_ref": null,
+ "nonblocking_findings": [
+  {
+   "id": "N1",
+   "summary": "완주 마커 이원화: 체인은 chain.status에 START/STAGE_A_DONE/STAGE_B_DONE/ALL_DONE + touch DONE을 기록하고, 코드는 별개로 run dir에 GATE_DONE을 기록한다(colab:477). run-monitor 워처는 체인측 ALL_DONE(또는 DONE 파일)을 완주 신호로 감시해야 하며 코드측 GATE_DONE은 보조 마커다. 둘 다 생성되므로 정합이나, 워처 키를 STAGE_B_DONE/ALL_DONE(체인)으로 두는 게 표준(training_contract N3 반영).",
+   "evidence": "run_mint2v2b_chain.sh:13,15 (STAGE_B_DONE/ALL_DONE) + touch DONE:14; colab_train_base2.py:477 (GATE_DONE)"
+  },
+  {
+   "id": "N2",
+   "summary": "밴드 결과의 매치드-컨트롤 해석: 두 gate(s79/s81)는 서로 및 원본 mint2v2 레시피와 완전 일치(SEED·dir만 상이). 그러나 mint2v2 레시피 자체는 챔피언 대비 묶음변경(TARGET_BALANCE + TB_V2 + PRETEXT_META=omit + mint2_balanced_v2 데이터)이다. HOLDOUT_ONLY는 하이퍼파라미터·데이터를 안 바꾸므로 밴드값 자체엔 confound를 안 넣지만, 산출 밴드는 '단독효과'가 아니라 mint2v2 묶음 probe로만 해석해야 한다.",
+   "evidence": "chain line8(A: TARGET_BALANCE=1 TB_V2=1 PRETEXT_META=omit EXTRA_DATA=...v2_gate.jsonl); training_contract confounders[0]"
+  },
+  {
+   "id": "N3",
+   "summary": "S81 체인은 line4 RUN을 하드코딩(run_mint2v2_s81_gate)해 템플릿 run_mint2v2_s${SEED}(=run_mint2v2_s81)와 dir명이 다르다. 호출 `81 1`로 SEED=81은 COMMON(line6 SEED=${SEED})에 정상 전파되고 RUN은 하드코딩 dir을 정확히 가리키므로 무해 — dir명 차이일 뿐 confound 아님. S79는 템플릿(run_mint2v2b_s${SEED}) 유지.",
+   "evidence": "run_mint2v2_s81gate_chain.sh:4,6; run_mint2v2b_chain.sh:4"
+  }
+ ],
+ "verified_claims": [
+  {
+   "claim": "A: 원격 양 dir colab_train_base2.py sha256 = ec60a75381b4d6f97fde5bd34e35e3ba572803649d0849b73940bef2748e0abd = 로컬 승인본(ec60a75, HOLDOUT_ONLY 포함)과 완전 일치. feat.py 양 dir = 91c419d634a85ad912d3dc43b9c802ddf0f1a31b0a203345cb38779b30b05ca8(=91c419d6 승인본). 코드/피처 SHA 고정 확인.",
+   "evidence": "치타 sha256sum run_mint2v2b_s79/colab_train_base2.py run_mint2v2_s81_gate/colab_train_base2.py (동일) + feat.py 동일; 로컬 shasum -a 256 = 동일"
+  },
+  {
+   "claim": "B: HOLDOUT_ONLY=1은 양 체인의 Stage B(line11: EPOCHS=6 INIT_BACKBONE=./pretext_backbone HOLDOUT_IDX=data/hidx.npy HOLDOUT_ONLY=1)에만 배선됐고 Stage A(line8: EPOCHS=3 PRETEXT=1 ...)엔 없음(grep HOLDOUT_ONLY = line11 단독). N2 footgun(PRETEXT StageA는 colab:437에서 먼저 sys.exit → HOLDOUT_ONLY 조용히 no-op) 회피됨.",
+   "evidence": "치타 grep -n HOLDOUT_ONLY run_mint2v2b_chain.sh run_mint2v2_s81gate_chain.sh → 둘 다 line11만; grep PRETEXT=1 → line8(HOLDOUT_ONLY 없음); colab_train_base2.py:429-437"
+  },
+  {
+   "claim": "C: 두 체인 각각 원본 run_mint2v2_chain.sh 대비 diff = 정확히 2 hunk(4c4 RUN dir 경로 / 11c11 Stage B에 HOLDOUT_ONLY=1 추가). COMMON(line6: kf-deberta-base MAX_LEN=768 BATCH=16 GRAD_ACCUM=3 LR=2e-5 GRAD_CKPT=0)·Stage A(line8)·Stage B 나머지(INIT_BACKBONE·HOLDOUT_IDX=hidx·real-only=EXTRA_DATA 없음) 전부 불변. 삭제/기타 변경 0.",
+   "evidence": "치타 diff run_mint2v2_chain.sh run_mint2v2b_chain.sh → {4c4,11c11}; diff run_mint2v2_chain.sh run_mint2v2_s81gate_chain.sh → {4c4,11c11}"
+  },
+  {
+   "claim": "D: HOLDOUT_ONLY=1 경로(Stage B: PRETEXT 미설정→PRETEXT=0, REFIT_ONLY 미설정→else branch:466): train_model(tr,va):467 → predict:468 → np.save holdout_probs3.npy:474 + holdout_idx3.npy:475 → if HOLDOUT_ONLY GATE_DONE write:477 → sys.exit(0):482, 전부 full-refit(:493)·zip(:616) 이전. exit0이므로 체인 set -eo pipefail 무중단 → cp effective_config_B:12, STAGE_B_DONE:13, touch DONE:14, ALL_DONE:15 정상 기록. refit/zip 없음.",
+   "evidence": "colab_train_base2.py:463-482,493,616 (로컬=원격 byte-identical by SHA); run_mint2v2b_chain.sh:11-15; code_diff/training_contract test C2/C3/E3-E6 PASS"
+  },
+  {
+   "claim": "E: 양 run dir 클린 — pretext_backbone/_ckpt/checkpoint-*/GATE_DONE/DONE/chain.status/effective_config*.json/holdout_*.npy 전부 부재(체크포인트·산출물 미재사용, 신규 발사 클린 슬레이트). Stage B의 INIT_BACKBONE=./pretext_backbone는 각 dir 내부 Stage A가 생성하는 dir-격리 경로(교차seed 오염 없음). GPU 분리: s79 호출 `79 0`(CUDA_VISIBLE_DEVICES=0), s81 `81 1`(=1). 발사 전 GPU0/1 idle(util 0%, mem 1MiB), colab proc 0.",
+   "evidence": "치타 ls -ld (전 마커 부재); nvidia-smi 0,0%,1MiB / 1,0%,1MiB; pgrep colab = SSH 자기명령뿐; chain call `79 0`/`81 1`"
+  },
+  {
+   "claim": "F: 완주 마커 정합 — 체인 chain.status ALL_DONE(line15, + touch DONE line14) + 코드 GATE_DONE(colab:477) 둘 다 exit0 경로에서 생성됨. run-monitor는 체인측 ALL_DONE/DONE을 완주 신호로 감시(표준), GATE_DONE은 보조(N1).",
+   "evidence": "run_mint2v2b_chain.sh:14-15; colab_train_base2.py:476-477; training_contract N3"
+  },
+  {
+   "claim": "데이터 계보: 양 dir data는 심링크 /home/<REMOTE_USER>/dacon/data(공유). Stage A EXTRA_DATA=data/train_mint2_balanced_v2_gate.jsonl sha256 = 05fad50e76545cb499e0fedaf56d8df7edb588a3aa991015575f1c5209f22466(=승인 campaign gate data, 5454행). HOLDOUT_IDX=data/hidx.npy 존재(112128B, 07-12). env/bin/python(→python3) 존재.",
+   "evidence": "치타 sha256sum data/train_mint2_balanced_v2_gate.jsonl = 05fad50e...; ls data/hidx.npy; ls env/bin/python"
+  },
+  {
+   "claim": "매치드-컨트롤(mint2b confound 재발 방지): Stage A=3ep(PRETEXT), Stage B=6ep — 레시피 라벨 v2_A3ep_B6ep와 일치, mint2b의 'StageA 6ep vs pretext 3ep' confound 없음. 두 seed는 COMMON/StageA/StageB 완전 동일(SEED·dir만 상이) — 서로 및 원본 mint2v2와 matched. HOLDOUT_ONLY는 EPOCHS/BATCH/GRAD_ACCUM/LR/SEED/MAX_LEN/GRAD_CKPT 무변경(colab:48-53,71 diff 무변경).",
+   "evidence": "chain line6,8,11 (양 체인·원본 동일); training_contract verified_claims(하이퍼파라미터 계약 불변)"
+  }
+ ],
+ "unverified_claims": [
+  "effective_config_B.json에 HOLDOUT_ONLY=true 반영 여부는 발사 후 산출물 — 코드(colab:150) + Stage B env(HOLDOUT_ONLY=1)로 보장되나 실행 전 실측 불가.",
+  "홀드 밴드 npy(holdout_probs3/idx3)·홀드 Macro-F1·밴드 통과 여부는 아직 미발생 결과 — 학습 후 blend-evaluator 밴드체크로만 확인.",
+  "gate jsonl(5454행) 행수 assert(체크리스트 #7·#8)·gate StageA 홀드세션 mint 누수 0(#9)은 data-lineage-auditor 소관 — 이 감사는 데이터 SHA=승인 campaign 아티팩트(05fad50e)임만 확인, 행수/누수 내용 미검증.",
+  "체크리스트 10_pre_training #1(사전등록)·#13(ETA+완료감시 부착)은 발사 절차 항목 — 지휘자가 발사 트리거 시 별도 마감."
+ ],
+ "confounders": [
+  "밴드 결과 해석: 산출될 홀드 밴드는 mint2v2 '묶음 probe'(TARGET_BALANCE+TB_V2+omit+mint2_balanced_v2)의 효과이지 단일변수 단독효과가 아니다 — '단독효과' 호칭 금지, '묶음 probe'로만 기록(N2).",
+  "HOLDOUT_ONLY 자체는 학습 데이터·하이퍼파라미터 무변경이므로 밴드값에 confound를 주입하지 않는다(밴드 자격 산출만) — 우열·챔피언 판단자 아님. 이 감사는 배선/제어흐름/클린상태만 검증하며, 데이터 누수·행수는 data-lineage-auditor 소관.",
+  "이 pre_launch는 원격 read-only 실측으로 training_contract-20260714T043544Z-holdout-only의 UNVERIFIED E(원격 StageB 배선)를 닫는다 — 두 판정은 lineage 상 연속(코드 계약 → 배선 실측)."
+ ],
+ "required_fixes": [],
+ "safe_next_action": "PASS — 배선 6항목(A~F) 전부 실측 확인: 양 dir colab SHA=ec60a75(승인본)·feat 91c419d6·gate data 05fad50e / HOLDOUT_ONLY는 Stage B에만(Stage A 없음, N2 footgun 회피) / 체인 diff=원본 대비 2 hunk(RUN+StageB HOLDOUT_ONLY)뿐 레시피 불변 / HOLDOUT_ONLY exit0 후 refit·zip 없이 체인 마커 정상 / run dir 클린·체크포인트 미재사용·GPU0/1 분리·idle / ALL_DONE+GATE_DONE 정합. training_contract의 UNVERIFIED E 닫힘. ★PASS는 진행 자격 — 발사 자체는 campaign 승인으로 이미 인가(지휘자가 PASS 후 s79 GPU0/s81 GPU1 발사). action_state=WAITING_USER. 밴드는 mint2v2 묶음 probe로만 해석.",
+ "escalated": false,
+ "evidence_references": [
+  "open/coordination/results/code_diff-20260714T043524Z-holdout-only.json",
+  "open/coordination/results/training_contract-20260714T043544Z-holdout-only.json",
+  "open/scripts/colab_train_base2.py:57",
+  "open/scripts/colab_train_base2.py:150",
+  "open/scripts/colab_train_base2.py:463-482",
+  "open/scripts/colab_train_base2.py:493",
+  "open/scripts/colab_train_base2.py:616",
+  "remote:~/dacon/run_mint2v2b_chain.sh:4,8,11-15",
+  "remote:~/dacon/run_mint2v2_s81gate_chain.sh:4,8,11-15",
+  "remote:~/dacon/run_mint2v2_chain.sh (원본 대조군)",
+  "open/docs/checklists/10_pre_training.md"
+ ],
+ "artifact_sha": {
+  "open/scripts/colab_train_base2.py": "ec60a75381b4d6f97fde5bd34e35e3ba572803649d0849b73940bef2748e0abd",
+  "open/scripts/feat.py": "91c419d634a85ad912d3dc43b9c802ddf0f1a31b0a203345cb38779b30b05ca8",
+  "remote-gate-data:train_mint2_balanced_v2_gate.jsonl": "05fad50e76545cb499e0fedaf56d8df7edb588a3aa991015575f1c5209f22466"
+ }
+}

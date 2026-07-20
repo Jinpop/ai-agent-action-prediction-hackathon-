@@ -1,0 +1,34 @@
+{
+ "kind": "raw_logits",
+ "class_order": [
+  "edit_file",
+  "grep_search",
+  "read_file",
+  "glob_pattern",
+  "respond_only",
+  "run_bash",
+  "apply_patch",
+  "run_tests",
+  "list_directory",
+  "ask_user",
+  "plan_task",
+  "lint_or_typecheck",
+  "write_file",
+  "web_search"
+ ],
+ "split": "cheetah GroupKFold(5) fold0 on 70k real rows == scratchpad/hidx.npy (14000 rows); mint는 홀드아웃세션 제외 후 학습에만 편입",
+ "eval_rule": "per-member softmax -> mean -> argmax (배포 script.py와 동일)",
+ "train_script_sha256": "b0029bcd9e5c551795398e0e0e5ac2fed0853ef2365d0d67201ae07df794d9ce",
+ "created": "2026-07-11T00:03 KST (holdout phase 종료 직후 회수, refit 전)",
+ "recipe": "kakaobank/kf-deberta-base MAX_LEN=768 EPOCHS=6 BATCH=16 GRAD_ACCUM=3 LR=2e-5 GRAD_CKPT=0",
+ "source_run": "cheetah ~/dacon/run_kf768ci74",
+ "seed": 74,
+ "env": "MASK_MINT_META=1 EXTRA_DATA=data/train_mint_ci.jsonl",
+ "caution": "00:31 재검토: train_mint_ci는 CI 파괴본(43.7%), zero-sentinel 도메인표식 부작용 — 홀드 0.7627은 묶음효과이며 '마스킹 실증' 아님. 밴드 통과 후보 자격만 유효.",
+ "shape": [
+  14000,
+  14
+ ],
+ "dtype": "float32",
+ "row_sum_example": -7.2607421875
+}

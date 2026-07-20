@@ -1,0 +1,48 @@
+{
+ "schema_version": "3",
+ "request_id": "pre_launch-20260714T111358Z-metawave1-final",
+ "created_at": "2026-07-14T10:58:00Z",
+ "stage": "pre_launch",
+ "policy_version": "campaign:official-meta-wave1",
+ "objective": "campaign official-meta-wave1 META-N/META-T 발사 직전 최종 pre_launch 내부 교차검증(사용자 6개 보완 반영 강화 config, colab 99331657). 직전 pre_launch(구 colab 592ed8d6·암묵 flag)는 config 변경으로 폐기 — 이게 최종. read-only 치타 실측. ★Codex 미호출(campaign 금지).",
+ "verify_items": [
+  "A: 양 dir colab SHA=99331657(assert 반영본)·feat=f65e9d91, 체크포인트 미재사용",
+  "B: 항목4 manifest 정확(META-N NUM=1/TRANS=0, META-T NUM=0/TRANS=1, 공통 REFIT_ONLY=1/SEED=79/EPOCHS=6/INIT_BACKBONE 동일/pretext SHA 9265212e)",
+  "C: 항목2 assert META_NUM_EXT==feat.META_NUM_EXT(train/serve skew 가드) 존재",
+  "D: REFIT_ONLY 단일스테이지·상호배타 assert 무위반·real-only(EXTRA_DATA='')",
+  "E: 축 독립(META-N=META_NUM_EXT / META-T=META_TRANS_EXT, seed79 동일)",
+  "F: GPU0/1 분리·idle, effective_config가 META_NUM_EXT/META_TRANS_EXT 기록",
+  "G(인계): verify_zip 강화 로컬반영 f01f2b49 / META-T combo transcript·cA feat.py 는 포장단계",
+  "matched-control: Stage B epoch/LR/batch가 대조군 m2b_s79와 일치(공유 COMMON confound 없음)"
+ ],
+ "downstream_action": "launch",
+ "proposed_next_action": "양 META 체인 발사(META-N GPU0 `run_metaN_chain.sh 0`, META-T GPU1 `run_metaT_chain.sh 1`) — campaign 승인 하 지휘자 절차, action_state=WAITING_USER.",
+ "lineage_id": "official-meta-wave1-prelaunch",
+ "direct_control": "대조군 = 기존 배포멤버 run_mint2b_s79(pretext 9265212e → real-only 6ep refit). META-N/META-T는 그 위에 meta 축 flag 1개만 변경.",
+ "intended_change": "META-N=META_NUM_EXT(숫자메타 +6키, 119d→125d, head 887→893). META-T=META_TRANS_EXT([META] transcript 공식메타 확장). 두 축 서로 matched(seed79·6ep·동일 pretext·동일 COMMON), m2b 대비 각 1변수.",
+ "artifact_paths": [
+  "open/scripts/colab_train_base2.py",
+  "open/scripts/feat.py",
+  "scratchpad/verify_zip.py"
+ ],
+ "evidence_paths": [
+  "scratchpad/colab_ec60a75_ref.py",
+  "scratchpad/colab_415e4c3e_ref.py",
+  "open/docs/checklists/10_pre_training.md"
+ ],
+ "code_sha256": {
+  "open/scripts/colab_train_base2.py": "99331657a6c41498500ccef01320e9d0070bd2b8274d98bcc4c75385e6855b57",
+  "open/scripts/feat.py": "f65e9d9103282e4fb9355a80624ba88656a5fcbd3aa3d3675bbf56f8720a7624",
+  "scratchpad/verify_zip.py": "f01f2b4908aa2ab96e66c7af1f84fddac8df765e43482bb9e161672fefa6d246",
+  "scratchpad/colab_ec60a75_ref.py": "ec60a75381b4d6f97fde5bd34e35e3ba572803649d0849b73940bef2748e0abd"
+ },
+ "sha_notes": {
+  "remote:run_metaN_s79/colab_train_base2.py & run_metaT_s79/colab_train_base2.py": "치타 실측 99331657...b57 (양 dir 동일, 로컬 repo와도 동일)",
+  "remote:run_mint2b_s79/pretext_backbone/model.safetensors": "치타 실측 9265212e...73b (양 META INIT_BACKBONE 재사용)"
+ },
+ "effective_config_path": null,
+ "known_caveats": [
+  "홀드아웃 gate 생략(campaign 승인 deadline 예외) — REFIT_ONLY로 배포멤버 직접 생성. 효과는 서버 LB로만 측정, 홀드 matched-control 없음.",
+  "포장단계 항목(G): verify_zip META-N 893 통과·META-T combo transcript·cA feat.py 는 산출물 생성 후 zip-verifier/package-builder 소관(발사 blocker 아님)."
+ ]
+}

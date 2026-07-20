@@ -1,0 +1,60 @@
+{
+  "schema_version": "3",
+  "request_id": "post_lb-20260714T112000Z-metawave1-2nn",
+  "audit_key": "0000000000000000000000000000000000000000000000000000000000000000",
+  "lineage_id": "metawave1-2nn-postlb",
+  "stage": "post_lb",
+  "policy_version": "campaign:official-meta-wave1",
+  "objective": "campaign official-meta-wave1 Part A post_lb: cA 2NN+C ablation 3종 서버 LB 실측 해석 — 멤버 LOO 한계기여 재계산·ablation 공정성·챔피언 판정(cA 유지)·랭킹(s48 다양성 레버·m2b79 중복)·프레이밍 규율. read-only. Codex 미호출.",
+  "gate_state": "PASS",
+  "action_state": "WAITING_USER",
+  "downstream_action": "none",
+  "verdict_source": "internal_cross_check",
+  "auditor_model": "claude-opus-4-8 (lb-interpreter internal cross-check, read-only)",
+  "cache_hit": false,
+  "attempt": 0,
+  "started_at": "2026-07-14T11:15:00Z",
+  "completed_at": "2026-07-14T11:20:00Z",
+  "runner_recorded": {
+    "request_id": "post_lb-20260714T112000Z-metawave1-2nn",
+    "model": "claude-opus-4-8",
+    "reasoning": "internal_cross_check (no Codex). LB는 사용자 보고, 산술·프레임은 로컬 read-only 대조.",
+    "started_at": "2026-07-14T11:15:00Z",
+    "completed_at": "2026-07-14T11:20:00Z",
+    "attempt": 0,
+    "cache_hit": false,
+    "raw_request_id": null
+  },
+  "raw_result_ref": null,
+  "verified_claims": [
+    {"claim": "멤버 LOO 한계기여 = cA − drop_X (10자리): s48 +0.0110543983, k81 +0.0052044955, m2b79 +0.0014236058", "evidence": "cA=0.7848461512; drop_s48=0.7737917529 drop_k81=0.7796416557 drop_m2b79=0.7834225454 산술 재계산 일치"},
+    {"claim": "matched single-member leave-one-out(공정): 각 2NN이 정확히 1멤버 제거, 나머지 2 seed+classic 고정, blend 0.6×mean(2)+0.4×classic 자동재정규화, 동일 테스트셋·결정론 서버", "evidence": "프로젝트 배포 블렌드 스펙(0.6 seed + 0.4 classic) 고정"},
+    {"claim": "챔피언 무변경: 3종 drop 모두 cA 미달(0.7738/0.7796/0.7834 < 0.7848461512) → 멤버 제거는 손해, cA 유지, 2NN은 진단용", "evidence": "auto-highest-LB"},
+    {"claim": "랭킹: s48(+0.0111) >> k81(+0.0052) > m2b79(+0.0014); s48≈2.1×k81≈7.8×m2b79", "evidence": "델타 비율"},
+    {"claim": "runtime 6:12~6:28 measured(<600s, cA 9:46보다 여유) — 2멤버 블렌드라 빠름", "evidence": "사용자 제출 채점시간"},
+    {"claim": "목표차 cA→12등(0.79307) = +0.0082238488", "evidence": "0.79307 − 0.7848461512"}
+  ],
+  "unverified_claims": [
+    "LB·채점시간은 사용자·서버 보고(결정론 서버 오라클 전제).",
+    "'s48=다양성 레버'는 confounded LOO의 해석(유일 non-kf-deberta 백본)이지 직접 측정된 분해 아님."
+  ],
+  "confounders": [
+    "LOO 델타는 개별 멤버 품질 + 잔여 멤버와의 복상관/다양성 기여를 합산 측정 — s48 큰 델타는 다양성에서 상당부분 유래(품질 단독 아님).",
+    "★m2b79 +0.0014는 '현재 kf-deberta 3번째 멤버가 k81과 얼마나 중복인가'의 지표이지 그 슬롯 교체(mint2v2·META)의 상한 캡이 아니다 — 동일계열(kf-deberta) 교체는 중복-한정으로 상승폭 제한, 더 탈상관 교체는 +0.0014 초과 가능. ('캡' 서술 금지, '중복-한정 LOO'로.)",
+    "runtime measured는 2멤버 블렌드라 빠른 것 — 3멤버 교체 후보 런타임 증명 아님.",
+    "델타 3개 합(0.0177)은 가법적 의미 없음(LOO 비가법).",
+    "'m2b79/kf-deberta 자체가 나쁘다' 과대금지(0.6/0.4 앙상블·상관구조 의존). '노이즈' 금지(결정론)."
+  ],
+  "required_fixes": [],
+  "safe_next_action": "PASS — docs-ledger-writer가 실험로그 EOF append + HANDOFF §9 갱신(cA 유지·멤버기여 랭킹·다양성 레버 시사). 지휘자 정정: 발사보고에서 'META 상한 ~+0.0014 캡'은 '중복-한정 LOO(동일계열 교체 상승 제한)'로 완화. 후속 GPU/슬롯은 별도 사용자 결정. 함의: 최대 레버는 신규 non-kf-deberta 백본(다양성).",
+  "escalated": false,
+  "evidence_references": [
+    "open/coordination/results/post_lb-20260714T000000Z-round2.json",
+    "open/docs/checklists/60_post_submit.md"
+  ],
+  "artifact_sha": {
+    "submits/submit_2nn_drop_s48.zip": "9b0a99d64accd667c959ae7fcada681a54fc14781f799b85e752c54d451b1eec",
+    "submits/submit_2nn_drop_k81.zip": "aea9dd3d08d778bc63eef66fc2d1b006000ab021afb8e13b6ff8f3197460f7c2",
+    "submits/submit_2nn_drop_m2b79.zip": "90457f765bbac94d5b3dd4d8e7f1092731688d60ec57aa574d03bd5a98218ffb"
+  }
+}

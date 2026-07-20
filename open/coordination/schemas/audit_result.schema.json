@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dacon236694/coordination/audit_result.schema.json",
+  "title": "runner-normalized audit result v3 (2026-07-14 재설계). 이 파일은 러너가 raw 감사 출력(results_raw/)을 정규화해 기록한 결과다. verdict는 PASS|BLOCK|NEEDS_HUMAN만(인프라 실패는 infra_error.schema.json). action_state는 AUDIT_PASS와 분리된 사용자 행동 승인 축이며 러너는 항상 WAITING_USER로 기록한다.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "request_id",
+    "audit_key",
+    "lineage_id",
+    "stage",
+    "policy_version",
+    "objective",
+    "gate_state",
+    "action_state",
+    "downstream_action",
+    "verdict_source",
+    "auditor_model",
+    "cache_hit",
+    "attempt",
+    "started_at",
+    "completed_at",
+    "runner_recorded",
+    "verified_claims",
+    "unverified_claims",
+    "confounders",
+    "required_fixes",
+    "safe_next_action",
+    "artifact_sha"
+  ],
+  "properties": {
+    "schema_version": { "const": "3" },
+    "request_id": {
+      "type": "string",
+      "pattern": "^[a-z_]+-[0-9]{8}T[0-9]{6}Z-[a-z0-9-]{4,}$"
+    },
+    "audit_key": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "canonical JSON(stage, verify_items, policy_version, 실측 evidence SHA)의 sha256. 같은 key = 같은 증거 감사(캐시 대상)."
+    },
+    "lineage_id": {
+      "type": "string",
+      "description": "finding 승격이 누적되는 재감사 묶음. 증거 SHA는 제외하므로 fix→재감사가 같은 lineage를 공유."
+    },
+    "stage": { "type": "string" },
+    "policy_version": { "type": "string" },
+    "objective": { "type": "string" },
+    "gate_state": {
+      "type": "string",
+      "enum": ["PASS", "BLOCK", "NEEDS_HUMAN"],
+      "description": "감사 verdict. 인프라 실패는 여기 오지 않고 infra_error.schema.json으로 기록."
+    },
+    "action_state": {
+      "type": "string",
+      "enum": ["WAITING_USER", "AUTHORIZED", "EXECUTED"],
+      "description": "★AUDIT_PASS와 별개인 사용자 행동 승인 축. 러너는 항상 WAITING_USER. AUTHORIZED/EXECUTED는 사용자·지휘자 절차가 별도로 기록(러너 자동 승격 금지)."
+    },
+    "downstream_action": {
+      "type": "string",
+      "enum": ["none", "launch", "stop", "kill", "paid_gpu", "delete", "submit", "package", "other"]
+    },
+    "verdict_source": {
+      "type": "string",
+      "enum": ["codex", "cache", "internal_cross_check"],
+      "description": "codex=외부 감사 실호출, cache=동일 audit_key 재사용, internal_cross_check=Claude 서브에이전트 교차검증."
+    },
+    "auditor_model": { "type": "string" },
+    "cache_hit": { "type": "boolean" },
+    "attempt": { "type": "integer", "minimum": 0, "description": "실제 Codex 기동 횟수. 캐시 재사용은 0(호출 없음), Codex 실행은 1." },
+    "started_at": { "type": "string" },
+    "completed_at": {
+      "type": "string",
+      "description": "ISO8601 UTC — 실제 완료 시각(파일 mtime과 모순 금지)"
+    },
+    "runner_recorded": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["request_id", "model", "reasoning", "started_at", "completed_at", "attempt", "cache_hit"],
+      "description": "★러너가 기록한 관측 사실(raw 감사 출력과 분리). raw는 자기 시각·model을 신뢰하지 않는다.",
+      "properties": {
+        "request_id": { "type": "string" },
+        "model": { "type": ["string", "null"] },
+        "reasoning": { "type": ["string", "null"] },
+        "started_at": { "type": ["string", "null"] },
+        "completed_at": { "type": ["string", "null"] },
+        "attempt": { "type": "integer" },
+        "cache_hit": { "type": "boolean" },
+        "raw_request_id": { "type": ["string", "null"] }
+      }
+    },
+    "raw_result_ref": {
+      "type": ["string", "null"],
+      "description": "results_raw/ 아래 원시 감사 출력 경로(캐시 재사용이면 원본 rid 결과, 정규화 전용이면 null 가능)."
+    },
+    "blocking_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["summary"],
+        "properties": {
+          "id": { "type": "string" },
+          "summary": { "type": "string" },
+          "evidence": { "type": "string" },
+          "fingerprint": { "type": "string" }
+        }
+      }
+    },
+    "nonblocking_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["summary"],
+        "properties": {
+          "id": { "type": "string" },
+          "summary": { "type": "string" },
+          "evidence": { "type": "string" }
+        }
+      }
+    },
+    "verified_claims": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["claim", "evidence"],
+            "properties": { "claim": { "type": "string" }, "evidence": { "type": "string" } }
+          }
+        ]
+      }
+    },
+    "unverified_claims": { "type": "array", "items": { "type": "string" } },
+    "confounders": { "type": "array", "items": { "type": "string" } },
+    "required_fixes": { "type": "array", "items": { "type": "string" } },
+    "safe_next_action": {
+      "type": "string",
+      "description": "★권고문일 뿐 실행 권한이 아니다. 실제 행동 승인은 action_state로만 판단(safe_next_action='launch'여도 action_state=WAITING_USER면 발사 금지)."
+    },
+    "escalated": {
+      "type": "boolean",
+      "description": "같은 lineage_id+finding fingerprint의 연속 미해결 BLOCK 2회로 NEEDS_HUMAN 승격됐는지."
+    },
+    "evidence_references": { "type": "array", "items": { "type": "string" } },
+    "artifact_sha": {
+      "type": "object",
+      "description": "감사가 묶인 실측 증거 SHA {repo-relative 경로: 64-hex}.",
+      "additionalProperties": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+    },
+    "backfilled": {
+      "type": "boolean",
+      "description": "true = 소급 생성된 legacy 기록. 정직 표기."
+    },
+    "post_audit_correction": { "type": "string" }
+  }
+}

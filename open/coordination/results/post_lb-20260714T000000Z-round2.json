@@ -1,0 +1,57 @@
+{
+  "request_id": "post_lb-20260714T000000Z-round2",
+  "stage": "post_lb",
+  "objective": "cA·cB LB 결과 기록 직전 게이트 — 챔피언 교체 산술·zip→조합 매핑·표현규율·후속 probe 재포장 필요성 검증(파일 무수정, 판정만).",
+  "verdict": "PASS",
+  "auditor_model": "data-auditor (claude-opus subagent, read-only)",
+  "completed_at": "2026-07-14T00:20:00Z",
+  "blocking_findings": [],
+  "verified_claims": [
+    "산술 독립 재계산 정확일치: cA(0.7848461512)−카드1(0.784156489)=+0.0006896622, cA−v58(0.7840764953)=+0.0007696559, cB(0.781756698)−카드1=−0.0023997910. 서열 cA>카드1>v58 → cA=현 최고 LB 신챔피언(서버 결정론적 갱신).",
+    "zip 매핑 로컬 실측: submit_cA.zip=982,197,808B SHA256 e09abe21…(=qz8p1g content-length 일치), submit_cB.zip=982,199,476B SHA256 59b9500a…(=tkxyu7 content-length 일치). 크기 1,668B 차로 상호 교체 불가.",
+    "zip 내부 구성 unzip 직접확인: cA SEED_DIRS=['./model_s48','./model_kf768_81','./model_kf768_m2b79'], cB=['./model_s48','./model_kf768_m2b79','./model_kf768_m2b81'] — build_combos.py COMBOS와 정확일치, 고아·잔류 멤버 0.",
+    "cA zip은 model_kf768_81(cA 고유·cF에 없음) 보유 → 스테이징 오염에도 불구 zip은 진짜 cA. cB도 model_kf768_m2b81 보유로 진짜 cB.",
+    "조합 위상: cA={s48,k81,m2b79}=v58에서 k79→m2b79 교체(카드8 유형). 카드1={s48,k79,m2b79}. cA↔카드1 단일차이=제3멤버 k81 vs k79. cB=더블 mint.",
+    "스테이징 오염 corroborated: stage_cA~cF/script.py 전부 동일 inode 56184410(cp -al 하드링크), open('w') write-through로 전부 cF 내용으로 사후 오염. zip은 순차 빌드라 빌드시점 정상 — 제출 무영향. ★스테이징 재zip 금지."
+  ],
+  "표현규율_강제": [
+    "①허용: 'cA가 카드1을 +0.0006896622, v58를 +0.0007696559 넘어 현 최고 LB — 결정론적 갱신, 신챔피언'. 프레임=classic×1+s48+kf768_81+mint2b_s79.",
+    "②★'k81 우위/k81이 k79보다 낫다/조합 발견/구조적 발견' 단정 금지. cA↔카드1 차이=kf seed79→81 draw 교체, margin +0.00069=단일 seed-draw 폭. ★seed-diversity 교락: 카드1={79,79} vs cA={79,81} — k81 품질 vs 앙상블 다양성 분리 불가.",
+    "③cB 서술: '카드1 −0.0023997910 미달 기각'. 'mint 스태킹 죽음' 단정 금지(약한 m2b81 draw + k79 손실 묶음효과).",
+    "④'노이즈' 전면금지 — 'seed·멤버 draw 상호작용 범위'.",
+    "⑤m2b79 두 프레임 상회는 'm2b79 draw 유용성 재확인' 관찰까지만. balanced 자체효과는 카드3 델타가 seed 스프레드 내라 여전히 미분리 — 'balanced 통한다' 금지."
+  ],
+  "unverified_claims": [
+    "업로드코드↔파일 링크는 서버측(content-length 정확일치 + 사용자 로그 신뢰; 로컬 파일→조합은 SHA+SEED_DIRS 완전검증).",
+    "슬롯 회계 07-13 6/10은 서버 카운터·제출 TZ 의존(산술 4+2=6 내적 일관, 비차단)."
+  ],
+  "confounders": [
+    "cA vs 카드1 seed-diversity 교락(표현규율② 참조).",
+    "스테이징 하드링크 오염(비차단·제출영향 없음): 재zip 금지, build_combos.py는 편집 전 하드링크 분리 필요.",
+    "cA=신챔피언이라 대기 probe 2장(distill·dose6, 카드1 프레임)은 챔피언과 2슬롯차 — '현챔피언 단일슬롯 교체판' 호칭 금지."
+  ],
+  "required_fixes": [],
+  "safe_next_action": "PASS — append-only 실험로그 + HANDOFF §1(챔피언=cA 0.7848461512)·§9 갱신. 표현규율 5항 문구 그대로. probe 재포장은 전략선택(격리 목적이면 cA 프레임: distill→{distill_s48,k81,m2b79}, dose6→{s48,k81,dose6}) — 지휘자+사용자 결정. 기존 zip 그대로 제출 시 '2변수 묶음 probe'로만 기록.",
+  "후속_방향": {
+    "distill_dose6_재포장_판정": "정정목적 재포장 불요(기존 zip 유효·검증완료). 격리 목적이면 cA 프레임 재포장 필요 — 전략선택.",
+    "관찰(비단정)": "v58→cA(k79→m2b79)=+0.00077 > v58→카드1(k81→m2b79)=+0.00008 → k81 유지가 더 나은 방향과 일치하나 단일 seed draw라 구조단정 금지."
+  },
+  "checklist_60_post_submit": {
+    "item1_전소수점_노이즈금지": "PASS",
+    "item2_챔피언_LB로만": "PASS",
+    "item3_append_only": "지휘자 이행",
+    "item4_슬롯갱신": "6/10 기록(서버측 caveat 병기)",
+    "item5_H100종료": "N/A",
+    "item6_watcher위생": "N/A"
+  },
+  "artifact_sha": {
+    "submit_cA.zip(신챔피언, qz8p1g→0.7848461512)": "e09abe215431283ca77ff076391e6cbd7371df3a9814a399ffdfdeb092de6204",
+    "submit_cB.zip(기각, tkxyu7→0.781756698)": "59b9500a4321764181e4ca090ccf6c7ccb8056fb846cc0a59637dac092f32986"
+  },
+  "evidence_references": [
+    "submits/submit_cA.zip · submits/submit_cB.zip (unzip -p SEED_DIRS 직접확인)",
+    "scratchpad/build_combos.py",
+    "scratchpad/stage_c{A..F}/script.py inode 56184410 공유·cF 오염 실측",
+    "open/coordination/results/post_lb-20260713T133500Z-round1.json"
+  ]
+}

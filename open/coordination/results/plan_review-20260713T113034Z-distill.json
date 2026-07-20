@@ -1,0 +1,45 @@
+{
+  "request_id": "plan_review-20260713T113034Z-distill",
+  "objective": "수정 증류 student(카드7) 발사 직전 감사 — temperature/split/id/class-order·matched-control(s48+KD 1변수)·teacher 커버리지",
+  "verdict": "PASS",
+  "auditor_model": "data-auditor (claude-opus subagent, read-only)",
+  "completed_at": "2026-07-13T11:40:00Z",
+  "blocking_findings": [],
+  "nonblocking_findings": [
+    {
+      "id": "teacher-saw-hidx-2nd-order",
+      "summary": "teacher OOF 폴드(GroupKFold)≠hidx라 teacher는 타 세션의 hidx 행을 학습(soft 생성 시). GroupKFold가 세션-형제 누수는 차단하므로 hidx-특정 라벨누수 아니고 '약간 나은 일반 teacher' 확산(2차 편향). → student hidx 홀드는 미세 낙관편향 가능 → 홀드는 자격필터로만, 우열·이득 주장 금지.",
+      "evidence": "colab OOF GroupKFold(5) :427-444; hidx 세션 split"
+    }
+  ],
+  "verified_claims": [
+    "matched-control(s48+KD 1변수): base_seed48.md=klue/roberta-base·512·6ep·seed48·batch16×accum3·EXTRA=train_mint. 스펙 정확일치, PRETEXT/TARGET_BALANCE/INIT_BACKBONE/COARSE_AUX/LABEL_SMOOTH/SESSION_EQUAL 전부 미설정. 유일 추가=KD(SOFT_TARGET/DISTILL_T2/ALPHA0.5)+HOLDOUT_IDX=hidx(eval-split pin, 배포refit split무관→학습confound 아님)",
+    "★temperature match: soft_distillA.npz temperature=2.0==DISTILL_T. 결정적 재도출 avg(softmax(oof74/2),softmax(oof79/2)) vs 저장본 max abs diff=0.0(T=2로 구움, v26 T=1버그 해소). colab 손실 :372-374 log_softmax(logits/2)·kl_div·×T² → 양측 T=2 일치",
+    "teacher 커버리지/id: soft ids=73180=oof74∩oof79, student ids(real70000∪mint3180=73180)와 집합 완전동일. colab SOFT :249 KeyError위험0, id순서 soft==oof74(True)",
+    "class-order: soft 14열, oof74/79 동일 colab OOF(ACTIONS)순. sanity oof74 argmax vs 실라벨 acc 0.758/macroF1 0.753(열순열이면 ~0.07)",
+    "in-sample/split: teacher OOF=GroupKFold out-of-fold(in-sample 아님). hidx 세션 학습/홀드 겹침 0, 홀드세션 mint 621행 학습제외 :269-273 → student 학습 clean",
+    "hard CE 유지: :371-375 loss=0.5CE+0.5KD·T²(0<α<1). COARSE_AUX 미설정→배포 head 불변. student=s48 슬롯 단일교체(RoBERTa 512)",
+    "옵션A(classic 제외): classic real70000만→포함시 soft 70000으로 축소·mint 3180 KeyError/real-only강등(2변수). 옵션A는 KD 1변수·mint커버 유지 위한 필수·정당한 변경",
+    "정규화축(§3): 본 스코프는 v26(전면교체 죽은축)과 다름(OOF teacher·temp matched·hard CE·1슬롯). probe 1장·'증류 성공' 호칭 금지·밴드=자격필터 사전공약. matched control(s48) 존재, LB가 심판"
+  ],
+  "unverified_claims": [
+    "치타 colab 415e4c3e엔 temperature assert 부재(로컬 44aa810b만) — read-only라 치타 파일 미검증 → required_fix로 처리(아래 해소)"
+  ],
+  "confounders": [],
+  "required_fixes": [
+    "[하드·해소됨] 치타 colab을 44aa810b(assert 보유)로 업로드 후 발사 → 지휘자 이행: colab_distill.py=44aa810b(assert 2개) 업로드·run_distill_s48 셋업 완료. + 발사 후 effective_config에서 DISTILL_T=2.0·SOFT_TARGET=soft_distillA.npz(3b9302b8) 확인"
+  ],
+  "safe_next_action": "카드3 완주(GPU free ~22:45) 후 발사(run_distill_chain.sh, colab_distill.py 44aa810b). 밴드통과분만 s48 슬롯교체 포장→zip-verifier→pre_submit. 밴드=자격필터, 우열 LB, '증류 성공' 호칭 금지.",
+  "evidence_references": [
+    "open/scripts/make_soft_target.py", "open/scripts/colab_train_base2.py (:238-250,261-273,371-375,427-444)",
+    "scratchpad/soft_distillA.npz", "scratchpad/oof_logits_seed{74,79}.npy",
+    "open/docs/model_notes/base_seed48.md"
+  ],
+  "artifact_sha": {
+    "scratchpad/soft_distillA.npz": "3b9302b8be26159b742dba72c70768c46e8038b6a357d235103c27a116f0aa8f",
+    "cheetah colab_distill.py": "44aa810b (assert-bearing, 업로드 확인)",
+    "open/data/train_mint.jsonl": "eac21323fc0ebe1bd92657ddfe5f92dd6ff4722a7b878a00f40dc1c231e11408",
+    "scratchpad/hidx.npy": "e39aae253087b4ac08f2550005e08421584a2dbc273adf64c692a6b0f1b0feae"
+  },
+  "post_audit_correction": "2026-07-13T11:4xZ required_fix 이행: 치타에 44aa810b(colab_distill.py, temperature assert 보유) 업로드·SHA확인, run_distill_s48 셋업(발사 대기). 구 soft.npz(07-07 v26 T=1)와 혼동 금지 — soft_distillA.npz(3b9302b8) 사용."
+}

@@ -1,0 +1,32 @@
+{
+ "kind": "raw_logits",
+ "shape": [
+  14000,
+  14
+ ],
+ "dtype": "float32",
+ "class_order": [
+  "edit_file",
+  "grep_search",
+  "read_file",
+  "glob_pattern",
+  "respond_only",
+  "run_bash",
+  "apply_patch",
+  "run_tests",
+  "list_directory",
+  "ask_user",
+  "plan_task",
+  "lint_or_typecheck",
+  "write_file",
+  "web_search"
+ ],
+ "split": "cheetah GroupKFold(5) fold0 == hidx.npy",
+ "eval_rule": "per-member softmax -> mean -> argmax",
+ "source_run": "cheetah ~/dacon/run_kf768cin74",
+ "seed": 74,
+ "env": "EXTRA_DATA=data/train_mint_ci.jsonl, MASK 없음 (CI none화 단독 = 2x2의 (CI,no-mask) 칸)",
+ "holdout_macro_f1": 0.7591,
+ "note": "2x2 factorial 완성: 74=0.7579 / m74(mask)=0.7555 / cin74(CI)=0.7591 / ci74(both)=0.7627. train_mint_ci는 복원본 아님(43.7%) — feature dropout/noise 처리로 해석(HANDOFF §6.2).",
+ "created": "2026-07-11T05:45 KST"
+}

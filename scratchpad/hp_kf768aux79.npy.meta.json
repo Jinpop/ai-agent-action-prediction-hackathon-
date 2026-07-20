@@ -1,0 +1,31 @@
+{
+ "kind": "raw_logits",
+ "shape": [
+  14000,
+  14
+ ],
+ "dtype": "float32",
+ "class_order": [
+  "edit_file",
+  "grep_search",
+  "read_file",
+  "glob_pattern",
+  "respond_only",
+  "run_bash",
+  "apply_patch",
+  "run_tests",
+  "list_directory",
+  "ask_user",
+  "plan_task",
+  "lint_or_typecheck",
+  "write_file",
+  "web_search"
+ ],
+ "split": "cheetah GroupKFold(5) fold0 == hidx.npy",
+ "eval_rule": "per-member softmax -> mean -> argmax",
+ "source_run": "cheetah ~/dacon/run_kf768aux79",
+ "seed": 79,
+ "env": "COARSE_AUX=0.2 EXTRA_DATA=train_mint.jsonl — v49 k79와 완전 matched(변수=보조손실)",
+ "holdout_macro_f1": 0.7537,
+ "created": "2026-07-11T06:55 KST"
+}

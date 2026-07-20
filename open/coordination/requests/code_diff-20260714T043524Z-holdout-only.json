@@ -1,0 +1,39 @@
+{
+ "schema_version": "3",
+ "request_id": "code_diff-20260714T043524Z-holdout-only",
+ "created_at": "2026-07-14T04:35:24Z",
+ "stage": "pre_launch",
+ "policy_version": "2026-07-14",
+ "objective": "HOLDOUT_ONLY=1 신규 플래그의 코드 diff 내부 교차검증(로컬 전용, Codex 없음). 후보 open/scripts/colab_train_base2.py(ec60a75)가 대조군 scratchpad/colab_dabf455d_ref.py(dabf455d) 대비 선언된 4개 삽입점 외 미선언 부수변경이 없는지, HOLDOUT_ONLY=0일 때 런타임 동일(inert)인지, 종료블록 위치(holdout 저장 후·full-refit/zip 전)·SKIP_REFIT 의미 불변·신규 SHA를 실측 확인.",
+ "verify_items": [
+  "A. diff가 정확히 4개 삽입점(56a57 플래그, 66a68 assert, 147a150 config, 472a476,482 종료블록)뿐 — 삭제 라인 0, 다른 hunk 없음(직접 diff 재실행).",
+  "B. 미선언 부수변경 없음: HOLDOUT_ONLY=0 기본값일 때 dabf455d와 런타임 동작 완전 동일(추가 코드 전부 if HOLDOUT_ONLY 가드 안 + 파싱/assert/config는 0일 때 inert).",
+  "C. 삽입 종료블록이 holdout 저장 후·배포 full-refit(model_full, line 493) 전·zip(line 616) 전에 위치, sys.exit(0) 포함. PRETEXT train_model(line 431)과 혼동 없이 배포 refit만 스킵.",
+  "D. SKIP_REFIT 의미 불변(HOLDOUT_ONLY 종료가 SKIP_REFIT 분기 이전이라 SKIP_REFIT 로직 무변경).",
+  "E. 신규 SHA ec60a75381b4d6f9 재확인."
+ ],
+ "downstream_action": "none",
+ "proposed_next_action": "판정만(발사·업로드·제출 권한 아님). PASS 시에도 실제 학습 발사는 사용자 명시 승인 필요(action_state=WAITING_USER).",
+ "lineage_id": "code_diff-holdout-only-flag",
+ "direct_control": "scratchpad/colab_dabf455d_ref.py (plan-review dabf455d 승인본, sha dabf455d3cc9)",
+ "intended_change": "신규 HOLDOUT_ONLY=1 플래그: 홀드아웃 학습·평가·밴드입력 npy 저장 후 GATE_DONE 기록하고 즉시 sys.exit(0). full-refit/model_sub/script.py/requirements/zip 전부 생략. 기존 SKIP_REFIT 의미 불변 요구.",
+ "artifact_paths": [
+  "open/scripts/colab_train_base2.py",
+  "scratchpad/colab_dabf455d_ref.py",
+  "scratchpad/test_holdout_only.py"
+ ],
+ "evidence_paths": [
+  "scratchpad/test_holdout_only.py"
+ ],
+ "code_sha256": {
+  "open/scripts/colab_train_base2.py": "ec60a75381b4d6f97fde5bd34e35e3ba572803649d0849b73940bef2748e0abd",
+  "scratchpad/colab_dabf455d_ref.py": "dabf455d3cc93f2185ae9c4bd3733e3adc7690f4defab040ac29d3214fd4e8c3"
+ },
+ "data_sha256": {},
+ "known_caveats": [
+  "★Codex 재호출 금지 — 내부 교차검증 단독.",
+  "★로컬 전용 감사 — 원격(치타) 업로드/상태변경 없음. read-only.",
+  "발사·업로드·제출은 각각 별도 사용자 명시 승인(action_state=WAITING_USER)."
+ ],
+ "timeout_sec": 600
+}

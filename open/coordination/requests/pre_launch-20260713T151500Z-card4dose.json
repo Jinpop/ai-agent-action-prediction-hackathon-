@@ -1,0 +1,23 @@
+{
+  "stage": "pre_launch",
+  "request_id": "pre_launch-20260713T151500Z-card4dose",
+  "created_at": "2026-07-13T15:15:00Z",
+  "timeout_sec": 1200,
+  "objective": "카드4 dose(mint2b Stage A 6ep) 발사 직전 감사 — 카드1과 완전 matched(유일변수 Stage A EPOCHS 3→6) 확인. 사용자 확정 10-제출 계획의 조건부 슬롯, 트리거 ①충족(카드1 LB 0.784156489 = v58 +0.00008 승, 단 'seed79 draw 한정' 프레이밍).",
+  "direct_control": "run_mint2b_s79 gate chain (치타 /home/<REMOTE_USER>/dacon/run_mint2b_s79): Stage A = EPOCHS=3 PRETEXT=1 PRETEXT_META=keep TARGET_BALANCE=1 EXTRA_DATA=data/train_mint2_balanced_gate.jsonl SEED=79 → pretext_backbone; Stage B = EPOCHS=6 INIT_BACKBONE=./pretext_backbone HOLDOUT_IDX=data/hidx.npy SEED=79 real-only. 카드1 = 이 체인의 배포판이 현 챔피언.",
+  "intended_change": "★유일 변수 = Stage A EPOCHS 3→6 (dose 탐색). 나머지 전부(모델명·MAX_LEN·LR·BATCH·GRAD_ACCUM·SEED·데이터 SHA·Stage B 전체 env) run_mint2b_s79 effective_config.json 클론. GPU1에 발사(GPU0=증류 점유).",
+  "verify_items": [
+    "★stage별 하이퍼파라미터 matched-control(CLAUDE.md plan_review 규칙): run_mint2b_s79의 Stage A/B effective_config.json을 치타에서 직접 읽어 새 발사 env와 항목별 대조 — Stage A는 EPOCHS만 3→6, Stage B는 완전 일치(EPOCHS=6·LR·BATCH·GRAD_ACCUM·SEED=79·HOLDOUT_IDX=hidx)여야 함. COMMON 변수로 양 stage에 같은 값 뿌리는 confound(mint2b 최초발사 사고 유형) 재발 여부 명시 점검",
+    "데이터 무결성: 치타 data/train_mint2_balanced_gate.jsonl·data/hidx.npy SHA256이 run_mint2b_s79 effective_config에 기록된 값과 동일(데이터 미변경)",
+    "colab_train_base2.py(치타) SHA = run_mint2b_s79 학습 당시와 동일(415e4c3e 계열) — 코드 1변수 오염 없음",
+    "누수: gate 데이터가 hidx-holdout 세션 완전제외(카드1 때 검증된 빌더 산출물 그대로인지 SHA로 확인), Stage B HOLDOUT_IDX=hidx pin",
+    "GPU 배정: GPU0 증류 점유 확인, 카드4는 GPU1 단독(동시 2런 자원충돌 없음 — mint2b 2seed 병행 전례 있음)",
+    "프레이밍 규율: 트리거 ①은 '카드1 seed79 draw 한정 근접'(post_lb 감사) — 카드4 결과는 'dose draw 분산 탐색'로만 기록, 'dose 단독효과' 호칭은 seed 스프레드 초과 시에만"
+  ],
+  "known_caveats": [
+    "카드1 margin +0.00008 = seed 스프레드의 5.4% — dose 변형이 draw 분산 안에서 움직일 가능성 높음(사전공약: 밴드=자격필터, 우열은 LB)",
+    "밤샘 무인 진행(사용자 지시 '내일 확인 전까지 이행') — 실제 제출은 계속 사용자"
+  ],
+  "proposed_next_action": "PASS 시 train-launcher로 GPU1 발사(gate chain A6→B6, ETA ≈04:00 KST) → 밴드체크 → 통과 시 full 6354 Stage A + refit. BLOCK 시 수정 후 재감사.",
+  "user_approval_required": false
+}

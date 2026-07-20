@@ -1,0 +1,21 @@
+{
+  "request_id": "plan_review-20260714T021802Z-3ef3c6",
+  "verdict": "BLOCK",
+  "blocking_findings": [
+    {
+      "id": "sha_mismatch",
+      "summary": "artifact SHA 불일치",
+      "evidence": "open/scripts/colab_train_base2.py (신규 dabf455d): 파일 없음; scratchpad/build_mint2_balanced_v2.py: SHA 불일치(req=신규 빌더 — stri… 현재=1aa52a8d22cf…); open/data/train_mint2_balanced_v2.jsonl: SHA 불일치(req=17d75352… (f… 현재=17d753527a40…); open/data/train_mint2_balanced_v2_gate.jsonl: SHA 불일치(req=05fad50e… (g… 현재=05fad50e7654…); open/data/train_mint2_balanced_v2_labels.csv: SHA 불일치(req=aea580d3…… 현재=aea580d3655f…); open/data/train_mint2_balanced_v2_gate_labels.csv: SHA 불일치(req=6bb8c1b1…… 현재=6bb8c1b1571d…)"
+    }
+  ],
+  "nonblocking_findings": [],
+  "verified_claims": [],
+  "unverified_claims": [],
+  "confounders": [],
+  "required_fixes": [
+    "요청 SHA를 현재 파일과 일치시키거나 파일을 고정"
+  ],
+  "safe_next_action": "진행 금지",
+  "evidence_references": [],
+  "completed_at": "2026-07-14T02:18:02Z"
+}

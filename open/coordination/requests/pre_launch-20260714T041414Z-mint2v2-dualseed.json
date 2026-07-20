@@ -1,0 +1,51 @@
+{
+ "schema_version": "3",
+ "request_id": "pre_launch-20260714T041414Z-mint2v2-dualseed",
+ "created_at": "2026-07-14T04:11:00Z",
+ "stage": "pre_launch",
+ "policy_version": "2026-07-14",
+ "objective": "mint2v2 gate dual-seed(seed79 GPU0 run_mint2v2b_s79 / seed81 GPU1 run_mint2v2_s81_gate) 발사 직전 pre_launch 내부 교차검증 — 디스크 fire 타깃 = plan_review r2 승인 레시피(dabf455d) 여부, 미선언 drift 0, gate 누수 0, Stage B 카드1 매치드 컨트롤, 체크포인트 미재사용/GPU 분리 확인.",
+ "verify_items": [
+  "A. 두 체인(run_mint2v2b_chain.sh / run_mint2v2_s81gate_chain.sh)이 승인 레시피(colab dabf455d)와 RUN/seed만 다른지 — 치타 실측 sha256sum + diff",
+  "B. Stage B가 카드1(mint2b) 매치드 컨트롤(env byte-identical: EPOCHS=6·INIT_BACKBONE·HOLDOUT_IDX=hidx·EXTRA_DATA 없음·COMMON 동일)인지",
+  "C. gate 누수 0: Stage A gate 데이터가 hidx-holdout 세션 제외 + Stage B HOLDOUT_IDX=hidx 정렬",
+  "D. 체크포인트 미재사용(_ckpt/pretext_backbone 없음) + GPU0/GPU1 완전분리(별도 dir·inode, CUDA_VISIBLE_DEVICES 0/1)",
+  "E. TB_V2 수학(배치독립 (per*wt).mean() + bincount weights=WT)이 plan_review 검증대로인지",
+  "F. effective_config가 20+플래그·SHA·버전 자동기록하는지",
+  "G. 해석 프레이밍 가드('4변수 묶음 × seed training draw', 단독효과·seed우위 호칭 금지) 적절성"
+ ],
+ "downstream_action": "launch",
+ "proposed_next_action": "mint2v2 gate dual-seed(seed79 GPU0 / seed81 GPU1) 학습 발사 — ★사용자 명시 승인 후 지휘자만 실행. 본 감사는 계약 정합 판정만, 발사 권한 아님.",
+ "lineage_id": "pre_launch-mint2v2-dualseed",
+ "direct_control": "카드1 mint2b(Stage A: 415e4c3e·PRETEXT_META=keep·v1 gate·TB_V2 없음 / Stage B: real-only 6ep INIT_BACKBONE+hidx). Stage B는 매치드 컨트롤, Stage A는 4변수 묶음 delta.",
+ "intended_change": "묶음(4변수): ①v2 strict rolling-window 데이터 ②TB_V2 배치독립 가중손실 ③TB_V2 target가중 클래스가중 ④PRETEXT_META omit. 순수 1변수 아님.",
+ "artifact_paths": [
+  "open/scripts/colab_train_base2.py",
+  "open/scripts/feat.py",
+  "open/data/train_mint2_balanced_v2_gate.jsonl",
+  "open/data/train_mint2_balanced_v2.jsonl"
+ ],
+ "evidence_paths": [
+  "open/coordination/results/plan_review-20260714T023334Z-5dde0f.json",
+  "open/coordination/logs/mint2b/effective_config_A_s79.json",
+  "open/coordination/logs/mint2b/effective_config_B_s79.json",
+  "scratchpad/colab_415e_to_dabf_diff.txt",
+  "scratchpad/hidx.npy"
+ ],
+ "code_sha256": {
+  "open/scripts/colab_train_base2.py": "dabf455d3cc93f2185ae9c4bd3733e3adc7690f4defab040ac29d3214fd4e8c3",
+  "open/scripts/feat.py": "91c419d634a85ad912d3dc43b9c802ddf0f1a31b0a203345cb38779b30b05ca8",
+  "scratchpad/colab_415e_to_dabf_diff.txt": "f82acf59eef79fdf7dd179405cd14ca8afc308b51c201042a695dc72164737f7"
+ },
+ "data_sha256": {
+  "open/data/train_mint2_balanced_v2_gate.jsonl": "05fad50e76545cb499e0fedaf56d8df7edb588a3aa991015575f1c5209f22466",
+  "open/data/train_mint2_balanced_v2.jsonl": "17d753527a406085dcb6fa50f6f708b0a265a3d43a1727dde9386f225811022e",
+  "scratchpad/hidx.npy": "e39aae253087b4ac08f2550005e08421584a2dbc273adf64c692a6b0f1b0feae"
+ },
+ "known_caveats": [
+  "★Codex 재호출 금지 — 내부 교차검증 단독.",
+  "발사·중단·kill·유료GPU는 각각 별도 사용자 명시 승인(action_state=WAITING_USER).",
+  "Stage B는 env byte-identical이나 코드 SHA 415e4c3e→dabf455d(불활성 delta)."
+ ],
+ "timeout_sec": 1200
+}

@@ -1,0 +1,43 @@
+너는 이 대회 프로젝트의 독립 감사자(Codex)다. 다음을 반드시 지켜라:
+1) 읽는 순서: AGENTS.md → open/docs/HANDOFF.md → open/docs/실험로그.md(관련 절만) → open/docs/대회규칙_채점환경.md → 이 stage의 체크리스트(open/docs/checklists/).
+2) Claude(요청자)의 결론을 신뢰하지 말고 실제 파일과 evidence_paths를 직접 대조하라.
+3) 서버 채점은 완전 결정론이다('노이즈' 표현 금지 — 결정론적 차이).
+4) holdout은 제출 자격 필터일 뿐 우열 판단에 쓰지 마라.
+5) 직접 대조군(direct_control)과 변경 변수(intended_change)가 실제로 일치(단일변수·교란 없음)하는지 확인하라. 동시변경은 confounders에 넣어라.
+6) read-only로 확인 불가한 주장은 unverified_claims에 넣어라. 추정과 사실을 구분하라.
+7) 어떤 프로젝트 파일도 수정하지 마라. 유일한 출력은 audit_result JSON이다.
+8) request_id를 audit_result.request_id에 정확히 반향하라.
+verdict: 위험단계 진행을 막을 결함=BLOCK, 사용자 결정 필요=NEEDS_HUMAN, 안전=PASS. required_fixes는 구체적으로.
+
+[STAGE=plan_review] 실험 계획 감사: 목적·직접 대조군·단일 변경변수·교란·예상 정보가치가 타당한가. 죽은 축(HANDOFF §5) 재시도인지, 홀드아웃으로 우열을 판단하려는지 점검하라.
+
+[AUDIT_REQUEST]
+{
+  "stage": "plan_review",
+  "timeout_sec": 1200,
+  "objective": "H100 seed83/84 direct-mint 후보를 v58 챔피언 프레임(s48+k79+신멤버)으로 밴드 통과 시 포장·제출하는 계획 감사",
+  "direct_control": "v58(s48+k79+k81)에서 k81 슬롯을 H100 seed83/84로 단일 교체",
+  "intended_change": "kf768 3번째 슬롯 멤버(seed only, H100 training draw)",
+  "artifact_paths": [
+    "open/docs/checklists/50_per_candidate.md"
+  ],
+  "code_sha256": {},
+  "data_sha256": {},
+  "effective_config_path": null,
+  "evidence_paths": [
+    "open/docs/HANDOFF.md",
+    "open/docs/checklists/50_per_candidate.md"
+  ],
+  "known_caveats": [
+    "H100 산출물은 A5000 정확재현 아님(training draw)",
+    "밴드는 자격필터 sanity(hidx∩va 2825행)",
+    "seed79v2는 refit 안 함(홀드아웃만)"
+  ],
+  "proposed_next_action": "홀드아웃 완주 후 밴드 통과분만 refit→회수→포장(비위험). 제출은 사용자 승인.",
+  "user_approval_required": false,
+  "request_id": "plan_review-20260712T114815Z-523f4a",
+  "created_at": "2026-07-12T11:48:15Z",
+  "deadline": "2026-07-12T12:08:15Z"
+}
+
+출력: audit_result 스키마를 정확히 따르는 JSON만. request_id=plan_review-20260712T114815Z-523f4a

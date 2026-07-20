@@ -1,0 +1,14 @@
+{
+  "request_id": "plan_review-20260714T022315Z-30ab6d",
+  "verdict": "NEEDS_HUMAN",
+  "blocking_findings": [],
+  "nonblocking_findings": [],
+  "verified_claims": [],
+  "unverified_claims": [],
+  "confounders": [],
+  "required_fixes": [],
+  "safe_next_action": "Codex 감사 미완 — 위험단계(launch/kill/포장/제출) 진행 금지, 모니터링만",
+  "evidence_references": [],
+  "completed_at": "2026-07-14T02:23:31Z",
+  "_gate_note": "codex exit 1"
+}

@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dacon236694/coordination/audit_result.schema.json",
+  "title": "data-auditor result v2 (07-14 갱신 — 실무 계약 반영: 추가필드 허용·claim 객체형 허용·findings 선택화. v1 대비 완화는 외부감사가 지적한 '계약≠실무 82건 위반' 해소 목적, 핵심 필수는 유지)",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "request_id",
+    "objective",
+    "verdict",
+    "auditor_model",
+    "completed_at",
+    "verified_claims",
+    "unverified_claims",
+    "confounders",
+    "required_fixes",
+    "safe_next_action",
+    "artifact_sha"
+  ],
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "description": "감사한 요청의 request_id를 정확히 반향(파일명과 일치, 불일치 시 stale로 거부)",
+      "pattern": "^[a-z_]+-[0-9]{8}T[0-9]{6}Z-[a-z0-9-]{4,}$"
+    },
+    "objective": {
+      "type": "string"
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "PASS",
+        "BLOCK",
+        "NEEDS_HUMAN"
+      ]
+    },
+    "auditor_model": {
+      "type": "string"
+    },
+    "completed_at": {
+      "type": "string",
+      "description": "ISO8601 UTC — ★실제 완료 시각(파일 mtime과 모순 금지, 추정·라운딩 기입 금지)"
+    },
+    "stage": {
+      "type": "string"
+    },
+    "blocking_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "summary"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "nonblocking_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "summary"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "verified_claims": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "object",
+            "required": [
+              "claim",
+              "evidence"
+            ],
+            "properties": {
+              "claim": {
+                "type": "string"
+              },
+              "evidence": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "description": "독립 재도출로 확인한 주장 — 문자열(근거 포함) 또는 {claim, evidence} 객체"
+    },
+    "unverified_claims": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "confounders": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "required_fixes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "safe_next_action": {
+      "type": "string"
+    },
+    "evidence_references": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "artifact_sha": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "path",
+              "sha256"
+            ],
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "sha256": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ],
+      "description": "path->sha 객체(Claude 관례) 또는 {path,sha256} 배열(Codex strict 산출)"
+    },
+    "post_audit_correction": {
+      "type": "string"
+    }
+  }
+}

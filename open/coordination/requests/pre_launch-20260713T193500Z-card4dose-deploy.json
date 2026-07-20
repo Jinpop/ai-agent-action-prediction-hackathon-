@@ -1,0 +1,27 @@
+{
+  "stage": "pre_launch",
+  "request_id": "pre_launch-20260713T193500Z-card4dose-deploy",
+  "created_at": "2026-07-13T19:35:00Z",
+  "timeout_sec": 1200,
+  "objective": "카드4 dose6 배포 체인(full 6,354-window Stage A 6ep → 배포 refit) 발사 직전 감사 — 카드1 배포 전례(run_mint2bdep_s79)와 완전 matched(유일변수 Stage A EPOCHS 3→6) 확인 + 발사 env 세트 도출.",
+  "context": {
+    "gate_chain": "run_mint2b_dose6_s79 완주(ALL_DONE 19:07 UTC), 밴드 in-band Y(블렌드 0.773437 ≥ 하한 0.767910, log-analyst 재계산)",
+    "gate_audit": "open/coordination/results/pre_launch-20260713T151500Z-card4dose.json (PASS — 단 '배포경로는 별도 게이트' 명시)",
+    "deploy_control": "카드1 배포 = run_mint2bdep_s79 (밴드통과 후 full 6,354-window Stage A 재수행 → refit → 포장, 현 챔피언 멤버). 카드4 배포는 이와 완전 matched + Stage A EPOCHS만 3→6이어야 LB probe가 dose 1변수 유지."
+  },
+  "intended_change": "run_mint2bdep_s79의 Stage A/B effective_config를 치타에서 직접 읽어 클론, 유일변수 = Stage A EPOCHS 3→6. 코드 = run_mint2bdep_s79 소스 코드 SHA와 동일본 복사(root 드리프트 cb3ce5d8 회피 — 이전 감사에서 확인된 지뢰). GPU 2장 전부 idle이므로 GPU0 또는 1 사용.",
+  "verify_items": [
+    "치타 run_mint2bdep_s79의 effective_config(stage별)를 직접 읽어 배포 체인의 정확한 env·데이터(full train_mint2_balanced.jsonl 6354, gate 아님)·refit 방식(REFIT_ONLY/SKIP_REFIT/HOLDOUT_IDX 유무) 실측 — 추정 금지",
+    "카드4 배포 env 도출: 위 config에서 Stage A EPOCHS만 3→6, 나머지 전 플래그 일치(발사자용 env 세트 명시)",
+    "full 데이터 SHA: data/train_mint2_balanced.jsonl(6354)이 카드1 배포 당시와 동일 SHA인지",
+    "코드 SHA: run_mint2bdep_s79 코드와 동일본을 새 run 디렉터리에 복사(415e4c3e 계열 예상 — 실측으로 확인)",
+    "GPU·디스크: 2장 idle 확인, 여유 공간(pack 포함 ~2G)",
+    "프레이밍: 배포판 홀드아웃 없음(full 재학습) — 밴드 자격은 gate chain으로 이미 통과, 배포판은 포장 재료. 'dose draw 분산 탐색' 유지"
+  ],
+  "known_caveats": [
+    "블렌드 홀드 델타 −0.000274(관찰치) — 방향 무예측, 서버 실측이 심판",
+    "밤샘 무인 진행(사용자 지시), 실제 제출은 사용자"
+  ],
+  "proposed_next_action": "PASS 시 train-launcher 발사(ETA: Stage A full 6ep ~15-20분 + refit ~2.5-3.5h → 완주 ≈08:00-08:30 KST) → fp16 포장 → zip-verifier → pre_submit → 아침 제출대기 2호. BLOCK 시 수정 후 재감사.",
+  "user_approval_required": false
+}

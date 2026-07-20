@@ -1,0 +1,33 @@
+{
+  "schema_version": "3",
+  "request_id": "post_lb-20260714T150000Z-metawave1-metant",
+  "created_at": "2026-07-14T14:45:00Z",
+  "stage": "post_lb",
+  "policy_version": "campaign:official-meta-wave1",
+  "objective": "official-meta-wave1 Part B: metaN/metaT LB 실측 기록 게이트 — delta 재계산·챔피언 교체(cA→META-T)·matched A/B(metaN vs metaT)·프레이밍 규율 내부 교차검증. Codex 미호출.",
+  "verify_items": [
+    "delta 재계산: metaN-cA=+0.0001608046, metaT-cA=+0.0018075385, metaT-metaN=+0.0016467339",
+    "챔피언 교체: metaT 최고 LB → META-T 신챔피언 자동채택",
+    "matched A/B: metaN vs metaT는 단일 멤버-슬롯 스왑(공유멤버·classic·BLEND_W 동일), 유일차이 meta 축",
+    "cA 대비: fresh REFIT confound 포함(순수 A/B 아님), metaT +0.0018>draw폭→정보축 전달",
+    "runtime metaN 584s/metaT 598s measured, metaT 600s벽 2s마진",
+    "프레이밍: transcript-meta>numeric은 시사(n=1·draw경계·채널+필드셋 번들), '순수 채널 A/B'·'노이즈' 금지"
+  ],
+  "downstream_action": "none",
+  "proposed_next_action": "PASS 시 docs-ledger-writer가 실험로그 append + HANDOFF §1(챔피언 META-T)·§9·§6 갱신. 후속 GPU/슬롯은 별도 사용자 결정.",
+  "lineage_id": "official-meta-wave1-partB-post_lb",
+  "direct_control": "직전 챔피언 cA[s48,k81,mint2b_s79,classic] — mint2b_s79 슬롯을 metaN/metaT로 각각 교체",
+  "intended_change": "관측 대상: official-meta 증강 멤버(metaN=숫자메타+6키, metaT=transcript 공식메타)의 서버 LB. metaN vs metaT는 meta 축 matched. 코드/데이터 변경 아님 — LB 해석만.",
+  "evidence_paths": [
+    "scratchpad/stage_metaN/script.py",
+    "scratchpad/stage_metaT/script.py",
+    "submits/submit_metaN.zip",
+    "submits/submit_metaT.zip"
+  ],
+  "effective_config_path": null,
+  "known_caveats": [
+    "LB·채점시간은 사용자·서버 보고.",
+    "audit_key는 internal_cross_check all-zeros placeholder.",
+    "metaT-metaN(+0.00165)≈draw폭 경계·n=1·번들 → 축 강단정 유보. cA 대비는 REFIT confound."
+  ]
+}

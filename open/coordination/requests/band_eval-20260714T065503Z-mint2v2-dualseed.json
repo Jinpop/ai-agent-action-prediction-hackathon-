@@ -1,0 +1,32 @@
+{
+  "schema_version": "3",
+  "request_id": "band_eval-20260714T065503Z-mint2v2-dualseed",
+  "created_at": "2026-07-14T06:55:03Z",
+  "stage": "post_gate",
+  "policy_version": "campaign:mint2v2-dualseed-0714",
+  "objective": "campaign mint2v2-dualseed-0714 BAND_EVAL: mint2b_s79 슬롯을 mint2v2_s79/s81로 각각 단일교체한 probe 블렌드가 cA 프레임 밴드(champ_repro_plain-0.0058) 자격을 통과하는지만 판정. 홀드=자격필터, 우열 아님. Codex 미호출.",
+  "verify_items": [
+    "멤버별 softmax(raw logits) / classic OOF 재-softmax 금지",
+    "신규 멤버 holdout idx3 == hidx(same_order/same_set)",
+    "단일 슬롯 교체 계약(mint2b_s79→mint2v2_*, s48/k81 고정, blend 0.6/0.4)",
+    "공통 split 교집합·classic OOF 커버리지·ID 정렬",
+    "cA 챔피언 홀드 재현 + probe별 plain/sess-eq + 밴드 하한(champ_repro-0.0058) + IN-BAND Y/N",
+    "밴드=배포 실측 자격일 뿐(우열·챔피언 교체는 LB·전략), mint2v2 4변수 묶음 probe 명시"
+  ],
+  "downstream_action": "none",
+  "proposed_next_action": "IN-BAND probe만 DEPLOY_REFIT(full v2 Stage A + REFIT_ONLY) — 별도 pre_launch 게이트 후. 밴드=자격, 우열 아님.",
+  "lineage_id": "mint2v2-dualseed-0714-band",
+  "direct_control": "챔피언 cA[s48,k81,mint2b_s79] — mint2b_s79 슬롯을 mint2v2_s79/s81로 각각 단일교체",
+  "intended_change": "관측 대상: mint2b_s79 슬롯의 mint2v2(v2 4변수 묶음) 멤버 교체가 cA 프레임 홀드 블렌드 밴드 자격을 통과하는지. 코드/데이터 변경 아님 — 홀드 밴드 자격 판정만.",
+  "evidence_paths": [
+    "scratchpad/mint2v2_band.py",
+    "scratchpad/harvest_mint2v2/s79/holdout_probs3.npy",
+    "scratchpad/harvest_mint2v2/s81/holdout_probs3.npy"
+  ],
+  "effective_config_path": null,
+  "known_caveats": [
+    "backfilled: 이 짝 request는 band_eval 결과 저장 시 누락됐고 post_lb 스키마 정합화(2026-07-14) 때 지휘자가 소급 생성 — 판정 내용 무변경, 시각은 원 결과의 started_at 기준.",
+    "audit_key는 internal_cross_check all-zeros placeholder.",
+    "묶음 4변수·cA 프레임 한정 — 축 death/단독효과 단정 금지."
+  ]
+}

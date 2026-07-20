@@ -1,0 +1,60 @@
+{
+  "schema_version": "3",
+  "request_id": "post_lb-20260715T013000Z-metawave1-blendw",
+  "audit_key": "0000000000000000000000000000000000000000000000000000000000000000",
+  "lineage_id": "official-meta-wave1-blendw-post_lb",
+  "stage": "post_lb",
+  "policy_version": "campaign:official-meta-wave1",
+  "objective": "official-meta-wave1 후속 post_lb: BLEND_W 0.6→0.62 비율조정(metaN_w062) LB 해석. delta 재계산·matched(단일 스칼라)·챔피언·§5 blend-w frame-specific 재분류·프레이밍 규율 내부 교차검증. read-only, Codex 미호출.",
+  "gate_state": "PASS",
+  "action_state": "WAITING_USER",
+  "downstream_action": "none",
+  "verdict_source": "internal_cross_check",
+  "auditor_model": "claude-opus-4-8 (lb-interpreter internal cross-check, read-only)",
+  "cache_hit": false,
+  "attempt": 0,
+  "started_at": "2026-07-15T01:15:00Z",
+  "completed_at": "2026-07-15T01:30:00Z",
+  "runner_recorded": {
+    "request_id": "post_lb-20260715T013000Z-metawave1-blendw",
+    "model": "claude-opus-4-8",
+    "reasoning": "lb-interpreter read-only post_lb (no Codex). LB는 사용자 보고, 산술·matched는 로컬 문서·코드 대조.",
+    "started_at": "2026-07-15T01:15:00Z",
+    "completed_at": "2026-07-15T01:30:00Z",
+    "attempt": 0,
+    "cache_hit": false,
+    "raw_request_id": null
+  },
+  "raw_result_ref": null,
+  "verified_claims": [
+    {"claim": "metaN_w062-metaN=+0.0010037485, -cA=+0.0011645531, -metaT=-0.0006429854", "evidence": "LB 0.7860107043 vs 0.7850069558/0.7848461512/0.7866536897 직접 뺄셈, 사용자 검산 일치"},
+    {"claim": "metaN_w062 vs metaN은 BLEND_W(0.6→0.62) 단일 스칼라 matched, 동일 멤버·재학습 없음·draw 0", "evidence": "META-N 프레임(s48+k81+metaN+classic) 문서화 + 런타임 근접 584s→587s(멤버 동일 방증) + 선행 metant 감사(results/post_lb-20260714T150000Z-metawave1-metant.json)가 META-N 프레임 멤버·BLEND_W=0.6 확립"},
+    {"claim": "META-T(0.7866536897)=최고 LB → 챔피언 유지, metaN_w062 미달", "evidence": "metaN_w062 0.7860107043 < metaT, delta -0.0006429854"},
+    {"claim": "§5 'w=0.6 정점/0.779 포화'는 구 RoBERTa/v49-era 프레임(메타 멤버 없음) 실측 → meta 프레임 0.62>0.6 +0.0010(매치드)은 frame-specific 정정", "evidence": "HANDOFF §5 line 54/58, 구프레임 w=0.6 최적 vs 본 매치드 +0.0010037485"},
+    {"claim": "블렌드가중 변경=시간중립 레버(멤버·추론 불변) → metaT 598s 벽에 시간 추가 없음", "evidence": "metaN 584s→metaN_w062 587s(가중치만 변경, 토큰·멤버 불변)"}
+  ],
+  "unverified_claims": [
+    "metaT 프레임에 0.62 적용 시 +0.0010 전이·~0.7877 신챔피언은 가설(멤버 캘리브레이션 프레임 의존, 실측 전 미확정)",
+    "0.62가 meta 프레임 정점이라는 근거 없음 — n=1 point, 0.64+ 미검증(정점 미국소화)",
+    "runtime metaN_w062 587s는 measured<600이나 metaT_w06x 시간은 미검증(제출 시 확인)"
+  ],
+  "confounders": [
+    "w062 zip은 build-sanity만·스테이징 정리됨 → 독립 byte-diff 미수행. matched-단일변수는 문서화 빌드+런타임 근접+선행 metant 감사로 뒷받침(방향·기전 결정론)",
+    "delta는 진 축(numeric-ext META-N) 프레임에서 측정 → metaT 프레임 전이는 별개 실측 필요",
+    "n=1 point(BLEND_W=0.62만), 정점 미확정",
+    "구 §5 'w=0.6 정점'은 실제 실측이었음(오류 아님) → frame-specific 정정이지 반증 아님"
+  ],
+  "required_fixes": [],
+  "safe_next_action": "docs-ledger-writer가 실험로그 EOF append + HANDOFF §5(블렌드w frame-specific 정정)·§6(살아있는 시간중립 레버 추가)·§9(metaN_w062 0.7860107043·슬롯·목표차 +0.0064163103) 갱신. (권고) 시간중립 매치드 레버라 이미 빌드된 submit_metaT_w062/w064 제출로 챔피언 프레임 전이+정점 국소화 가치 — 단 발사·제출은 사용자 명시 승인. 목표차 진짜 레버는 큰 카드(신규 non-kf 백본).",
+  "escalated": false,
+  "evidence_references": [
+    "open/coordination/results/post_lb-20260714T150000Z-metawave1-metant.json",
+    "open/docs/HANDOFF.md",
+    "open/docs/checklists/60_post_submit.md"
+  ],
+  "artifact_sha": {
+    "submits/submit_metaN_w062.zip": "cdc8bba751858591a935ba4822fa2e9e0030316c0cdfe9bc0141e2a76b1ffbb0",
+    "submits/submit_metaT_w062.zip": "2bdd24e93a17c635822f9e657a4dbe4f6cc3a30a3451d3522a2705552d4b8b08",
+    "submits/submit_metaT_w064.zip": "32cd1bfd13c4864d39496323ba809d430b7cd41ed221cd62af567652849a74c6"
+  }
+}

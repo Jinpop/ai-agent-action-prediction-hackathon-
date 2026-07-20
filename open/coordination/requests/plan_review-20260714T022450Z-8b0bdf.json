@@ -1,0 +1,51 @@
+{
+  "stage": "plan_review",
+  "objective": "mint2-balanced-v2 seed79 gate 발사 게이트 — 07-14 외부감사 지적(TARGET_BALANCE 배치정규화·클래스가중 raw count·mint 활용 부족·메타 미사용 필드) 수정판. ★묶음 probe(4변수 동시변경) — '단독효과' 호칭 사전 금지.",
+  "direct_control": "카드1 mint2b gate chain(치타 run_mint2b_s79): Stage A = EPOCHS 3·PRETEXT keep·TARGET_BALANCE·train_mint2_balanced_gate(5,097/2,314)·code 415e4c3e → Stage B = EPOCHS 6·real-only·HOLDOUT_IDX=hidx. 현 챔피언 cA(0.7848461512)의 mint 멤버가 이 계보.",
+  "intended_change": "★묶음 4변수(전부 07-14 외부감사 수정항): ①TB_V2 배치독립 가중손실((per*wt).mean(), WT 전역 mean=1 :234 전제 — 기존 배치별 wt.sum() 재정규화 제거) ②TB_V2 클래스가중(bincount weights=WT — 기존 raw window 행수 제거) ③데이터 v2: strict 전체 3,162 target/6,829 unique window(gate 5,454/2,542) — exact-meta 조건 제거+내부 전역 dedup(target-커버리지 우선 tiebreak) ④메타 omit: PRETEXT_META=omit + session_meta 안정필드 4종만(user_tier/language_pref/loc/language_mix — 복원·zero-sentinel 없음). Stage B는 카드1과 byte-identical(TB_V2는 real-only WT=1이라 수학적 no-op이므로 미설정).",
+  "code_sha256": {
+    "open/scripts/colab_train_base2.py": "dabf455d3cc93f2185ae9c4bd3733e3adc7690f4defab040ac29d3214fd4e8c3",
+    "scratchpad/build_mint2_balanced_v2.py": "1aa52a8d22cf85e81789323ff0e72133dd91d8a6f2b8afec693e8c5056a4b604",
+    "open/scripts/feat.py": "91c419d634a85ad912d3dc43b9c802ddf0f1a31b0a203345cb38779b30b05ca8"
+  },
+  "data_sha256": {
+    "open/data/train_mint2_balanced_v2.jsonl": "17d753527a406085dcb6fa50f6f708b0a265a3d43a1727dde9386f225811022e",
+    "open/data/train_mint2_balanced_v2_gate.jsonl": "05fad50e76545cb499e0fedaf56d8df7edb588a3aa991015575f1c5209f22466",
+    "open/data/train_mint2_balanced_v2_labels.csv": "aea580d3655f4a4c9250e1986b84eb861f958d486e45d337360fce3299fd3bd1",
+    "open/data/train_mint2_balanced_v2_gate_labels.csv": "6bb8c1b1571dfaacb79a5b3f3b62ad850a3eecbdc7d34b3e53caa828a20ef122",
+    "scratchpad/hidx.npy": "e39aae253087b4ac08f2550005e08421584a2dbc273adf64c692a6b0f1b0feae"
+  },
+  "verify_items": [
+    "TB_V2 손실 수학: (per*wt).mean()이 배치독립인지(WT 전역 mean=1 :234 전제 확인), Stage B(WT=1)에서 기존 sum/wt.sum()과 동치라 Stage B env 미설정이 카드1 byte-identical 유지에 문제없는지",
+    "TB_V2 클래스가중: sqrt_weights(yy, WT[idx_tr])가 target가중 반영 카운트인지, 기존 경로(wt=None) 무변경인지",
+    "colab diff: dabf455d vs 415e4c3e가 선언된 변경(temp assert + TB_V2)만인지 — 기타 드리프트 있으면 BLOCK",
+    "빌더 검증: strict 3,162 도출 근거, 내부 dedup의 target-커버리지 tiebreak 타당성, ★모호 input 2건(동일 (history,prompt) 교차라벨 — scratchpad/mint2_v2_label_conflicts.json) 처리(한쪽 유지)가 안전한지",
+    "누수: gate 5,454행에 hidx-holdout 세션 0, budget/elapsed/git_dirty/ci 필드 부재(zero-sentinel 원천 차단), PRETEXT_META=omit 경로가 [META] 라인을 실제로 생략하는지(colab :118)",
+    "발사 env 도출: Stage A = 카드1 gate Stage A에서 {EXTRA_DATA→v2_gate, PRETEXT_META keep→omit, TB_V2=1} / Stage B = 카드1 gate Stage B와 byte-identical. train-launcher용 env 세트 명시",
+    "프레이밍: 묶음 4변수 probe — 밴드 통과해도 'v2 효과/수정이 통한다' 단독효과 호칭 금지 사전공약, 밴드=자격필터",
+    "GPU/디스크: 치타 2장 idle 여부, 신규 데이터·코드 업로드 목록"
+  ],
+  "evidence_paths": [
+    "open/scripts/colab_train_base2.py",
+    "scratchpad/build_mint2_balanced_v2.py",
+    "scratchpad/mint2_v2_label_conflicts.json",
+    "open/data/train_mint2_balanced_v2_gate.jsonl",
+    "open/coordination/results/post_lb-20260714T014500Z-round3.json"
+  ],
+  "known_caveats": [
+    "묶음 4변수라 어느 수정이 효과인지 분리 불가 — 사전공약: 결과는 '수정축 묶음 probe'로만 기록",
+    "모호 input 2건은 데이터 자체의 모호성(어느 라벨 선택도 자의적) — dedup으로 학습셋 내 모순은 없음",
+    "seed79 1장 probe — seed 스프레드(±0.0015) 안에서 움직일 수 있음",
+    "이 요청은 data-auditor + Codex 외부 감사 병행 대상(07-14 CLAUDE.md 신규 규칙 — 새 학습축 plan_review)",
+    "병행 감사: 동일 계획에 대한 data-auditor(Claude) PASS가 results/plan_review-20260714T020320Z-mint2v2.json에 존재 — 이 Codex 감사는 외부 교차검증(07-14 CLAUDE.md 규칙). Claude 판정에 동조할 의무 없음, 독립 판단.",
+    "1차 Codex 게이트 BLOCK(plan_review-20260714T021802Z-3ef3c6) = 요청서 SHA 프리픽스 표기 형식 문제(fail-closed 정상 작동) — 본 재요청은 전체 64-hex·클린 경로로 정정. 코드·데이터 파일 자체는 무변경."
+  ],
+  "proposed_next_action": "data-auditor PASS ∧ Codex PASS 시: 치타 업로드(colab dabf455d·v2 데이터 4파일) → run_mint2v2_s79 gate chain 발사(GPU, A3/B6) → 밴드체크 → 통과 시 full Stage A + 배포 refit → cA 프레임 m2b79 슬롯 교체 포장 → pre_submit → 사용자 제출.",
+  "effective_config_path": null,
+  "deadline": "2026-07-14T04:00:00Z",
+  "user_approval_required": false,
+  "timeout_sec": 900,
+  "request_id": "plan_review-20260714T022450Z-8b0bdf",
+  "created_at": "2026-07-14T02:24:50Z",
+  "artifact_paths": []
+}

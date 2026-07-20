@@ -1,0 +1,61 @@
+{
+  "schema_version": "3",
+  "request_id": "post_lb-20260715T231500Z-longshot-dual",
+  "audit_key": "0000000000000000000000000000000000000000000000000000000000000000",
+  "lineage_id": "longshot-dual-0715-post_lb",
+  "stage": "post_lb",
+  "policy_version": "campaign:longshot-dual-0715",
+  "objective": "campaign longshot-dual-0715 post_lb: Card A(metaT_s81)·Card B(koelectra) 서버 LB 해석 — delta·챔피언 불변·k81 레시피-다양성 해석·프레이밍 규율. 지휘자 직접 산술+기록(read-only 해석). Codex 미호출.",
+  "gate_state": "PASS",
+  "action_state": "WAITING_USER",
+  "downstream_action": "none",
+  "verdict_source": "internal_cross_check",
+  "auditor_model": "claude-opus-4-8 (지휘자 직접 산술 검증 + docs-ledger-writer 기록, 마감압박 하 경량 경로)",
+  "cache_hit": false,
+  "attempt": 0,
+  "started_at": "2026-07-14T23:10:00Z",
+  "completed_at": "2026-07-14T23:15:00Z",
+  "runner_recorded": {
+    "request_id": "post_lb-20260715T231500Z-longshot-dual",
+    "model": "claude-opus-4-8",
+    "reasoning": "마감(10:00 KST) 압박 하 지휘자 직접 delta 산술(소수점 전체)·구성 대조. LB·채점시간은 사용자·서버 보고.",
+    "started_at": "2026-07-14T23:10:00Z",
+    "completed_at": "2026-07-14T23:15:00Z",
+    "attempt": 0,
+    "cache_hit": false,
+    "raw_request_id": null
+  },
+  "raw_result_ref": null,
+  "nonblocking_findings": [
+    {"id": "lightweight-audit-path", "summary": "마감압박으로 별도 lb-interpreter 서브에이전트 생략, 지휘자 직접 산술+기록. delta 산술은 단순 뺄셈이라 리스크 낮음.", "evidence": "10:00 KST 마감, 08:1x 시점"}
+  ],
+  "verified_claims": [
+    {"claim": "Card A metaT81_w062 = 0.7857601405 (598s), delta vs 챔피언 metaT_w062 = -0.0009373466", "evidence": "0.7857601405-0.7866974871 전체 뺄셈, 사용자 스크린샷"},
+    {"claim": "Card B koel_w062 = 0.7827351370 (578s), delta vs 챔피언 = -0.0039623501", "evidence": "0.7827351370-0.7866974871"},
+    {"claim": "챔피언 metaT_w062 0.7866974871 불변 (2026-07-15 5제출 전패: allinfo_3nn -0.00168 / 1nnc 진단 / 2nn -0.0057 / koel -0.0040 / metaT81 -0.0009)", "evidence": "auto-highest-LB"},
+    {"claim": "두 카드 모두 챔피언 w062 프레임 k81 단일슬롯 교체(BLEND_W 0.62·공유멤버 동일) → 결손은 교체멤버로 격리", "evidence": "빌드 계보: submit_metaT_w062.zip 기반, 공유멤버 byte 유지, E2E seed 3.00"},
+    {"claim": "runtime measured: A 598s(600s벽 마진 2s)·B 578s — 타임아웃 없음", "evidence": "서버 채점시간"}
+  ],
+  "unverified_claims": [
+    "'k81 가치 = 레시피-다양성(시드·아키텍처 단독으론 부족)'은 관측 기반 해석 — Card A/B 각 n=1 draw라 법칙 아님.",
+    "'koelectra 죽음' 단정 금지 — 단일 draw·512len·direct-mint 묶음(멤버 자체 다변수).",
+    "LB·채점시간은 사용자·서버 보고."
+  ],
+  "confounders": [
+    "Card A: metaT81 멤버는 seed(79→81)만이 아니라 '같은 레시피 이중화'라는 앙상블 구조 변화 포함 — metaT79와 고상관이 결손 원인일 개연성(관측).",
+    "Card B: koel 멤버는 백본+길이(512)+레시피(direct-mint)+seed 묶음 — 아키텍처 단독효과 미분리.",
+    "n=1 draw each. 결정론 서버 — '노이즈' 금지."
+  ],
+  "required_fixes": [],
+  "safe_next_action": "docs-ledger-writer 기록(진행). 마지막 카드 submit_seedlotto_w062.zip(챔피언 동일구조·metaT seed 79→81만·matched 단일변수) 제출은 사용자 결정. 잔여 슬롯 2. 본선 컷 0.79591 도달 불가 인지 공유됨.",
+  "escalated": false,
+  "evidence_references": [
+    "open/coordination/campaign-longshot-dual-0715.json",
+    "open/coordination/results/post_lb-20260715T090000Z-allinfo-3nn1nnc.json"
+  ],
+  "artifact_sha": {
+    "submits/submit_koel_w062.zip": "a0438a6958c95506eb9bf09492c44bf9aa2ab3ade7096e80d5ea02e643d590e8",
+    "submits/submit_metaT81_w062.zip": "5fab591f0db79d09c4b5752482a7542331dcb32f557b22b347bfd73c7d0f7107",
+    "submits/submit_seedlotto_w062.zip": "8ab2d19267ea3638282a13e2e1f83490562bdd3eec8a9461646033c8f35541f2"
+  }
+}

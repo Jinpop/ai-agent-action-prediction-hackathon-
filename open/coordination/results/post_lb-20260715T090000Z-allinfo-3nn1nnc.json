@@ -1,0 +1,73 @@
+{
+  "schema_version": "3",
+  "request_id": "post_lb-20260715T090000Z-allinfo-3nn1nnc",
+  "audit_key": "0000000000000000000000000000000000000000000000000000000000000000",
+  "lineage_id": "all-info-h100-final-0715-post_lb",
+  "stage": "post_lb",
+  "policy_version": "campaign:all-info-h100-final-0715",
+  "objective": "campaign all-info-h100-final-0715 post_lb: ALL-INFO 3NN·1NN+C 서버 LB 해석 — delta 재계산·묶음(멤버구성 다중변경)·metaN동률 관찰·다양성 레버·시간벽·챔피언 불변·목표차·프레이밍 규율. read-only, Codex 미호출.",
+  "gate_state": "PASS",
+  "action_state": "WAITING_USER",
+  "downstream_action": "none",
+  "verdict_source": "internal_cross_check",
+  "auditor_model": "claude-opus-4-8 (lb-interpreter internal cross-check, read-only)",
+  "cache_hit": false,
+  "attempt": 0,
+  "started_at": "2026-07-15T08:50:00Z",
+  "completed_at": "2026-07-15T09:00:00Z",
+  "runner_recorded": {
+    "request_id": "post_lb-20260715T090000Z-allinfo-3nn1nnc",
+    "model": "claude-opus-4-8",
+    "reasoning": "lb-interpreter read-only post_lb (no Codex). LB·채점시간은 사용자·서버 보고, 산술·matched는 선행 metant/1nn 감사 대조.",
+    "started_at": "2026-07-15T08:50:00Z",
+    "completed_at": "2026-07-15T09:00:00Z",
+    "attempt": 0,
+    "cache_hit": false,
+    "raw_request_id": null
+  },
+  "raw_result_ref": null,
+  "nonblocking_findings": [
+    {"id": "target-gap-live-confirm", "summary": "목표차 +0.0063725129(0.79307-0.7866974871, 일관쌍)이나 12등 스코어는 리더보드 변동값 — docs 기록 전 라이브 재확정.", "evidence": "0.79307-0.7866974871=0.0063725129"},
+    {"id": "paid-gpu-shutdown", "summary": "60_post_submit #5: 유료 GPU(Elice) 최종 산출물 SHA 확인 후 즉시 종료 필요(사용자 승인 행동). 사용자 04:0x 종료 확인(NO_ACTIVE_TARGET).", "evidence": "campaign=all-info-h100(paid draw), 종료 raw 배너 NO_ACTIVE_TARGET"},
+    {"id": "naming-allinfo-misnomer", "summary": "명칭 정정(사용자 비평): 'ALL-INFO'는 정확히는 'ALL-REAL + STABLE-MINT'. Stage A는 복원가능 동적mint메타(CI/dirty/open, all-three exact=2863=train_mint_exact)까지 제외하고 stable 5필드만 사용 — 최대적재 아님.", "evidence": "train_mint_exact=2863행; stable_meta 5필드(tier/langpref/loc/langmix/turn), CI/dirty/open 생략"},
+    {"id": "stage-a-effective-config-overwritten", "summary": "Stage A effective_config.json이 동일 run_dir에서 Stage B에 덮어써져 원본 소실. 발사직후 probe로 값은 캡처됨 — scratchpad/harvest_allinfo/stage_a_effective_config.reconstructed.json에 재보존.", "evidence": "회수 effective_config=Stage B값(REFIT_ONLY)"},
+    {"id": "sha256sums-stale", "summary": "harvest model_sub/SHA256SUMS.txt는 fp16 변환 전(fp32) backbone SHA(f5d10477) 기록 — 실제 zip은 fp16(89b6c22e). 기능오류 아님·계보기록 오류, zip 미포함. 정정본 별도.", "evidence": "fp32 f5d10477 vs fp16 89b6c22e"},
+    {"id": "blendw-frame-precision", "summary": "3NN은 BLEND_W=0.60(manifest)인데 챔피언은 metaT_w062=0.62 → '현재 챔피언 프레임 그대로'는 부정확. 정확히는 metaT(0.6) 프레임에 ALL-INFO. blend-w 폭(+0.0000437974)은 delta에 반영됨.", "evidence": "3nn vs metaT(0.6)=-0.0016365060, vs champion(0.62)=-0.0016803034"},
+    {"id": "shared-member-reindex-assumed", "summary": "3nn 공유멤버(classic/s48/k81)가 metaT 프레임과 동일하다는 전제는 META_NUM_EXT 여분열 reindex-drop(metant 감사 로직) 가정 — zip-verifier가 byte-identical 확인함.", "evidence": "zip-verifier: 공유멤버 전수 SHA256 일치"}
+  ],
+  "verified_claims": [
+    {"claim": "3nn delta: vs 챔피언 metaT_w062=-0.0016803034; vs metaT(0.6)=-0.0016365060; vs metaN=+0.0000102279; vs cA=+0.0001710325", "evidence": "0.7850171837 소수점 전체 뺄셈, 내부검산 2건 통과((3nn-metaN)+(metaN-metaT)=3nn-metaT(0.6); 3nn-metaT(0.6)-blendw0.0000437974=3nn-champion)"},
+    {"claim": "1nn delta: 1nnc vs metaT_1nn=-0.0017998634; 1nnc vs 3nn(다양성)=-0.0531872371", "evidence": "0.7318299466 vs 0.7336298100 / vs 0.7850171837 전체 뺄셈"},
+    {"claim": "핵심: 3nn(0.7850171837)이 metaN(0.7850069558)과 동률(+0.0000102279), metaT엔 -0.00164 → transcript matched이득(metaT-metaN=+0.0016467339) 소실", "evidence": "metant 감사 metaT-metaN + 본 제출"},
+    {"claim": "멤버 결손 재현: 3nn(-0.00164)·1nn(-0.0018) 동부호·동자릿수 → ALL-INFO 멤버가 metaT 멤버보다 ~0.0016~0.0018 약함(원인은 묶음 미분리)", "evidence": "3nn/1nn 두 맥락 delta"},
+    {"claim": "챔피언 metaT_w062 0.7866974871 불변, ALL-INFO 미채택(3nn 0.7850171837<0.7866974871, auto-highest-LB)", "evidence": "auto-highest-LB"},
+    {"claim": "시간벽: 3nn 598s 완주(타임아웃 없음, metaT 598~600s 이력과 일관)·1nnc 191s = measured", "evidence": "제출 채점시간 measured 598/191"},
+    {"claim": "목표차 챔피언→12등(0.79307)=+0.0063725129(일관쌍)", "evidence": "0.79307-0.7866974871"}
+  ],
+  "unverified_claims": [
+    "LB·채점시간은 사용자·서버 보고(결정론 서버 오라클 전제).",
+    "'125d numeric이 transcript 이득을 희석'은 미검증 가설 — pretext(stable-meta)·draw(A100)가 함께 바뀐 묶음이라 인과 미분리.",
+    "순수 1nn(BLEND_W=1.0)은 미제출 — ALL-INFO 단독 LB 미관측.",
+    "per-field 복원가능 수치(CI 3108/dirty 3016/open 2910)는 외부감사/사용자 보고 — all-three=2863은 train_mint_exact와 정합 확인, per-field는 audit_mint_recoverability 재실행 무출력이라 미재확인."
+  ],
+  "confounders": [
+    "★교체된 meta멤버가 pretext(m2b_s79->stable-meta mint6829/3ep/TB_V2)+numeric(119d->125d META_NUM_EXT)+draw(A5000->A100)를 동시변경(묶음). 앙상블 슬롯은 매치되나 멤버 자체는 다변수 — '단독효과'·'순수 A/B' 금지.",
+    "3nn과 metaN이 동률이나 metaN도 numeric-ext(125d) 기반이라 '125d 원인'으로 귀결하고 싶은 유혹 있음 — metaN vs ALL-INFO는 transcript-포함·pretext·draw가 다름(matched 아님).",
+    "1nnc vs 3nn -0.053은 앙상블-크기 붕괴(무앙상블 base) 지배 — 품질귀속 아님.",
+    "vs 챔피언 -0.0016803034는 멤버교체+blend-w(0.6->0.62) 묶음.",
+    "n=1 seed(kf-deberta 단일 draw). 결정론 서버 — '노이즈' 금지."
+  ],
+  "required_fixes": [],
+  "safe_next_action": "docs-ledger-writer가 실험로그 EOF append(ALL-INFO negative 묶음 probe + 명칭정정 + 미사용정보 + 감사결함) + HANDOFF §9 스냅샷·§6(transcript>채널스택 관측, 법칙 아님) 갱신. 챔피언 metaT_w062 불변이라 §1 무변경. 다음 큰 카드(non-kf 백본) 발사·제출은 각각 사용자 명시 승인. (권고, 실행권 아님)",
+  "escalated": false,
+  "evidence_references": [
+    "open/coordination/results/post_lb-20260714T150000Z-metawave1-metant.json",
+    "open/coordination/results/post_lb-20260715T030000Z-metawave1-1nn.json",
+    "open/coordination/results/pre_launch-20260715T033000Z-allinfo.json",
+    "open/docs/checklists/60_post_submit.md"
+  ],
+  "artifact_sha": {
+    "submits/submit_allinfo_3nn.zip": "42c8affd1a802859a4c4a54dabf3ba7b9eeaaad7a1f94886ecf67c258ff81934",
+    "submits/submit_allinfo_1nnc.zip": "27a11d82df4805e7d5fdb2f7e94f9912850de2901fce22982884b56ae9006c1f"
+  }
+}

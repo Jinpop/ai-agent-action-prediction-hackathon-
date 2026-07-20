@@ -1,0 +1,69 @@
+{
+  "request_id": "plan_review-20260712T170000Z-mint2b",
+  "objective": "mint2 balanced 카드② stage A→B 발사 직전 plan_review — build_mint2_balanced.py + colab 5변경(TARGET_BALANCE·HOLDOUT_IDX)의 누수·가중·split·zero-sentinel·stage구조 독립 read-only 검증",
+  "verdict": "PASS",
+  "auditor_model": "data-auditor (claude-opus subagent, read-only)",
+  "completed_at": "2026-07-12T16:58:00Z",
+  "blocking_findings": [],
+  "nonblocking_findings": [
+    {
+      "id": "envelope-neutral",
+      "summary": "배포멤버는 kf-deberta-base 768(INIT_BACKBONE 후 real-only refit=여전히 kf768). v58 k81 슬롯과 kf768→kf768 동급교체라 A/B/C의 s48(512)→kf768(768) envelope 위반(zip+116MB·시간붕괴)이 없다. size/time 중립.",
+      "evidence": "recon §2 대비; v58 프레임 kf768 슬롯 단일교체"
+    },
+    {
+      "id": "non-v49-zip-contract",
+      "summary": "kf768→kf768 단일교체는 verify_zip 지원 아키텍처 클래스(head 887→256→14, kf params 185,290,752, dirname kf768)와 동일하나 baked-in ref가 v49. pre_submit에서 ref/new/old를 v58 기준으로 넘겨 clean 단일 kf768 스왑 확인, v58-특정이 안 잡히면 unverified 명시.",
+      "evidence": "verify_zip.py v49 계약 (CLAUDE.md §검증규약)"
+    },
+    {
+      "id": "deploy-stageA-full-rerun",
+      "summary": "stage A(gate 5097 전량학습, GKF 미사용)는 밴드체크 프록시. 배포 멤버는 full(6354) stage A + real-only refit 별도 재수행. 빌더가 gate/full 둘 다 emit해 분리 지원(프로젝트 표준 gate/full 패턴).",
+      "evidence": "build_mint2_balanced.py emit full/gate"
+    },
+    {
+      "id": "bandcheck-alignment-reminder",
+      "summary": "밴드체크(log-analyst) 시 각 멤버 idx로 hidx 공통행 정렬 + 멤버별 softmax 후 합성(hp_*.npy=raw logits). 신규멤버는 HOLDOUT_IDX=hidx pin으로 자동 hidx 정렬.",
+      "evidence": "which_split.py: hybrid/holdout_idx3.npy ≠ hidx 관측"
+    }
+  ],
+  "verified_claims": [
+    "split landmine 실재: 로컬 GroupKFold(5)-fold0 va(14000/1885) ≠ hidx.npy(14000/1885), 세션겹침 385/1885·row겹침 2857 (독립 재계산 일치)",
+    "기존 챔피언 멤버는 hidx split: hp_kf768_79 argmax vs y[hidx] Macro-F1=0.7617(recon 단독홀드 정확일치) / GKF-fold0 정렬=0.0707 (독립 재계산 일치)",
+    "HOLDOUT_IDX pin·refit 무간섭: colab va=np.load(hidx)·tr=setdiff1d·bounds assert, refit은 np.arange(len(texts))라 va 무관, 홀드아웃 eval에만 영향",
+    "누수 불변식: train_mint2_balanced_gate.jsonl의 gate window source-세션 ∩ hidx = 0 (full∩hidx=359는 배포용 superset이라 정상)",
+    "TARGET_BALANCE 균등: full/gate 전 target 총가중=1.000000(WT/=mean 후에도 전 target 동일), 1-window:6-window = 6:1 (독립 재계산 일치)",
+    "budget/elapsed·zero-sentinel 차단: full/gate 전행 budget/elapsed 0건, PRETEXT시 M[:]=0, [META]텍스트에 tier/ci/dirty/turn/open만 → v40 함정 원천차단",
+    "빌더 카운트 계약: CI 3108·dirty 3016·open 2910·strict 3162·core 2863·mint2 6859, emit full 6354/2863·gate 5097/2314, window-strict 위반0·label conflict0 (audit도구 독립 재현)",
+    "stage 구조 정합: PRETEXT⊥INIT_BACKBONE assert(:67), stageA PRETEXT 전량학습, stageB EXTRA없음→leak-guard 미발동, HOLDOUT_IDX pin만 홀드아웃 보호"
+  ],
+  "unverified_claims": [],
+  "confounders": [
+    "★[감사가 놓침, 사후 발견] Stage A epoch 미매칭: 최초 발사 체인이 COMMON EPOCHS=6을 stage A/B 공통 적용했으나 기존 strict/exact pretext stage A는 3ep(run_pretext_ec79o effective_config EPOCHS=3 확인). → 최초 결과는 balanced-window 단독효과가 아니라 (balanced windows + exact keep meta + pretext 6ep) 묶음효과. plan_review가 stage-A epoch을 matched-control 변수로 검토하지 않아 이 교란을 통과시킴. 사후 정정: 02:14 KST Stage A=3ep(prior 일치)/Stage B=6ep(prior real-only run_kf768_ec79o=6ep 일치)로 재발사(post_audit_correction 참조)."
+  ],
+  "required_fixes": [],
+  "safe_next_action": "stage A→B 발사 진행 가능 — 단 matched-control 위해 Stage A=3ep(prior pretext 일치)·Stage B=6ep 준수(최초 6ep 발사는 confound). 배포·제출·유료GPU·원격kill은 사용자 승인.",
+  "evidence_references": [
+    "scratchpad/build_mint2_balanced.py",
+    "open/scripts/colab_train_base2.py (:67,204,226-234,252,256-268,409,464)",
+    "open/data/train_mint2_balanced.jsonl",
+    "open/data/train_mint2_balanced_gate.jsonl",
+    "scratchpad/hidx.npy",
+    "scratchpad/hp_kf768_79.npy",
+    "open/docs/HANDOFF.md §3/§5/§6/§9",
+    "open/coordination/snapshots/recon_0713_restart_handoff.md",
+    "audit_indep.py (감사자 독립 검증 스크립트)"
+  ],
+  "artifact_sha": {
+    "scratchpad/build_mint2_balanced.py": "99d3630801fa0b3878b650ffb52bbc352f8600fe932d16d0bcce428dc830051c",
+    "open/scripts/colab_train_base2.py": "415e4c3e41b423041f55391dae018d9da7cbcb00ba20e212974ab46933e5692f",
+    "open/scripts/feat.py": "91c419d634a85ad912d3dc43b9c802ddf0f1a31b0a203345cb38779b30b05ca8",
+    "open/data/train_mint2_balanced.jsonl": "a8e7e7d2784bce9383396c311b67298b32368b14de95af19a4c8fae2f7565504",
+    "open/data/train_mint2_balanced_gate.jsonl": "6f866c822b3f37059dcb97c5aee0235aaff5a59a3ca08a5bd176f94cd70369c2",
+    "open/data/train_mint2_balanced_gate_labels.csv": "6839752eea895f823c6f8e4be20ab3fbf94aeb040fbe8035fd61511e522d08fa",
+    "scratchpad/hidx.npy": "e39aae253087b4ac08f2550005e08421584a2dbc273adf64c692a6b0f1b0feae",
+    "open/coordination/logs/mint2b/effective_config_A_s79.json": "e8ecf3843d6459f343dc25f4653d201b2b3adbb977ab1af186cc8d07212e643e",
+    "open/coordination/logs/mint2b/effective_config_A_s81.json": "6f6e01f2304f66e1b6a423740edf77efcc9ea6f0ed2150be6b6069dac7e81290"
+  },
+  "post_audit_correction": "2026-07-12T17:14Z(02:14 KST) Stage A epoch confound 정정 — 6ep 발사(seed79/81)를 사용자 지적으로 중단(pkill, GPU idle 확인)·6ep run디렉터리 제거, 체인을 per-stage epoch(A=3ep/B=6ep)로 수정 후 재발사. Stage A effective_config EPOCHS=3 재확인. 최초 6ep 산출물은 폐기(balanced 단독효과로 해석 금지). [runtime 증거 보존] live effective_config.json이 Stage B(EPOCHS=6)로 덮이므로, 체인이 stage 전환 시 effective_config_A.json(EPOCHS=3)/_B.json(EPOCHS=6)로 스냅샷. _A 양seed는 open/coordination/logs/mint2b/에 SHA와 함께 회수완료(위 artifact_sha; 원격=로컬 SHA 일치 확인). effective_config_B.json(EPOCHS=6)은 Stage B 완주 시 동일 위치에 보존예정(SHA256SUMS.txt 갱신)."
+}

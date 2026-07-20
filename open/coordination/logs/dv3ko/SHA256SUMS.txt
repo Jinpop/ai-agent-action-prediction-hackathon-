@@ -1,0 +1,2 @@
+e4333fb5d1a067de52b6f25040dc7a470452eb050be23e94b5cdc3cba37651fe  open/coordination/logs/dv3ko/effective_config_s79.json
+eec5f45a622d34955562150ffca2e006fdb3047167fa75838bc2087f519a9622  open/coordination/logs/dv3ko/effective_config_s81.json

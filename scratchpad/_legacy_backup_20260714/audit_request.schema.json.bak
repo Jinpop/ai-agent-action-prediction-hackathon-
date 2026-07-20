@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dacon236694/coordination/audit_request.schema.json",
+  "title": "audit request v2 (07-14 갱신 — Claude-only 게이트 실무 계약 반영. v1은 Codex 게이트 시대 계약으로 실무와 괴리→82건 위반, 외부감사 지적으로 개정)",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "request_id", "created_at", "stage", "objective",
+    "verify_items", "proposed_next_action", "user_approval_required"
+  ],
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "description": "고유 ID: <stage>-<UTC타임스탬프>-<slug>. slug는 사람이 읽는 소문자·숫자·하이픈. 파일명과 일치. 재사용 금지.",
+      "pattern": "^[a-z_]+-[0-9]{8}T[0-9]{6}Z-[a-z0-9-]{4,}$"
+    },
+    "created_at": { "type": "string", "description": "ISO8601 UTC — ★실제 작성 시각(파일 mtime과 모순 금지, 추정·라운딩 기입 금지)" },
+    "stage": {
+      "type": "string",
+      "enum": ["plan_review", "pre_launch", "anomaly_review", "post_gate",
+               "post_training", "pre_submit", "post_lb"]
+    },
+    "objective": { "type": "string", "description": "감사 목적 한 줄" },
+    "direct_control": { "type": "string", "description": "직접 대조군(무엇 대비 무엇) — matched 실험이면 필수 권장" },
+    "intended_change": { "type": "string", "description": "변경 변수(1변수면 명시, 묶음이면 묶음이라 명시)" },
+    "verify_items": {
+      "type": "array", "items": { "type": "string" }, "minItems": 1,
+      "description": "감사자가 독립 확인해야 할 항목 목록"
+    },
+    "artifact_paths": { "type": "array", "items": { "type": "string" } },
+    "code_sha256": {
+      "type": "object",
+      "description": "{경로: sha256 또는 설명문}. 정확 SHA를 알면 64-hex, 모르면 상태 설명 허용(v2 완화).",
+      "additionalProperties": { "type": "string" }
+    },
+    "data_sha256": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "effective_config_path": { "type": ["string", "null"] },
+    "evidence_paths": { "type": "array", "items": { "type": "string" } },
+    "known_caveats": { "type": "array", "items": { "type": "string" } },
+    "proposed_next_action": { "type": "string" },
+    "deadline": { "type": "string" },
+    "timeout_sec": { "type": "integer" },
+    "user_approval_required": { "type": "boolean" },
+    "backfilled": { "type": "boolean", "description": "true = 원 요청이 채팅 프롬프트로만 존재해 소급 생성된 기록(07-14 검증기 도입 시). 정직 표기 — 신규 감사에 사용 금지." },
+    "backfill_note": { "type": "string" }
+  }
+}

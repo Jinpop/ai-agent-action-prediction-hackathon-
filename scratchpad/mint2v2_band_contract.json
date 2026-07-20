@@ -1,0 +1,19 @@
+{
+  "softmax_flag": {
+    "s48": true,
+    "k81": true,
+    "mint2b_s79": true,
+    "mint2v2_s79": true,
+    "mint2v2_s81": true
+  },
+  "split": {
+    "mint2v2_s79": {
+      "same_order": true,
+      "same_set": true
+    },
+    "mint2v2_s81": {
+      "same_order": true,
+      "same_set": true
+    }
+  }
+}

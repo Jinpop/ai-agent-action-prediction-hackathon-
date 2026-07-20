@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dacon236694/coordination/audit_result.codex.schema.json",
+  "title": "Codex 원시(raw) 감사 출력 계약 (2026-07-14 재설계). Codex --output-schema용 strict 스키마: root/전 객체 additionalProperties:false, required=전 키. 러너가 이 raw를 results_raw/에 저장하고 audit_result.schema.json(v3 normalized)로 정규화한다. raw는 자기 request_id/verdict/findings만 담고, model·시각·attempt·audit_key는 러너가 기록한다.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_id",
+    "objective",
+    "verdict",
+    "auditor_model",
+    "completed_at",
+    "blocking_findings",
+    "nonblocking_findings",
+    "verified_claims",
+    "unverified_claims",
+    "confounders",
+    "required_fixes",
+    "safe_next_action",
+    "evidence_references",
+    "artifact_sha"
+  ],
+  "properties": {
+    "request_id": { "type": "string" },
+    "objective": { "type": "string" },
+    "verdict": {
+      "type": "string",
+      "enum": ["PASS", "BLOCK", "NEEDS_HUMAN"]
+    },
+    "auditor_model": { "type": "string" },
+    "completed_at": { "type": "string" },
+    "blocking_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "summary", "evidence"],
+        "properties": {
+          "id": { "type": "string" },
+          "summary": { "type": "string" },
+          "evidence": { "type": "string" }
+        }
+      }
+    },
+    "nonblocking_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "summary", "evidence"],
+        "properties": {
+          "id": { "type": "string" },
+          "summary": { "type": "string" },
+          "evidence": { "type": "string" }
+        }
+      }
+    },
+    "verified_claims": { "type": "array", "items": { "type": "string" } },
+    "unverified_claims": { "type": "array", "items": { "type": "string" } },
+    "confounders": { "type": "array", "items": { "type": "string" } },
+    "required_fixes": { "type": "array", "items": { "type": "string" } },
+    "safe_next_action": {
+      "type": "string",
+      "description": "권고문일 뿐 실행 권한 아님. 러너/지휘자는 이를 행동 승인으로 해석하지 않는다."
+    },
+    "evidence_references": { "type": "array", "items": { "type": "string" } },
+    "artifact_sha": {
+      "type": "array",
+      "description": "감사 시점 관련 코드·데이터 SHA256 목록 (strict 모드는 동적 키 객체 미지원 → 배열).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": { "type": "string" },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        }
+      }
+    }
+  }
+}

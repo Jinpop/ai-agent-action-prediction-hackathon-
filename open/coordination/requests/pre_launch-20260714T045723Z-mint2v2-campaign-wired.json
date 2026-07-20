@@ -1,0 +1,37 @@
+{
+ "schema_version": "3",
+ "request_id": "pre_launch-20260714T045723Z-mint2v2-campaign-wired",
+ "created_at": "2026-07-14T04:52:00Z",
+ "stage": "pre_launch",
+ "policy_version": "2026-07-14",
+ "objective": "campaign mint2v2-dualseed-0714 최종 pre_launch: 실제 배선된 원격 gate config(양 seed dir의 colab SHA·체인 StageB HOLDOUT_ONLY 배선·레시피 불변·클린 상태·완주 마커)가 발사 준비됐는지 내부 교차검증. training_contract-holdout-only의 유일 UNVERIFIED(E: 원격 StageB 배선)를 닫는다. read-only 판정만. ★Codex 미호출(campaign 금지).",
+ "verify_items": [
+  "A: 원격 양 dir(run_mint2v2b_s79, run_mint2v2_s81_gate) colab_train_base2.py sha256 = ec60a75381b4d6f9(로컬 승인본)인지 직접 sha256sum",
+  "B: Stage B(chain line11) env에 HOLDOUT_ONLY=1 배선 + Stage A(line8 PRETEXT)엔 없음(N2 silent no-op 회피) 직접 grep",
+  "C: 체인 diff vs 원본 run_mint2v2_chain.sh = line4 RUN + line11 HOLDOUT_ONLY 2 hunk뿐, 그 외 레시피(A3ep omit TBV2 gate.jsonl / B6ep INIT_BACKBONE HOLDOUT_IDX=hidx real-only / COMMON) 불변",
+  "D: HOLDOUT_ONLY=1 경로가 밴드입력(holdout_probs3/idx3) 저장 후 refit/zip 없이 exit0(GATE_DONE), 체인 set -e 무중단으로 STAGE_B_DONE/DONE/ALL_DONE 기록",
+  "E: 체크포인트 미재사용(_ckpt/pretext_backbone 부재)·GPU0/1 분리·GPU idle 실측",
+  "F: 완주 마커 정합 — 체인 chain.status ALL_DONE(line15) + 코드 GATE_DONE(colab:477) 둘 다 생성"
+ ],
+ "downstream_action": "launch",
+ "proposed_next_action": "PASS 시 지휘자가 campaign 승인(이미 인가)하에 s79 GPU0 / s81 GPU1 gate(HOLDOUT_ONLY=1) 발사. PASS는 진행 자격일 뿐 발사 트리거는 지휘자 절차.",
+ "lineage_id": "mint2v2-dualseed-0714-wiring",
+ "direct_control": "원본 체인 run_mint2v2_chain.sh(치타 ~/dacon, mint2v2 non-gate 풀 레시피) — 배선 체인이 이와 line4/line11 2 hunk만 다른지",
+ "intended_change": "1변수(배선): gate 체인 StageB env에 HOLDOUT_ONLY=1 추가(+ RUN dir 경로). 학습 하이퍼파라미터·데이터·StageA 레시피 불변.",
+ "code_sha256": {
+  "open/scripts/colab_train_base2.py": "ec60a75381b4d6f97fde5bd34e35e3ba572803649d0849b73940bef2748e0abd",
+  "open/scripts/feat.py": "91c419d634a85ad912d3dc43b9c802ddf0f1a31b0a203345cb38779b30b05ca8"
+ },
+ "data_sha256": {},
+ "sha_notes": {
+  "remote:~/dacon/run_mint2v2b_s79/colab_train_base2.py": "sha256sum on 치타 = ec60a75381b4d6f97fde5bd34e35e3ba572803649d0849b73940bef2748e0abd (=로컬 승인본)",
+  "remote:~/dacon/run_mint2v2_s81_gate/colab_train_base2.py": "sha256sum on 치타 = ec60a75381b4d6f97fde5bd34e35e3ba572803649d0849b73940bef2748e0abd (=로컬 승인본)",
+  "remote:~/dacon/data/train_mint2_balanced_v2_gate.jsonl": "sha256sum on 치타 = 05fad50e76545cb499e0fedaf56d8df7edb588a3aa991015575f1c5209f22466 (=승인 campaign gate data, 5454행)"
+ },
+ "effective_config_path": null,
+ "known_caveats": [
+  "원격 파일 SHA/체인/GPU 상태는 read-only SSH(sha256sum·diff·grep·ls·nvidia-smi)로만 실측 — 파일 수정·발사 없음.",
+  "effective_config_B.json(HOLDOUT_ONLY=true 반영)·홀드 밴드 npy·홀드 F1은 발사 후 산출물 — 이 감사는 배선/클린상태까지만 검증.",
+  "gate jsonl 행수/홀드세션 누수(체크리스트 #7~#9)는 data-lineage-auditor 소관 — 이 감사는 SHA가 승인 campaign 아티팩트(05fad50e)임만 확인."
+ ]
+}

@@ -1,0 +1,32 @@
+{
+  "schema_version": "3",
+  "request_id": "pre_launch-20260715T033000Z-allinfo",
+  "created_at": "2026-07-15T03:00:00Z",
+  "stage": "pre_launch",
+  "policy_version": "campaign:all-info-h100-final-0715",
+  "objective": "campaign all-info-h100-final-0715 발사 전 내부 교차검증: stable 코드분기·Stage A 데이터·A→B 레시피·fail-closed 12항. Codex 미호출.",
+  "verify_items": [
+    "code-diff: PRETEXT_META=stable 3 hunk만·feat 무변경·serve 무영향",
+    "data-lineage: Stage A 6829/3162·turn_index 무손실·dedup 회계·라벨정렬",
+    "training-contract: Stage A/B env manifest 일치·TARGET_BALANCE1 TB_V2 1·홀드아웃 무생성·토큰길이",
+    "fail-closed #1~#12 + backbone canary 185290752/130000"
+  ],
+  "downstream_action": "launch",
+  "proposed_next_action": "PASS + SSH 복구 시 allinfo_launch.sh 발사(캠페인 승인범위). 실제 제출은 사용자 직접.",
+  "lineage_id": "all-info-h100-final-0715-prelaunch",
+  "direct_control": "07-14 metaT REFIT 챔피언 프레임(공유 하이퍼 batch16/accum3/LR2e-5/GRAD_CKPT0/seed79) — ALL-INFO는 stable-meta pretext + 125d + META_TRANS_EXT 묶음 변경",
+  "intended_change": "신규 ALL-INFO 단일 kf-deberta-base 멤버 학습(Stage A stable-meta pretext 3ep → Stage B real 70k REFIT_ONLY 6ep). 챔피언 프레임 metaT 멤버 교체용.",
+  "evidence_paths": [
+    "scratchpad/allinfo_chain.sh",
+    "scratchpad/allinfo_frozen/colab_train_base2.py",
+    "open/data/train_mint_allinfo_stable.jsonl",
+    "open/coordination/campaign-all-info-h100-final-0715.json"
+  ],
+  "effective_config_path": null,
+  "known_caveats": [
+    "ALL-INFO = 묶음 probe(단일변수 아님) — 서버 delta '단독효과' 금지.",
+    "3NN zip runtime 위험(metaT 598~600s 벽), train/serve parity·T4 시간은 PACKAGING zip-verifier 확인.",
+    "audit_key는 internal_cross_check all-zeros placeholder.",
+    "SSH 블로커(Elice 인스턴스 sshd 미준비) — 발사 대기."
+  ]
+}

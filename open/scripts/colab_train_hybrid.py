@@ -1,0 +1,288 @@
+"""Colab GPU 용 하이브리드 트랜스포머 파인튜닝 (Dacon 236694).
+
+v8(텍스트만) 실패 교훈 반영:
+  1) RoBERTa CLS 벡터에 feat.py 메타 피처(~150d)를 concat 해서 분류 head 에 투입
+     (고전 ML 의 승부처였던 상태/키워드/history 신호를 그대로 유지)
+  2) MAX_LEN 160 -> 256 (history 잘림 방지)
+  3) 클래스 가중치 balanced -> sqrt (web_search precision 0.099 참사 방지)
+
+[ 실행법 (Google Colab, 런타임 > GPU(T4) 선택) ]
+  1) 업로드(6개): data/{train.jsonl, train_labels.csv, test.jsonl, sample_submission.csv}
+     + feat.py + 이 파일   (data 4개는 data/ 폴더 안에!)
+        !mkdir -p data && mv train.jsonl train_labels.csv test.jsonl sample_submission.csv data/
+  2) !pip -q install "transformers>=4.44" "datasets>=2.20" accelerate sentencepiece scikit-learn joblib
+  3) !python colab_train_hybrid.py
+  4) 끝나면 submit_hybrid.zip 다운로드 -> Dacon 제출
+
+산출물: ./model_sub/ (backbone+tokenizer+head+prep), ./submit_hybrid.zip, holdout_probs.npy
+"""
+import json
+import os
+import shutil
+import zipfile
+
+import joblib
+import numpy as np
+import pandas as pd
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from sklearn.metrics import classification_report, f1_score
+from sklearn.model_selection import GroupKFold
+from sklearn.preprocessing import StandardScaler
+from datasets import Dataset
+from transformers import (AutoModel, AutoTokenizer, Trainer, TrainingArguments)
+from transformers.modeling_outputs import SequenceClassifierOutput
+
+import feat  # 고전 ML 과 동일한 피처 모듈 (같이 업로드 필수)
+
+# ================== 설정 ==================
+MODEL_NAME = os.environ.get("MODEL_NAME", "klue/roberta-base")
+DATA_DIR = "./data"
+SUB_DIR = "./model_sub"
+MAX_LEN = int(os.environ.get("MAX_LEN", 256))
+EPOCHS = int(os.environ.get("EPOCHS", 3))
+BATCH = int(os.environ.get("BATCH", 32))
+LR = float(os.environ.get("LR", 2e-5))
+SEED = 42
+N_LIMIT = int(os.environ.get("N_LIMIT", 0))      # >0 이면 subset (smoke test)
+SKIP_REFIT = os.environ.get("SKIP_REFIT", "0") == "1"
+
+ACTIONS = feat.ACTIONS
+lab2id = {a: i for i, a in enumerate(ACTIONS)}
+
+
+def build_hybrid_text(sample):
+    """상태 프리픽스 + feat.build_text (상태를 텍스트로도 명시)."""
+    meta = sample.get("session_meta") or {}
+    ws = meta.get("workspace") or {}
+    hist = sample.get("history") or []
+    acts = [h.get("name") for h in hist
+            if isinstance(h, dict) and h.get("role") == "assistant_action"]
+    last = acts[-1] if acts else "none"
+    last_result = ""
+    for h in reversed(hist):
+        if isinstance(h, dict) and h.get("role") == "assistant_action":
+            last_result = str(h.get("result_summary") or "")[:60]
+            break
+    state = (f"[STATE] turn={meta.get('turn_index', 0)} last={last} "
+             f"result={last_result} ci={ws.get('last_ci_status')} "
+             f"open={len(ws.get('open_files') or [])} dirty={ws.get('git_dirty')} [/STATE] ")
+    return state + feat.build_text(sample)
+
+
+# ---------- 데이터 로드 ----------
+print(f"Model: {MODEL_NAME}  (hybrid: CLS + meta features)")
+train = feat.load_jsonl(os.path.join(DATA_DIR, "train.jsonl"))
+labels_df = pd.read_csv(os.path.join(DATA_DIR, "train_labels.csv"))
+lab = dict(zip(labels_df["id"], labels_df["action"]))
+if N_LIMIT:
+    train = train[:N_LIMIT]
+    print(f"[smoke] subset {N_LIMIT}")
+
+ids = [s["id"] for s in train]
+texts = [build_hybrid_text(s) for s in train]
+y = np.array([lab2id[lab[i]] for i in ids])
+groups = np.array([feat.session_of(i) for i in ids])
+
+print("Build meta features...")
+meta_df = feat.build_meta_frame(train)
+META_COLS = list(meta_df.columns)
+M = meta_df.values.astype(np.float32)
+print(f"  meta dims = {M.shape[1]}")
+
+tr, va = next(GroupKFold(n_splits=5).split(texts, y, groups))
+print(f"train={len(tr)}  holdout={len(va)}")
+
+tok = AutoTokenizer.from_pretrained(MODEL_NAME)
+
+
+def make_ds(idx, scaler):
+    Ms = scaler.transform(M[idx]).astype(np.float32)
+    d = Dataset.from_dict({
+        "text": [texts[i] for i in idx],
+        "label": [int(y[i]) for i in idx],
+        "meta": [row.tolist() for row in Ms],
+    })
+    return d.map(lambda b: tok(b["text"], truncation=True, max_length=MAX_LEN),
+                 batched=True, remove_columns=["text"])
+
+
+def sqrt_weights(yy):
+    counts = np.bincount(yy, minlength=len(ACTIONS)).astype(np.float64)
+    w = np.sqrt(counts.sum() / (len(ACTIONS) * np.maximum(counts, 1)))
+    return torch.tensor((w / w.mean()).astype(np.float32))
+
+
+class HybridNet(nn.Module):
+    def __init__(self, name, n_meta, n_labels, class_weights=None):
+        super().__init__()
+        self.backbone = AutoModel.from_pretrained(name)
+        h = self.backbone.config.hidden_size
+        self.head = nn.Sequential(
+            nn.Linear(h + n_meta, 256), nn.GELU(), nn.Dropout(0.1),
+            nn.Linear(256, n_labels))
+        self.register_buffer("cw", class_weights if class_weights is not None
+                             else torch.ones(n_labels))
+
+    def forward(self, input_ids=None, attention_mask=None, meta=None, labels=None):
+        cls = self.backbone(input_ids=input_ids,
+                            attention_mask=attention_mask).last_hidden_state[:, 0]
+        logits = self.head(torch.cat([cls, meta.float()], dim=-1))
+        loss = None
+        if labels is not None:
+            loss = F.cross_entropy(logits, labels, weight=self.cw)
+        return SequenceClassifierOutput(loss=loss, logits=logits)
+
+
+def metrics(p):
+    return {"macro_f1": f1_score(p.label_ids, p.predictions.argmax(-1), average="macro")}
+
+
+def train_model(idx_tr, idx_va=None):
+    scaler = StandardScaler().fit(M[idx_tr])
+    ds_tr = make_ds(idx_tr, scaler)
+    ds_va = make_ds(idx_va, scaler) if idx_va is not None else None
+    model = HybridNet(MODEL_NAME, M.shape[1], len(ACTIONS), sqrt_weights(y[idx_tr]))
+    args = TrainingArguments(
+        output_dir="./_ckpt", num_train_epochs=EPOCHS,
+        per_device_train_batch_size=BATCH, per_device_eval_batch_size=64,
+        learning_rate=LR, warmup_ratio=0.1, weight_decay=0.01,
+        eval_strategy="epoch" if ds_va is not None else "no",
+        save_strategy="no", logging_steps=100,
+        fp16=torch.cuda.is_available(), seed=SEED, report_to="none",
+        remove_unused_columns=True,
+    )
+    trainer = Trainer(model=model, args=args, train_dataset=ds_tr,
+                      eval_dataset=ds_va, compute_metrics=metrics if ds_va is not None else None,
+                      processing_class=tok)
+    trainer.train()
+    return trainer, model, scaler
+
+
+# ---------- 홀드아웃 학습/평가 ----------
+trainer, model, scaler = train_model(tr, va)
+out = trainer.predict(make_ds(va, scaler))
+pred = out.predictions.argmax(-1)
+f1 = f1_score(y[va], pred, average="macro")
+print(f"\n==> 홀드아웃 Macro-F1 = {f1:.4f}   (v7 고전ML 0.6089 / v8 텍스트만 0.5014)")
+print(classification_report(y[va], pred, target_names=ACTIONS, digits=3, zero_division=0))
+np.save("holdout_probs.npy", out.predictions)   # 향후 스태킹용
+np.save("holdout_idx.npy", va)
+
+# ---------- 전체 재학습(제출용) ----------
+if SKIP_REFIT:
+    print("[smoke] SKIP_REFIT=1 -> 홀드아웃 모델 저장")
+    model_full, scaler_full = model, scaler
+else:
+    print("\nRefit on FULL data...")
+    _, model_full, scaler_full = train_model(np.arange(len(texts)))
+
+if os.path.exists(SUB_DIR):
+    shutil.rmtree(SUB_DIR)
+os.makedirs(SUB_DIR)
+model_full.backbone.save_pretrained(os.path.join(SUB_DIR, "backbone"))
+tok.save_pretrained(os.path.join(SUB_DIR, "backbone"))
+torch.save(model_full.head.state_dict(), os.path.join(SUB_DIR, "head.pt"))
+joblib.dump({"meta_columns": META_COLS, "scaler": scaler_full,
+             "actions": ACTIONS, "max_len": MAX_LEN},
+            os.path.join(SUB_DIR, "prep.pkl"))
+print(f"saved -> {SUB_DIR}")
+
+# ---------- 제출용 script.py ----------
+SUBMIT_SCRIPT = r'''"""추론(제출용) — 하이브리드(RoBERTa CLS + meta) 모델로 test.jsonl 예측."""
+import csv, os
+import joblib
+import numpy as np
+import torch
+import torch.nn as nn
+from transformers import AutoModel, AutoTokenizer
+
+import feat
+
+DEV = "cuda" if torch.cuda.is_available() else "cpu"
+prep = joblib.load("./model_sub/prep.pkl")
+ACTIONS, MAX_LEN = prep["actions"], prep["max_len"]
+
+
+def build_hybrid_text(sample):
+    meta = sample.get("session_meta") or {}
+    ws = meta.get("workspace") or {}
+    hist = sample.get("history") or []
+    acts = [h.get("name") for h in hist
+            if isinstance(h, dict) and h.get("role") == "assistant_action"]
+    last = acts[-1] if acts else "none"
+    last_result = ""
+    for h in reversed(hist):
+        if isinstance(h, dict) and h.get("role") == "assistant_action":
+            last_result = str(h.get("result_summary") or "")[:60]
+            break
+    state = (f"[STATE] turn={meta.get('turn_index', 0)} last={last} "
+             f"result={last_result} ci={ws.get('last_ci_status')} "
+             f"open={len(ws.get('open_files') or [])} dirty={ws.get('git_dirty')} [/STATE] ")
+    return state + feat.build_text(sample)
+
+
+class HybridNet(nn.Module):
+    def __init__(self, path, n_meta, n_labels):
+        super().__init__()
+        self.backbone = AutoModel.from_pretrained(path)
+        h = self.backbone.config.hidden_size
+        self.head = nn.Sequential(
+            nn.Linear(h + n_meta, 256), nn.GELU(), nn.Dropout(0.1),
+            nn.Linear(256, n_labels))
+
+
+tok = AutoTokenizer.from_pretrained("./model_sub/backbone")
+samples = feat.load_jsonl("./data/test.jsonl")
+texts = [build_hybrid_text(s) for s in samples]
+Mt = prep["scaler"].transform(
+    feat.build_meta_frame(samples, columns=prep["meta_columns"]).values.astype(np.float32)
+).astype(np.float32)
+
+net = HybridNet("./model_sub/backbone", Mt.shape[1], len(ACTIONS))
+net.head.load_state_dict(torch.load("./model_sub/head.pt", map_location="cpu"))
+net = net.to(DEV).eval()
+
+preds = []
+with torch.no_grad():
+    for i in range(0, len(texts), 64):
+        b = tok(texts[i:i + 64], truncation=True, max_length=MAX_LEN,
+                padding=True, return_tensors="pt").to(DEV)
+        m = torch.tensor(Mt[i:i + 64]).to(DEV)
+        cls = net.backbone(**b).last_hidden_state[:, 0]
+        preds.extend(net.head(torch.cat([cls, m], -1)).argmax(-1).cpu().tolist())
+pm = {s.get("id", ""): ACTIONS[p] for s, p in zip(samples, preds)}
+
+with open("./data/sample_submission.csv", newline="", encoding="utf-8") as f:
+    r = csv.DictReader(f)
+    fields, rows = r.fieldnames, list(r)
+for row in rows:
+    if row["id"] in pm:
+        row["action"] = pm[row["id"]]
+os.makedirs("./output", exist_ok=True)
+with open("./output/submission.csv", "w", newline="", encoding="utf-8") as f:
+    w = csv.DictWriter(f, fieldnames=fields)
+    w.writeheader()
+    w.writerows(rows)
+print("saved ./output/submission.csv", len(rows))
+'''
+open("script.py", "w", encoding="utf-8").write(SUBMIT_SCRIPT)
+open("requirements.txt", "w", encoding="utf-8").write(
+    "transformers==4.44.2\ntorch\nsentencepiece\nscikit-learn==1.6.1\n"
+    "joblib\npandas\nnumpy\n")
+
+zp = "submit_hybrid.zip"
+if os.path.exists(zp):
+    os.remove(zp)
+with zipfile.ZipFile(zp, "w", zipfile.ZIP_DEFLATED) as z:
+    z.write("script.py")
+    z.write("feat.py")
+    z.write("requirements.txt")
+    for root, _, files in os.walk(SUB_DIR):
+        for fn in files:
+            fp = os.path.join(root, fn)
+            z.write(fp, os.path.relpath(fp, "."))
+size = os.path.getsize(zp) / 1e6
+print(f"\n[완료] {zp}  ({size:.0f} MB)  홀드아웃 Macro-F1={f1:.4f}")
+print("1GB 초과 시 MODEL_NAME 축소 or fp16 저장 필요.")

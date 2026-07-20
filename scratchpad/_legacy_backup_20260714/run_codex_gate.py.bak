@@ -1,0 +1,413 @@
+#!/usr/bin/env python3
+"""Codex 독립 감사 게이트 러너 (07-12 사용자 지시 + 관측성/신호/모델 수정).
+
+Claude=실행자, Codex=read-only 독립 감사. Codex PASS 없이 위험단계 진행 금지.
+- Codex: `codex exec --json --model gpt-5.5 -c model_reasoning_effort=xhigh
+          --ephemeral --sandbox read-only --skip-git-repo-check`
+- 실시간 관측: prompts/<rid>.txt · logs/<rid>.jsonl · logs/<rid>.stderr.log ·
+              status/<rid>.json · results/<rid>.json
+- 안전: SIGTERM/SIGINT→NEEDS_HUMAN+archive+lock제거 / 시작시 dead-PID lock 스윕(fail-closed) /
+        Codex 파일수정(modify_alarm)→무조건 BLOCK / dry-run은 COORD_ROOT로 production과 분리.
+
+사용:  run_codex_gate.py <partial_request.json>
+exit:  0=PASS 10=BLOCK 20=NEEDS_HUMAN 30=GATE_ERROR
+"""
+import sys, os, json, hashlib, tempfile, datetime, glob, signal, time, subprocess
+
+REPO = "/Users/<USER>/Documents/Dacon_236694_AI_Agent"
+# COORD_ROOT: dry-run 격리용(미설정 시 production). 계약(schemas)은 항상 production.
+COORD = os.environ.get("COORD_ROOT", os.path.join(REPO, "open/coordination"))
+SCHEMA_DIR = os.path.join(REPO, "open/coordination/schemas")
+REQ_SCHEMA = os.path.join(SCHEMA_DIR, "audit_request.schema.json")
+# 07-14: 공용 결과 스키마가 v2(additionalProperties:true)로 완화되며 Codex response_format
+# 계약(root false 필수)과 충돌 → Codex 출력용 strict 스키마(v1 원형)를 분리 사용.
+# 저장·검증은 공용 v2가 superset이라 codex 산출물도 v2를 통과한다.
+RES_SCHEMA = os.path.join(SCHEMA_DIR, "audit_result.codex.schema.json")
+CODEX = os.environ.get("CODEX_GATE_BIN", "/Applications/ChatGPT.app/Contents/Resources/codex")
+MODEL = os.environ.get("CODEX_GATE_MODEL", "gpt-5.5")
+REASONING = os.environ.get("CODEX_GATE_REASONING", "xhigh")
+_TO_OVERRIDE = os.environ.get("CODEX_GATE_TIMEOUT")
+TIMEOUTS = {"pre_submit": 1200}
+DEFAULT_TIMEOUT = 600
+EXIT = {"PASS": 0, "BLOCK": 10, "NEEDS_HUMAN": 20, "GATE_ERROR": 30}
+STAGES = ["plan_review", "pre_launch", "anomaly_review", "post_gate",
+          "post_training", "pre_submit", "post_lb"]
+SUBDIRS = ["requests", "results", "archive", "locks", "state", "logs", "prompts", "status", "snapshots"]
+MANIFEST_GLOBS = ["CLAUDE.md", "AGENTS.md", "open/docs/**/*.md",
+                  "open/scripts/*.py", "open/coordination/schemas/*.json",
+                  "open/coordination/README.md", "scratchpad/*.py"]
+
+STD_INSTRUCTIONS = (
+    "너는 이 대회 프로젝트의 독립 감사자(Codex)다. 다음을 반드시 지켜라:\n"
+    "1) 읽는 순서: AGENTS.md → open/docs/HANDOFF.md → open/docs/실험로그.md(관련 절만) → "
+    "open/docs/대회규칙_채점환경.md → 이 stage의 체크리스트(open/docs/checklists/).\n"
+    "2) Claude(요청자)의 결론을 신뢰하지 말고 실제 파일과 evidence_paths를 직접 대조하라.\n"
+    "3) 서버 채점은 완전 결정론이다('노이즈' 표현 금지 — 결정론적 차이).\n"
+    "4) holdout은 제출 자격 필터일 뿐 우열 판단에 쓰지 마라.\n"
+    "5) 직접 대조군(direct_control)과 변경 변수(intended_change)가 실제로 일치(단일변수·교란 없음)하는지 "
+    "확인하라. 동시변경은 confounders에 넣어라.\n"
+    "6) read-only로 확인 불가한 주장은 unverified_claims에 넣어라. 추정과 사실을 구분하라.\n"
+    "7) 어떤 프로젝트 파일도 수정하지 마라. 유일한 출력은 audit_result JSON이다.\n"
+    "8) request_id를 audit_result.request_id에 정확히 반향하라.\n"
+    "verdict: 위험단계 진행을 막을 결함=BLOCK, 사용자 결정 필요=NEEDS_HUMAN, 안전=PASS. required_fixes는 구체적으로.\n"
+)
+STAGE_PROMPTS = {
+    "plan_review": "실험 계획 감사: 목적·직접 대조군·단일 변경변수·교란·예상 정보가치가 타당한가. "
+                   "죽은 축(HANDOFF §5) 재시도인지, 홀드아웃으로 우열을 판단하려는지 점검하라.",
+    "pre_launch": "학습 발사 직전: 코드/data SHA가 frozen과 일치하는지, effective_config가 레시피를 정확 반영하는지, "
+                  "split/누수, ETA·자원계획, set_seed 위치(모델 생성 전)를 점검하라(checklists/10).",
+    "anomaly_review": "이상 감사: 크래시·속도저하·환경차이·우회책의 부작용. 우회가 학습 드로우·계약을 바꿨는지, "
+                      "산출물 해석에 caveat이 필요한지 판단하라.",
+    "post_gate": "홀드아웃/밴드 감사: 행 정렬(hidx∩va 등)·logit/prob 계약(softmax)·누수(full-refit 재추론 금지)·"
+                 "밴드 자격 근거. 밴드는 자격필터일 뿐임을 확인하라(checklists/20,30).",
+    "post_training": "학습 완료: refit 완주·원본 pack↔staging↔zip SHA 체인·manifest·모델 계약"
+                     "(params·head·max_len·fp16)을 점검하라(checklists/30,40).",
+    "pre_submit": "제출 직전: verify_zip.py 21항 + 5행 E2E 통과 근거와 v58 기준 diff·비복사본·시간마진. "
+                  "미통과 항목이 있으면 BLOCK(checklists/30,40,50).",
+    "post_lb": "제출 후: 직접 대조 delta(정확 소수점)·교란 범위·챔피언 판정·후속 해석. "
+               "'노이즈'·'단독효과'·'순수 A/B' 표현이 증거보다 강하면 BLOCK. 슬롯·목표격차 계산 확인(checklists/60).",
+}
+
+STATE = {"rid": None, "lock": None, "res": None, "req": None, "proc": None, "phase": "init"}
+
+
+def sha256(p):
+    h = hashlib.sha256()
+    with open(p, "rb") as f:
+        for c in iter(lambda: f.read(1 << 20), b""):
+            h.update(c)
+    return h.hexdigest()
+
+
+def now_utc():
+    return datetime.datetime.now(datetime.timezone.utc)
+
+
+def iso(dt):
+    return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def d(*p):
+    return os.path.join(COORD, *p)
+
+
+def ensure_dirs():
+    for s in SUBDIRS:
+        os.makedirs(d(s), exist_ok=True)
+
+
+def pid_alive(pid):
+    try:
+        os.kill(int(pid), 0)
+        return True
+    except (OSError, ValueError):
+        return False
+
+
+def atomic_write(path, text):
+    dirn = os.path.dirname(path)
+    with tempfile.NamedTemporaryFile("w", dir=dirn, delete=False, suffix=".tmp", encoding="utf-8") as tf:
+        tf.write(text)
+        tmp = tf.name
+    os.replace(tmp, path)
+
+
+def write_status(rid, **kw):
+    st = {"request_id": rid, "model": MODEL, "reasoning": REASONING,
+          "updated_at": iso(now_utc())}
+    st.update(kw)
+    atomic_write(d("status", rid + ".json"), json.dumps(st, ensure_ascii=False, indent=2))
+
+
+def validate(obj, schema_path, kind):
+    schema = json.load(open(schema_path))
+    missing = [k for k in schema.get("required", []) if k not in obj]
+    if missing:
+        return f"{kind} 필수필드 누락: {missing}"
+    if kind == "result" and obj.get("verdict") not in ("PASS", "BLOCK", "NEEDS_HUMAN"):
+        return f"result.verdict 부적합: {obj.get('verdict')}"
+    return None
+
+
+def manifest():
+    m = {}
+    for g in MANIFEST_GLOBS:
+        for p in glob.glob(os.path.join(REPO, g), recursive=True):
+            if os.path.isfile(p):
+                m[os.path.relpath(p, REPO)] = sha256(p)
+    return m
+
+
+def archive(req, res):
+    rid = req.get("request_id", res.get("request_id", "unknown"))
+    atomic_write(d("archive", rid + ".json"),
+                 json.dumps({"request": req, "result": res}, ensure_ascii=False, indent=2))
+
+
+def failclosed_result(rid, note, verdict="NEEDS_HUMAN", fixes=None):
+    return {"request_id": rid, "verdict": verdict,
+            "blocking_findings": [], "nonblocking_findings": [],
+            "verified_claims": [], "unverified_claims": [], "confounders": [],
+            "required_fixes": fixes or [],
+            "safe_next_action": "Codex 감사 미완 — 위험단계(launch/kill/포장/제출) 진행 금지, 모니터링만",
+            "evidence_references": [], "completed_at": iso(now_utc()), "_gate_note": note}
+
+
+def emit(gate_verdict, obj, extra=None):
+    out = {"gate_verdict": gate_verdict}
+    out.update(obj)
+    if extra:
+        out.update(extra)
+    print(json.dumps(out, ensure_ascii=False, indent=2))
+    sys.exit(EXIT.get(gate_verdict, 30))
+
+
+def cleanup_lock():
+    if STATE["lock"] and os.path.exists(STATE["lock"]):
+        try:
+            os.remove(STATE["lock"])
+        except OSError:
+            pass
+
+
+def on_signal(signum, frame):
+    # SIGTERM/SIGINT: fail-closed 결과+archive 기록 후 lock 제거
+    rid = STATE["rid"]
+    if STATE["proc"] and STATE["proc"].poll() is None:
+        try:
+            STATE["proc"].terminate()
+        except Exception:
+            pass
+    if rid:
+        res = failclosed_result(rid, f"signal {signum} 수신 — 게이트 중단(fail-closed)")
+        if STATE["res"]:
+            atomic_write(STATE["res"], json.dumps(res, ensure_ascii=False, indent=2))
+        if STATE["req"]:
+            archive(STATE["req"], res)
+        write_status(rid, phase="signal_failclosed", signal=signum)
+    cleanup_lock()
+    print(json.dumps({"gate_verdict": "NEEDS_HUMAN", "message": f"signal {signum} → fail-closed",
+                      "request_id": rid}, ensure_ascii=False))
+    os._exit(EXIT["NEEDS_HUMAN"])
+
+
+def dead_lock_sweep():
+    """시작 시 dead-PID lock 감지 → fail-closed archive 후 정리."""
+    swept = []
+    for lp in glob.glob(d("locks", "*.lock")):
+        try:
+            pid = open(lp).read().strip()
+        except OSError:
+            pid = ""
+        if not pid or not pid_alive(pid):
+            rid = os.path.basename(lp)[:-5]
+            ap = d("archive", rid + ".json")
+            if not os.path.exists(ap):
+                res = failclosed_result(rid, f"dead-PID lock({pid}) 정리 — 이전 게이트 비정상 종료")
+                atomic_write(ap, json.dumps({"request": {"request_id": rid}, "result": res},
+                                            ensure_ascii=False, indent=2))
+            try:
+                os.remove(lp)
+            except OSError:
+                pass
+            swept.append(rid)
+    return swept
+
+
+def run_codex(prompt, res_path, jsonl_path, err_path, timeout, rid):
+    """Popen 실시간 스트리밍 + status 갱신 + timeout. 성공 시 결과 dict, 실패 시 (None, note)."""
+    cmd = [CODEX, "exec", "--json", "--model", MODEL, "-c", f"model_reasoning_effort=\"{REASONING}\"",
+           "--ephemeral", "--sandbox", "read-only", "--skip-git-repo-check", "-C", REPO,
+           "--output-schema", RES_SCHEMA, "--output-last-message", res_path, prompt]
+    if os.path.exists(res_path):
+        os.remove(res_path)
+    jf = open(jsonl_path, "w", buffering=1, encoding="utf-8")
+    ef = open(err_path, "w", buffering=1, encoding="utf-8")
+    start = time.time()
+    # stdin=DEVNULL 필수: codex exec는 stdin이 열려있으면 "<stdin> block"을 기다리며 hang.
+    proc = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=jf, stderr=ef, cwd=REPO)
+    STATE["proc"] = proc
+    write_status(rid, phase="running", pid=proc.pid, started_at=iso(now_utc()), elapsed_sec=0, timeout_sec=timeout)
+    while True:
+        rc = proc.poll()
+        el = time.time() - start
+        if rc is not None:
+            write_status(rid, phase="codex_exited", pid=proc.pid, returncode=rc, elapsed_sec=int(el))
+            break
+        if el > timeout:
+            proc.terminate()
+            try:
+                proc.wait(10)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+            jf.close(); ef.close()
+            write_status(rid, phase="timeout", elapsed_sec=int(el))
+            return None, f"codex timeout {timeout}s"
+        write_status(rid, phase="running", pid=proc.pid, elapsed_sec=int(el), timeout_sec=timeout)
+        time.sleep(5)
+    jf.close(); ef.close()
+    if rc != 0:
+        return None, f"codex exit {rc}"
+    if not os.path.exists(res_path):
+        return None, "결과 파일 미생성"
+    try:
+        return json.load(open(res_path)), None
+    except json.JSONDecodeError as e:
+        return None, f"결과 JSON 파싱 실패: {e}"
+
+
+def main():
+    ensure_dirs()
+    signal.signal(signal.SIGTERM, on_signal)
+    signal.signal(signal.SIGINT, on_signal)
+
+    if len(sys.argv) < 2:
+        emit("GATE_ERROR", {"message": "usage: run_codex_gate.py <partial_request.json>"})
+    req = json.load(open(sys.argv[1]))
+    stage = req.get("stage")
+    if stage not in STAGES:
+        emit("GATE_ERROR", {"message": f"stage 부적합: {stage}"})
+
+    swept = dead_lock_sweep()
+
+    ts = now_utc()
+    timeout = int(req.get("timeout_sec") or _TO_OVERRIDE or TIMEOUTS.get(stage, DEFAULT_TIMEOUT))
+    if not req.get("request_id"):
+        req["request_id"] = f"{stage}-{ts.strftime('%Y%m%dT%H%M%SZ')}-{os.urandom(3).hex()}"
+    req.setdefault("created_at", iso(ts))
+    req.setdefault("deadline", iso(ts + datetime.timedelta(seconds=timeout)))
+    req.setdefault("effective_config_path", None)
+    for k in ("artifact_paths", "evidence_paths", "known_caveats"):
+        req.setdefault(k, [])
+    for k in ("code_sha256", "data_sha256"):
+        req.setdefault(k, {})
+    for k in ("direct_control", "intended_change", "proposed_next_action", "objective"):
+        req.setdefault(k, "")
+    req.setdefault("user_approval_required", False)
+
+    err = validate(req, REQ_SCHEMA, "request")
+    if err:
+        emit("GATE_ERROR", {"message": err})
+    rid = req["request_id"]
+    STATE["rid"] = rid
+    STATE["req"] = req
+    STATE["res"] = d("results", rid + ".json")
+
+    if os.path.exists(STATE["res"]):
+        emit("GATE_ERROR", {"message": f"결과 재사용 의심: {STATE['res']} 이미 존재", "request_id": rid})
+
+    lock_path = d("locks", rid + ".lock")
+    STATE["lock"] = lock_path
+    try:
+        fd = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        os.write(fd, str(os.getpid()).encode())
+        os.close(fd)
+    except FileExistsError:
+        emit("GATE_ERROR", {"message": f"락 점유중: {lock_path}", "request_id": rid})
+
+    write_status(rid, phase="prep", stage=stage, swept_dead_locks=swept)
+    try:
+        # SHA 가드: 요청 SHA vs 현재 실측 (불일치=즉시 BLOCK, Codex 미호출)
+        mism = []
+        for shamap in ("code_sha256", "data_sha256"):
+            for path, want in req[shamap].items():
+                ap = os.path.join(REPO, path)
+                if not os.path.exists(ap):
+                    mism.append(f"{path}: 파일 없음")
+                elif sha256(ap) != want:
+                    mism.append(f"{path}: SHA 불일치(req={want[:12]}… 현재={sha256(ap)[:12]}…)")
+        if mism:
+            res = {"request_id": rid, "verdict": "BLOCK",
+                   "blocking_findings": [{"id": "sha_mismatch", "summary": "artifact SHA 불일치",
+                                          "evidence": "; ".join(mism)}],
+                   "nonblocking_findings": [], "verified_claims": [], "unverified_claims": [],
+                   "confounders": [], "required_fixes": ["요청 SHA를 현재 파일과 일치시키거나 파일을 고정"],
+                   "safe_next_action": "진행 금지", "evidence_references": [], "completed_at": iso(now_utc())}
+            atomic_write(STATE["res"], json.dumps(res, ensure_ascii=False, indent=2))
+            archive(req, res)
+            write_status(rid, phase="sha_block")
+            emit("BLOCK", {"request_id": rid, "message": "artifact SHA 불일치 — 즉시 BLOCK", "mismatches": mism})
+
+        # request 원자적 게시 + prompt 저장
+        atomic_write(d("requests", rid + ".json"), json.dumps(req, ensure_ascii=False, indent=2))
+        prompt = (STD_INSTRUCTIONS + "\n[STAGE=" + stage + "] " + STAGE_PROMPTS[stage] +
+                  "\n\n[AUDIT_REQUEST]\n" + json.dumps(req, ensure_ascii=False, indent=2) +
+                  "\n\n출력: audit_result 스키마를 정확히 따르는 JSON만. request_id=" + rid)
+        atomic_write(d("prompts", rid + ".txt"), prompt)
+
+        before = manifest()
+        jsonl_path = d("logs", rid + ".jsonl")
+        err_path = d("logs", rid + ".stderr.log")
+
+        result, note = None, None
+        for attempt in (1, 2):
+            write_status(rid, phase=f"attempt_{attempt}", stage=stage)
+            result, note = run_codex(prompt, STATE["res"], jsonl_path, err_path, timeout, rid)
+            if result is not None:
+                break
+
+        after = manifest()
+        modified = [p for p in before if before.get(p) != after.get(p)]
+        added = [p for p in after if p not in before and not p.startswith("open/coordination")]
+        modify_alarm = bool(modified) or bool(added)
+
+        if result is None:
+            res = failclosed_result(rid, note)
+            atomic_write(STATE["res"], json.dumps(res, ensure_ascii=False, indent=2))
+            archive(req, res)
+            write_status(rid, phase="failclosed", note=note)
+            emit("NEEDS_HUMAN", {"request_id": rid, "message": f"Codex 감사 실패 → fail-closed: {note}",
+                                 "modified_files": modified, "added_files": added})
+
+        rerr = validate(result, RES_SCHEMA, "result")
+        if rerr:
+            res = failclosed_result(rid, f"결과 스키마 부적합: {rerr}")
+            atomic_write(STATE["res"], json.dumps(res, ensure_ascii=False, indent=2))
+            archive(req, res)
+            emit("NEEDS_HUMAN", {"request_id": rid, "message": f"결과 스키마 부적합 → fail-closed: {rerr}"})
+        if result.get("request_id") != rid:
+            res = failclosed_result(rid, f"결과 request_id 불일치(stale): {result.get('request_id')}")
+            archive(req, res)
+            emit("NEEDS_HUMAN", {"request_id": rid,
+                                 "message": f"결과 request_id 불일치(stale) → fail-closed: {result.get('request_id')} != {rid}"})
+
+        verdict = result["verdict"]
+
+        # (9) Codex 파일수정 감지 → 무조건 BLOCK
+        if modify_alarm:
+            verdict = "BLOCK"
+            result.setdefault("blocking_findings", []).append(
+                {"id": "codex_modified_files", "summary": "Codex가 read-only인데 파일 수정 감지 — 강제 BLOCK",
+                 "evidence": f"modified={modified} added={added}"})
+
+        # 동일 finding 2회 BLOCK → NEEDS_HUMAN 승격
+        escalated = False
+        if verdict == "BLOCK":
+            st_path = d("state", f"{stage}_findings.json")
+            hist = json.load(open(st_path)) if os.path.exists(st_path) else {}
+            for f in result.get("blocking_findings", []):
+                fid = f.get("id", "?")
+                hist[fid] = hist.get(fid, 0) + 1
+                if hist[fid] >= 2:
+                    escalated = True
+            atomic_write(st_path, json.dumps(hist, ensure_ascii=False, indent=2))
+            if escalated:
+                verdict = "NEEDS_HUMAN"
+
+        archive(req, result)
+        write_status(rid, phase="done", verdict=verdict, no_modify_ok=not modify_alarm)
+        emit(verdict, {"request_id": rid, "codex_verdict": result["verdict"],
+                       "escalated_same_finding_2x": escalated, "no_modify_ok": not modify_alarm,
+                       "modified_files": modified, "added_files": added,
+                       "blocking_findings": result.get("blocking_findings", []),
+                       "required_fixes": result.get("required_fixes", []),
+                       "safe_next_action": result.get("safe_next_action", ""),
+                       "observability": {"status": d("status", rid + ".json"),
+                                         "prompt": d("prompts", rid + ".txt"),
+                                         "events": jsonl_path, "stderr": err_path, "result": STATE["res"]}})
+    finally:
+        cleanup_lock()
+
+
+if __name__ == "__main__":
+    main()

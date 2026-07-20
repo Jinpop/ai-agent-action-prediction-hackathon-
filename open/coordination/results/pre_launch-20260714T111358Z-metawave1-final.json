@@ -1,0 +1,125 @@
+{
+ "schema_version": "3",
+ "request_id": "pre_launch-20260714T111358Z-metawave1-final",
+ "audit_key": "e48d681617455a10228686ac7ca6e38697052347e620a161f0b913c1de46e6fb",
+ "lineage_id": "official-meta-wave1-prelaunch",
+ "stage": "pre_launch",
+ "policy_version": "campaign:official-meta-wave1",
+ "objective": "campaign official-meta-wave1 META-N/META-T 발사 직전 최종 pre_launch 내부 교차검증(사용자 6개 보완 반영 강화 config, colab 99331657). 직전 pre_launch(구 colab 592ed8d6·암묵 flag)는 config 변경으로 폐기 — 이게 최종. read-only 치타 실측. ★Codex 미호출(campaign 금지).",
+ "gate_state": "PASS",
+ "action_state": "WAITING_USER",
+ "downstream_action": "launch",
+ "verdict_source": "internal_cross_check",
+ "auditor_model": "Claude Opus 4.8 (claude-opus-4-8) — training-contract/pre_launch internal cross-check, read-only",
+ "cache_hit": false,
+ "attempt": 0,
+ "started_at": "2026-07-14T10:58:00Z",
+ "completed_at": "2026-07-14T11:13:58Z",
+ "runner_recorded": {
+  "request_id": "pre_launch-20260714T111358Z-metawave1-final",
+  "model": "claude-opus-4-8",
+  "reasoning": "internal_cross_check (no Codex; campaign Codex 금지 준수). 치타 read-only SSH 실측 + 로컬 diff.",
+  "started_at": "2026-07-14T10:58:00Z",
+  "completed_at": "2026-07-14T11:13:58Z",
+  "attempt": 0,
+  "cache_hit": false,
+  "raw_request_id": null
+ },
+ "raw_result_ref": null,
+ "nonblocking_findings": [
+  {
+   "id": "N1",
+   "summary": "colab 99331657 = 592ed8d6(code_diff-metawave1 감사본) + 사용자 보완 assert(#2 skew 가드)만 추가. ec60a75→99331657 전체 diff 3 hunk = META flag+skew assert(63-69)·[META] if/else(128-142)·effective_config META키(164)뿐, 그 외 라인 변경 0.",
+   "evidence": "diff scratchpad/colab_ec60a75_ref.py open/scripts/colab_train_base2.py → 62a63,69 / 121,124c128,142 / 145a164"
+  },
+  {
+   "id": "N2",
+   "summary": "m2b_s79 대조군 코드(415e4c3e)→ec60a75 delta는 전부 default-off flag 게이트(TB_V2·HOLDOUT_ONLY·KD-temp·sqrt_weights wt=None). META 체인은 이 flag 미설정 → 실행되는 real-only refit 경로가 m2b와 byte-equivalent. [META] transcript 빌더는 415e4c3e↔ec60a75 무변경이라 META-N else-branch=[META] 가 m2b transcript 재현.",
+   "evidence": "diff colab_415e4c3e_ref colab_ec60a75_ref → 변경 전부 TB_V2/HOLDOUT_ONLY/KD/loss·sqrt_weights(모두 flag-off), build_transcript/[META] 무변경"
+  },
+  {
+   "id": "N3",
+   "summary": "REFIT_ONLY=True는 홀드아웃 eval만 스킵(colab:484 else 미실행), full 70k refit(colab:511 train_model(np.arange))은 set_seed(SEED)@425를 model@426 앞에 재호출 → 배포멤버는 m2b의 holdout+refit 산출물과 동일 방식. REFIT_ONLY는 멤버 생성엔 무영향(홀드 진단만 생략).",
+   "evidence": "colab:484,509,511,425-426"
+  }
+ ],
+ "verified_claims": [
+  {
+   "claim": "A: 양 dir(run_metaN_s79·run_metaT_s79) colab sha256=99331657a6c41498...b57(선언 99331657 일치, 로컬 repo와도 동일=frozen 일치), feat sha256=f65e9d9103282e4f...624(선언 f65e9d91 일치). 양 dir 구성=colab+feat+data심링크뿐 — pretext_backbone/_ckpt/checkpoint-*/DONE/effective_config*/submit_base2.zip 전부 부재 → 체크포인트·산출물 미재사용, 클린 슬레이트.",
+   "evidence": "치타 sha256sum run_metaN_s79|run_metaT_s79/{colab,feat}; ls -la 양 dir(colab+feat+data만)"
+  },
+  {
+   "claim": "B: chain env manifest 정확. run_metaN_chain.sh: META_NUM_EXT=1 META_TRANS_EXT=0 EXTRA_DATA='' REFIT_ONLY=1 SEED=79 EPOCHS=6 INIT_BACKBONE=../run_mint2b_s79/pretext_backbone + COMMON(MODEL_NAME=kakaobank/kf-deberta-base MAX_LEN=768 BATCH=16 GRAD_ACCUM=3 LR=2e-5 GRAD_CKPT=0). run_metaT_chain.sh: META_NUM_EXT=0 META_TRANS_EXT=1, 나머지 byte-동일. 양 chain INIT_BACKBONE 동일·GPU=$1(N→0, T→1).",
+   "evidence": "치타 cat run_metaN_chain.sh / run_metaT_chain.sh"
+  },
+  {
+   "claim": "B-pretext: INIT_BACKBONE=../run_mint2b_s79/pretext_backbone/model.safetensors sha256=9265212edf5ef771...73b(선언 9265212e 일치). 양 META 동일 backbone 재사용. m2b_s79 effective_config(.json/_B)의 INIT_BACKBONE_weights SHA도 동일 9265212e.",
+   "evidence": "치타 sha256sum run_mint2b_s79/pretext_backbone/model.safetensors; m2b effective_config sha_init_bb"
+  },
+  {
+   "claim": "C: colab:68-69 assert META_NUM_EXT == feat.META_NUM_EXT(train/serve skew 가드) 존재. colab:64가 env META_NUM_EXT를 읽고, feat.py:19가 import(colab:42) 시점 동일 env를 읽어 module attr로 노출 → 동일 프로세스 env라 동치. META-N=둘다 True, META-T=둘다 False로 통과. env를 feat import 이후 바꾸면 조용한 119d 오작동을 여기서 잡음.",
+   "evidence": "치타 grep run_metaN_s79/colab:64,68-69; feat.py:19 META_NUM_EXT=os.environ.get(...)"
+  },
+  {
+   "claim": "D: REFIT_ONLY 단일스테이지·상호배타 assert 무위반. chain env 기준 실행시 defaults: PRETEXT=False(59)·PRETEXT_META='blank'(60)·SKIP_REFIT=False(55)·HOLDOUT_ONLY=False(57)·MASK_MINT_META=False(62). 따라서 colab:70(META in blank/omit/keep) 71(PRETEXT or PRETEXT_META=='blank'→True) 72(not(PRETEXT∧MASK)) 74(not(SKIP_REFIT∧REFIT_ONLY)) 75(not(HOLDOUT_ONLY∧REFIT_ONLY)) 76(not(PRETEXT∧INIT_BACKBONE)→PRETEXT=False라 통과) 77(not PRETEXT or EXTRA_DATA→통과) 전부 PASS — 어떤 assert도 발사 BLOCK 안 함. EXTRA_DATA=''=real-only(체크리스트#11).",
+   "evidence": "치타 grep colab defaults 55-62,70-77; chain env(PRETEXT/PRETEXT_META/HOLDOUT_ONLY/SKIP_REFIT/MASK_MINT_META 미설정)"
+  },
+  {
+   "claim": "D-refit path: REFIT_ONLY=True → colab:484 홀드아웃 else-branch 미실행 → colab:509 not REFIT_ONLY del 스킵(NameError 회피) → colab:511 train_model(np.arange(len(texts))) full refit → colab:~633 submit_base2.zip(script.py+feat.py+requirements+model_sub{backbone,head.pt,prep.pkl}). set_seed(SEED)@425가 HybridNet@426 앞(체크리스트#4). fp16=cuda.is_available()·seed=SEED.",
+   "evidence": "치타 sed colab:421-445(train_model set_seed 425 before model 426),484,508-511,612-645"
+  },
+  {
+   "claim": "E: 축 독립. META-N=META_NUM_EXT(feat.py:110-113 +5 lang_(kt/vue/swift/ipynb/tf)+langpref_mixed → 119d→125d, verify_zip head 887→893) / META-T=META_TRANS_EXT(colab:128-142 [META] transcript에 langpref/budget/elapsed/loc/langmix 추가, 숫자메타 불변). 서로 다른 flag, seed79 동일. 두 META는 서로 matched(1변수=어느 축), m2b_s79 대비 각 1변수.",
+   "evidence": "feat.py:19-20,110-113; colab:128-142; code_diff-metawave1 검증 B1/B2"
+  },
+  {
+   "claim": "F: GPU0/1 둘 다 idle(1MiB, 0%%). colab_train_base2.py running proc 0(pgrep=자기 SSH뿐). 양 dir 분리(metaN/metaT)·GPU 분리 호출(N `0`=CUDA_VISIBLE_DEVICES=0, T `1`=1). effective_config(_dump_effective_config colab:157-)가 META_NUM_EXT/META_TRANS_EXT(164) + 20+ flag 전부 + sha256(colab/feat/train.jsonl/INIT_BACKBONE_weights) + versions(torch/cuda/transformers/sklearn/numpy) 기록.",
+   "evidence": "치타 nvidia-smi(0,1MiB,0%%/1,1MiB,0%%); pgrep -af colab_train_base2=0; colab:157-185"
+  },
+  {
+   "claim": "matched-control(mint2b confound 재발 방지): 대조군 run_mint2b_s79 Stage B(effective_config_B.json)=EPOCHS=6·SEED=79·LR=2e-5·BATCH=16·GRAD_ACCUM=3·MAX_LEN=768·INIT_BACKBONE=./pretext_backbone(9265212e)·EXTRA_DATA=''·PRETEXT=False. META-N/META-T Stage B=동일 값(EPOCHS=6 등) — 공유 COMMON confound 없음. Stage A(pretext)는 재실행 아님(양 META 동일 9265212e 재사용)이라 mint2b식 'StageA 6ep vs pretext 3ep' confound 원천 부재. Stage B 6ep가 대조군과 일치.",
+   "evidence": "치타 m2b effective_config_B(EPOCHS=6...) vs chain env(EPOCHS=6); pretext 재사용(재실행 아님)"
+  },
+  {
+   "claim": "code frozen/선언변경뿐: ec60a75(pre-META 베이스)→99331657 diff=정확히 3 hunk(META flag+skew assert 63-69 / [META] if-else 128-142 / effective_config META키 164), 그 외 0. 592ed8d6(code_diff-metawave1 감사본)→99331657 delta=skew assert(#2)만. 415e4c3e(m2b 코드)→ec60a75 delta 전부 default-off flag 게이트(TB_V2/HOLDOUT_ONLY/KD/sqrt_weights)라 META 실행경로는 m2b와 byte-equivalent.",
+   "evidence": "diff colab_ec60a75_ref vs open/scripts/colab; diff colab_415e4c3e_ref vs colab_ec60a75_ref"
+  }
+ ],
+ "unverified_claims": [
+  "effective_config.json/effective_config_B.json의 META_NUM_EXT/META_TRANS_EXT/REFIT_ONLY/EXTRA_DATA/EPOCHS 실제 반영값은 발사 후 산출물(colab:157-185 자동기록) — 실행 전 실측 불가(코드경로만 확인).",
+  "체크리스트#7 base train.jsonl(70k refit 대상) 행수·direct-mint 계보·#8 pretext 행수 assert·#9 gate 누수 0은 data-lineage-auditor 소관. 본 발사 Stage B는 real-only(EXTRA_DATA='')·Stage A는 재사용(재실행 아님)이라 #7~#10 신규 발동 없음 — 재사용 pretext(9265212e)의 계보는 m2b 발사 시 검증분 상속.",
+  "체크리스트#1(사전등록 실험로그)·#13(ETA+완료감시 부착)은 발사 절차 항목 — 지휘자가 발사 트리거 시 마감(pre_launch 시점 미완).",
+  "항목G(포장): verify_zip이 META-N 실멤버(893d) zip을 실제 통과시키는지·META-T combo transcript(모델별·texts_h 비공유)·cA 원본 feat.py 사용은 산출물 생성 후 zip-verifier/package-builder 소관. verify_zip 로컬 SHA f01f2b49(선언 일치)만 확인.",
+  "train/serve parity(META-N 추론 env에 META_NUM_EXT=1 보장·META-T 추론 build_transcript가 META-T-aware): 배포 포장단계 정합 — code_diff-metawave1이 이미 confounder로 인계. 학습측 발사엔 무관."
+ ],
+ "confounders": [
+  "홀드아웃 gate 생략(campaign 승인 deadline 예외)이므로 META_NUM_EXT/META_TRANS_EXT의 '단독효과'는 홀드 matched-control로 확정 불가 — 서버 LB로만 측정. 각 META는 m2b 대비 1축 probe이나 효과 attribution은 서버 실측 전까지 '축 probe'로만, '단독효과' 호칭 금지.",
+  "m2b_s79 대조군은 colab 415e4c3e, META는 99331657 — 코드 버전이 다르나 추가 로직 전부 default-off flag(TB_V2/HOLDOUT_ONLY/KD/META) 게이트라 실행되는 real-only refit 경로는 byte-equivalent. '동일 바이너리'가 아니라 '동일 실행경로(flag-off)'라는 서술.",
+  "REFIT_ONLY(META)와 holdout+refit(m2b)은 배포멤버 생성엔 동등(set_seed 재호출로 full refit 결정론) — 단 m2b 멤버는 v2 데이터/다른 pretext_meta(keep) 계보를 가질 수 있어, META vs m2b 서버 delta는 순수 meta축이 아니라 계보 묶음일 수 있음. META-N vs META-T 비교만이 seed·pretext·데이터 완전 matched."
+ ],
+ "required_fixes": [],
+ "safe_next_action": "PASS — 최종 config(colab 99331657·feat f65e9d91) 발사 자격 충족. A~F 전부 치타 실측 PASS: 양 dir SHA 선언 일치·클린 / manifest flag 정확(N=NUM1/TRANS0, T=NUM0/TRANS1, 공통 REFIT_ONLY/SEED79/EPOCHS6/pretext 9265212e) / skew assert(colab:68) 존재 / 모든 assert 통과(발사 BLOCK 없음) / 축 독립·seed79 / GPU0-1 idle·분리·effective_config META 기록. matched-control: Stage B 6ep가 대조군 m2b_s79와 일치, Stage A 재사용이라 mint2b confound 원천 부재. ★PASS=진행 자격일 뿐 — 발사는 campaign official-meta-wave1 승인 하 지휘자 절차(META-N `run_metaN_chain.sh 0`, META-T `run_metaT_chain.sh 1`). action_state=WAITING_USER. 효과는 서버 LB로만(홀드 gen 생략). 포장단계 G 항목 인계.",
+ "escalated": false,
+ "evidence_references": [
+  "remote:~/dacon/run_metaN_chain.sh",
+  "remote:~/dacon/run_metaT_chain.sh",
+  "remote:~/dacon/run_metaN_s79/colab_train_base2.py:42,63-77,157-185,421-445,484,508-511,612-645",
+  "remote:~/dacon/run_metaN_s79/feat.py:19-20,110-113",
+  "remote:~/dacon/run_mint2b_s79/effective_config_B.json",
+  "remote:~/dacon/run_mint2b_s79/pretext_backbone/model.safetensors",
+  "open/scripts/colab_train_base2.py",
+  "open/scripts/feat.py",
+  "scratchpad/verify_zip.py",
+  "scratchpad/colab_ec60a75_ref.py",
+  "scratchpad/colab_415e4c3e_ref.py",
+  "open/coordination/results/code_diff-20260714T105146Z-metawave1.json",
+  "open/docs/checklists/10_pre_training.md"
+ ],
+ "artifact_sha": {
+  "open/scripts/colab_train_base2.py": "99331657a6c41498500ccef01320e9d0070bd2b8274d98bcc4c75385e6855b57",
+  "open/scripts/feat.py": "f65e9d9103282e4fb9355a80624ba88656a5fcbd3aa3d3675bbf56f8720a7624",
+  "scratchpad/verify_zip.py": "f01f2b4908aa2ab96e66c7af1f84fddac8df765e43482bb9e161672fefa6d246",
+  "scratchpad/colab_ec60a75_ref.py": "ec60a75381b4d6f97fde5bd34e35e3ba572803649d0849b73940bef2748e0abd",
+  "remote-pretext:run_mint2b_s79/pretext_backbone/model.safetensors": "9265212edf5ef771aaa5b97830c98924a40a6ae53b32007b3397fb54092df73b"
+ }
+}

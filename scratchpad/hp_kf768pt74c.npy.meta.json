@@ -1,0 +1,32 @@
+{
+ "kind": "raw_logits",
+ "shape": [
+  14000,
+  14
+ ],
+ "dtype": "float32",
+ "class_order": [
+  "edit_file",
+  "grep_search",
+  "read_file",
+  "glob_pattern",
+  "respond_only",
+  "run_bash",
+  "apply_patch",
+  "run_tests",
+  "list_directory",
+  "ask_user",
+  "plan_task",
+  "lint_or_typecheck",
+  "write_file",
+  "web_search"
+ ],
+ "split": "cheetah GroupKFold(5) fold0 == hidx.npy",
+ "eval_rule": "per-member softmax -> mean -> argmax",
+ "source_run": "cheetah ~/dacon/run_kf768pt74c",
+ "seed": 74,
+ "env": "clean 2단계: pretext74c(2,542행·양채널차단) INIT + real-only, pipeline v2",
+ "holdout_macro_f1": 0.7551,
+ "control": "kf768_74(mint주입) 0.7579 — 계열비교 -0.0028",
+ "created": "2026-07-11T17:20 KST"
+}

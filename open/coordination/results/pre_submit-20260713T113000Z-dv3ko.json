@@ -1,0 +1,40 @@
+{
+  "request_id": "pre_submit-20260713T113000Z-dv3ko",
+  "objective": "카드5·6 dv3ko 신규백본 zip(v58 k81→dv3ko_s79/s81) 제출 직전 게이트 — 배포계보(단일단계)·프레임·docstring·표현규율 독립 검증",
+  "verdict": "PASS",
+  "auditor_model": "data-auditor (claude-opus subagent, read-only)",
+  "completed_at": "2026-07-13T11:30:00Z",
+  "blocking_findings": [],
+  "nonblocking_findings": [
+    {
+      "id": "briefing-discipline",
+      "summary": "브리핑 필수: ①밴드통과 박함(+0.0012/+0.0007 < 부트SE~0.004, dv81 se-gate −0.0003 경계미달) — 자격일 뿐 우열 LB ②runtime_status=estimated(T4 서버 measured 아님; dv3ko는 kf768과 deberta-v2 동형·768·12층이라 forward≈kf768→9:46/16초 마진 동급 추정, zip은 축소 885<978MB) ③confounder k81=v1 vs dv3ko=v2 → 'recipe-matched v2 backbone draw', post_lb '단독효과/백본만' 금지 ④dv3ko 단독홀드 낮음(0.685)이나 블렌드 다양성 in-band — '약하다' 단정 금지.",
+      "evidence": "밴드체크 dv3ko_band.py; effective_config_s{79,81}; HANDOFF §9"
+    }
+  ],
+  "verified_claims": [
+    "배포 계보(단일단계): effective_config_s{79,81} = MODEL_NAME=team-lucid·MAX_LEN768·EPOCHS6·16×3·2e-5·EXTRA=train_mint.jsonl·HOLDOUT_IDX=hidx·PRETEXT/INIT_BACKBONE/TARGET_BALANCE/SOFT_TARGET 모두 미설정 → 단일단계 k81 레시피 matched(백본만 상이). colab SHA 415e4c3e·EXTRA sha eac21323·HOLDOUT_IDX sha e39aae25 = pre_launch 계약 일치. 배포 model_sub=전체 refit(밴드체크는 홀드아웃 로짓, 표준 gate/deploy 패턴)",
+    "프레임 정합(CRC 전수): v58에서 k81(7파일)→dv3ko(7파일)+script.py만 상이. model_s48·model_kf768_79·model/artifacts.pkl·feat.py·requirements.txt 바이트동일. 4번째 멤버 없음, 블렌드 SEED_DIRS 3멤버 불변. dv79↔dv81 dv3ko멤버+docstring seed만 상이",
+    "dv3ko config: deberta-v2/DebertaV2Model 인코더·hidden768·vocab64100(param차 50,611,200=(130000−64100)×768 산술일치)·relative_attention True/position_biased_input False(768 native). head.pt/prep.pkl kf768과 바이트동일 크기(925951/5434). safetensors 전부 F16. vocab.txt 없음(SPM DebertaV2TokenizerFast·tokenizer.json)=카나리 일치. 금지엔트리 0. 885MB<1e9",
+    "docstring 교정: zip script.py diff = docstring 3줄+SEED_DIRS 1줄. '카드N dv3ko_sXX … v58(0.7841)에서 kf768_81→dv3ko' 정정, 블렌드/추론 로직 무변경",
+    "zip-verifier(지휘자) 무모순: verify_zip dv3ko 26/26 ALL PASS + 5행 E2E(SPM 오프라인 로드 실증) 보고를 CRC전수·계보·프레임 독립재확인으로 교차확인"
+  ],
+  "unverified_claims": [
+    "T4 600초 runtime = estimated(서버 제출만 measured). dv3ko가 kf768과 아키텍처 동형이라 시간증가 이유 없음·zip 축소 → envelope 위반 아님"
+  ],
+  "confounders": [
+    "k81=v1 파이프라인 draw vs dv3ko=v2(415e4c3e) → 'recipe-matched v2 backbone draw'(순수 백본 A/B 아님). post_lb '단독효과/백본만' 호칭 금지. 레시피(768/6ep/16×3/2e-5/EXTRA=train_mint) matched."
+  ],
+  "required_fixes": [],
+  "safe_next_action": "카드5·6 제출 가능(사용자 직접). 브리핑에 밴드박함·runtime estimated·v1-vs-v2 confounder·dv3ko다양성 명시. 우열은 LB.",
+  "evidence_references": [
+    "submits/submit_dv79.zip (SHA 별도)", "submits/submit_dv81.zip",
+    "open/coordination/logs/dv3ko/effective_config_s{79,81}.json",
+    "open/coordination/results/pre_launch-20260713T054730Z-dv3ko.json",
+    "submits/submit_v58.zip (대조)"
+  ],
+  "artifact_sha": {
+    "submits/submit_dv79.zip": "885475998 bytes (dv3ko_s79, type=dv3ko)",
+    "submits/submit_dv81.zip": "885476329 bytes (dv3ko_s81)"
+  }
+}

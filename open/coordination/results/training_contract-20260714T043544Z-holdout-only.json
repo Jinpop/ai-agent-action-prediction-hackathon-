@@ -1,0 +1,116 @@
+{
+ "schema_version": "3",
+ "request_id": "training_contract-20260714T043544Z-holdout-only",
+ "audit_key": "4ff0751bfd18f0176ab88d748b57a0c7b4e35a42671a06a48a2357c64fe2f3d0",
+ "lineage_id": "training_contract-holdout-only",
+ "stage": "training_contract",
+ "policy_version": "2026-07-14",
+ "objective": "신규 HOLDOUT_ONLY=1이 요구동작 1~8(밴드 자격만 계산 후 정지) 계약 충족 + 기존 gate/deploy 계약 불변 여부 내부 교차검증. workflow stage=plan_review-class. ★판정만(발사·업로드 권한 아님).",
+ "gate_state": "PASS",
+ "action_state": "WAITING_USER",
+ "downstream_action": "launch",
+ "verdict_source": "internal_cross_check",
+ "auditor_model": "Claude Opus 4.8 (claude-opus-4-8) — training-contract internal cross-check, read-only",
+ "cache_hit": false,
+ "attempt": 0,
+ "started_at": "2026-07-14T04:33:00Z",
+ "completed_at": "2026-07-14T04:38:00Z",
+ "runner_recorded": {
+  "request_id": "training_contract-20260714T043544Z-holdout-only",
+  "model": "claude-opus-4-8",
+  "reasoning": "internal_cross_check (no Codex; ★Codex 미호출 지시 준수)",
+  "started_at": "2026-07-14T04:33:00Z",
+  "completed_at": "2026-07-14T04:38:00Z",
+  "attempt": 0,
+  "cache_hit": false
+ },
+ "raw_result_ref": null,
+ "nonblocking_findings": [
+  {
+   "id": "N1",
+   "summary": "HOLDOUT_ONLY=0 경로도 effective_config.json에 'HOLDOUT_ONLY': false 키가 1개 추가된다(:150). 학습·배포 동작 무변경의 순수 기록성 변화이나 dabf455d 산출 effective_config와 키 1개 차이가 생김.",
+   "evidence": "open/scripts/colab_train_base2.py:150 (diff 147a150) — cfg dict 항목 추가, 동작분기 아님"
+  },
+  {
+   "id": "N2",
+   "summary": "HOLDOUT_ONLY∧PRETEXT를 막는 assert는 없다. PRETEXT=1이면 StageA 분기(:429-437)가 train_model 후 :437 sys.exit로 먼저 종료 → HOLDOUT_ONLY는 조용히 no-op(밴드 npy·GATE_DONE 미생성). 요구 E대로 StageA엔 절대 배선 금지(배선 시 silent 무동작 footgun).",
+   "evidence": "colab_train_base2.py:429(if PRETEXT), :437(sys.exit), :464(홀드 블록은 그 아래)"
+  },
+  {
+   "id": "N3",
+   "summary": "코드는 마커명 'GATE_DONE'을 기록(:477). 카드1 gate 체인은 'STAGE_B_DONE'을 썼다 — 배선 시 run-monitor 워처/체인이 감시하는 마커명을 'GATE_DONE'과 일치시켜야 완주 감지가 된다(배선 단계 확인사항).",
+   "evidence": "colab_train_base2.py:477 open('GATE_DONE'); 배경(카드1 STAGE_B_DONE)"
+  },
+  {
+   "id": "N4",
+   "summary": "holdout_probs3.npy는 out.predictions(=softmax 전 raw 로짓, :469에서 argmax로 F1 산출)을 저장한다. 파일명은 'probs'이나 내용은 로짓 — 기존 멤버 관행(:266 주석 '기존 멤버 홀드아웃 로짓이 전부 이 split')과 일치. blend-evaluator 밴드체크는 로짓/확률 혼용 금지(§14)에 따라 softmax 일관 적용 전제.",
+   "evidence": "colab_train_base2.py:468-469,474; :266 주석"
+  }
+ ],
+ "verified_claims": [
+  {
+   "claim": "A: HOLDOUT_ONLY 선언(:57) 후 홀드 블록은 REFIT_ONLY의 else(:464 if REFIT_ONLY / :466 else) 내부 — train_model(tr,va):467, out=predict:468, f1=f1_score:470, classification_report print:472, np.save holdout_probs3.npy:474, np.save holdout_idx3.npy:475, if HOLDOUT_ONLY:476 → GATE_DONE write:477, sys.exit(0):482. 요구동작 1(학습/예측)·2(npy 2종)·3(F1+report)·4(effective_config 키:150)·5(GATE_DONE:477)·6(즉시 종료:482) 전부 충족.",
+   "evidence": "colab_train_base2.py:57,150,464-482; test_holdout_only.py B1/B2/B3/E1/E2 PASS"
+  },
+  {
+   "claim": "A: f1(:470)·out(:468)은 else 블록(466-482) 내부에서 476 이전에, va(:267 HOLDOUT_IDX 지정 시 / :272 GroupKFold-fold0)는 모듈 수준에서 정의 — 종료블록 476-482 시점에 3변수 모두 스코프 내. 종료블록은 else 내부(들여쓰기 4)로 REFIT_ONLY=True일 때 도달 불가.",
+   "evidence": "colab_train_base2.py:265-272(va),:468(out),:470(f1),:476-482(else 내부 if HOLDOUT_ONLY)"
+  },
+  {
+   "claim": "B: sys.exit(0):482가 배포 full-refit train_model(np.arange):493·SUB_DIR/model_sub build:495-515·script.py write:611·requirements.txt:612·submit_base2.zip:616-626보다 앞 → HOLDOUT_ONLY=1이면 전부 미실행. 요구동작 7(full-data train_model 미호출)·8(model_sub·script.py·requirements·zip 미생성) 충족.",
+   "evidence": "colab_train_base2.py:482<493<616; test C2(482<493)/C3(493<616)/E3~E6 PASS"
+  },
+  {
+   "claim": "C: dabf455d(ref) 대비 diff는 순수 additive 4 hunk(57 선언 / 68 assert / 150 config키 / 476-482 종료블록)·삭제 0. 476-482는 'if HOLDOUT_ONLY:' 가드 하에만 실행, 57/68/150은 HOLDOUT_ONLY=0에서 불활성. PRETEXT StageA(:429-437)·기본 배포 StageB(:484+ full-refit+zip)·SKIP_REFIT(:485-487, 여전히 zip)·REFIT_ONLY(:464-465) 전부 무변경 → HOLDOUT_ONLY=0 동작은 dabf455d와 동일.",
+   "evidence": "diff ref↔target: 56a57/66a68/147a150/472a476-482, 삭제 0; test D1(예상밖 추가 [])/D2(삭제 [])/E7~E10 PASS"
+  },
+  {
+   "claim": "D: assert not (HOLDOUT_ONLY and REFIT_ONLY):68이 논리적으로 옳음 — REFIT_ONLY=True는 :464 if-branch(홀드 학습·out·va·f1 전부 생략)를 타고 홀드 종료블록(:476)에 도달 못함. 두 플래그 동시 지정 시 HOLDOUT_ONLY 종료가 무력화되고 f1/out 미정의로 배포 경로 진입 → assert가 이 모순 조합을 차단.",
+   "evidence": "colab_train_base2.py:67(SKIP_REFIT^REFIT_ONLY),:68(HOLDOUT_ONLY^REFIT_ONLY),:464-466 분기; test A2 PASS"
+  },
+  {
+   "claim": "F: 밴드체크 입력 라인(:474 holdout_probs3.npy=out.predictions, :475 holdout_idx3.npy=va)은 비-HOLDOUT gate와 공유되는 기존 라인(diff 무변경). va는 HOLDOUT_IDX(hidx) 지정 시 그 파일(:267), 미지정 시 GroupKFold-fold0(:272) — gate 배선 시 HOLDOUT_IDX=hidx이면 기존 멤버 홀드아웃과 동일 split. 밴드체크에 필요한 로짓+idx 쌍 보존.",
+   "evidence": "colab_train_base2.py:265-272,474-475; N4(로짓/확률 명명 주의)"
+  },
+  {
+   "claim": "학습 하이퍼파라미터 계약 불변(mint2b confound 재발 방지): EPOCHS/BATCH/GRAD_ACCUM/LR/SEED/MAX_LEN/GRAD_CKPT 선언(:48-53,71) 및 set_seed(SEED)가 모델 생성 전(:406 set_seed → :407 HybridNet) 모두 dabf455d와 동일 — HOLDOUT_ONLY는 하이퍼파라미터를 건드리지 않음(선언·assert·config키·홀드 종료분기만 추가).",
+   "evidence": "diff에 :48-53/:71/:402-425 무변경; colab_train_base2.py:406-407 set_seed-then-model"
+  },
+  {
+   "claim": "E(부분): HOLDOUT_ONLY 배선 미적용 — 로컬 어떤 .sh/.py 체인도 HOLDOUT_ONLY를 참조하지 않음(grep 0건, 스크립트/ref/test 제외). 원격 변경 없음(task=로컬 전용, 원격 read-only).",
+   "evidence": "grep -rIl HOLDOUT_ONLY (colab/ref/test 제외) → 0건; 로컬 gate 체인 .sh 부재(원격 상주)"
+  }
+ ],
+ "unverified_claims": [
+  "E(원격측): 원격 gate 체인 스크립트(run_mint2v2*_chain.sh 류)의 StageB env에 HOLDOUT_ONLY=1을 추가하는 실제 배선은 이 task에서 미열람(원격 read-only). 배선 후 effective_config_B에 HOLDOUT_ONLY=true 반영·StageA(PRETEXT) env엔 미주입은 발사 전 별도 확인 필요.",
+  "run-monitor 워처/체인이 감시하는 완주 마커명이 코드의 'GATE_DONE'과 일치하는지는 원격 체인 미열람으로 미확인(N3).",
+  "홀드아웃 밴드 통과·gate 홀드 스코어·blend-evaluator 밴드 판정은 아직 발생하지 않은 결과 — 학습 실행 후에만 확인 가능.",
+  "체크리스트 10_pre_training #1(사전등록)·#13(ETA+완료감시)은 발사 절차 항목으로 본 계약감사 범위 밖 — 발사 재승인 단계에서 지휘자가 별도 마감."
+ ],
+ "confounders": [
+  "이 판정은 코드 계약(제어흐름·backward-compat)만 검증 — HOLDOUT_ONLY 자체는 학습 데이터·하이퍼파라미터를 바꾸지 않으므로 밴드 결과에 confound를 주입하지 않는다. 단 gate 발사 시의 데이터/StageA 레시피 confound(예: mint2v2 4변수 묶음)는 별도 plan_review/pre_launch 판정 소관이며 이 flag 감사와 무관.",
+  "결과 stage 필드='training_contract'(역할)와 request stage='plan_review'(workflow enum)는 request 스키마 enum 제약으로 상이 — 동일 우려의 재감사는 lineage_id='training_contract-holdout-only'로 묶임."
+ ],
+ "required_fixes": [],
+ "safe_next_action": "PASS — HOLDOUT_ONLY=1은 요구동작 1~8을 계약대로 충족하고 HOLDOUT_ONLY=0 경로는 dabf455d와 byte-identical(순수 additive 4 hunk). ★발사·업로드 권한 아님(action_state=WAITING_USER). 밴드전용 gate 실행 전 별도 재승인 2단계: (1) 원격 gate 체인 StageB env에 HOLDOUT_ONLY=1 배선(StageA/PRETEXT엔 금지, N2) + 워처 마커명 GATE_DONE 정합(N3) → (2) 사용자 명시 발사 승인. 결과 해석 시 HOLDOUT_ONLY는 밴드 자격 산출만 — 우열·챔피언 판단자 아님.",
+ "escalated": false,
+ "evidence_references": [
+  "open/scripts/colab_train_base2.py:57",
+  "open/scripts/colab_train_base2.py:68",
+  "open/scripts/colab_train_base2.py:150",
+  "open/scripts/colab_train_base2.py:464",
+  "open/scripts/colab_train_base2.py:476",
+  "open/scripts/colab_train_base2.py:482",
+  "open/scripts/colab_train_base2.py:493",
+  "open/scripts/colab_train_base2.py:616",
+  "scratchpad/colab_dabf455d_ref.py",
+  "scratchpad/test_holdout_only.py",
+  "open/docs/checklists/10_pre_training.md"
+ ],
+ "artifact_sha": {
+  "open/scripts/colab_train_base2.py": "ec60a75381b4d6f97fde5bd34e35e3ba572803649d0849b73940bef2748e0abd",
+  "scratchpad/colab_dabf455d_ref.py": "dabf455d3cc93f2185ae9c4bd3733e3adc7690f4defab040ac29d3214fd4e8c3",
+  "scratchpad/test_holdout_only.py": "0fd4775eb1d82bec830d22aaaa7fa21d9701d67ec73e54a194f68d9f31560ed5",
+  "open/scripts/feat.py": "91c419d634a85ad912d3dc43b9c802ddf0f1a31b0a203345cb38779b30b05ca8"
+ }
+}

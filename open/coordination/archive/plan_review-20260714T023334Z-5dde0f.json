@@ -1,0 +1,194 @@
+{
+  "request": {
+    "stage": "plan_review",
+    "objective": "mint2-balanced-v2 seed79 gate 발사 게이트 — 07-14 외부감사 지적(TARGET_BALANCE 배치정규화·클래스가중 raw count·mint 활용 부족·메타 미사용 필드) 수정판. ★묶음 probe(4변수 동시변경) — '단독효과' 호칭 사전 금지.",
+    "direct_control": "카드1 mint2b gate chain(치타 run_mint2b_s79): Stage A = EPOCHS 3·PRETEXT keep·TARGET_BALANCE·train_mint2_balanced_gate(5,097/2,314)·code 415e4c3e → Stage B = EPOCHS 6·real-only·HOLDOUT_IDX=hidx. 현 챔피언 cA(0.7848461512)의 mint 멤버가 이 계보.",
+    "intended_change": "★묶음 4변수(전부 07-14 외부감사 수정항): ①TB_V2 배치독립 가중손실((per*wt).mean(), WT 전역 mean=1 :234 전제 — 기존 배치별 wt.sum() 재정규화 제거) ②TB_V2 클래스가중(bincount weights=WT — 기존 raw window 행수 제거) ③데이터 v2: strict 전체 3,162 target/6,829 unique window(gate 5,454/2,542) — exact-meta 조건 제거+내부 전역 dedup(target-커버리지 우선 tiebreak) ④메타 omit: PRETEXT_META=omit + session_meta 안정필드 4종만(user_tier/language_pref/loc/language_mix — 복원·zero-sentinel 없음). Stage B는 카드1과 byte-identical(TB_V2는 real-only WT=1이라 수학적 no-op이므로 미설정).",
+    "code_sha256": {
+      "open/scripts/colab_train_base2.py": "dabf455d3cc93f2185ae9c4bd3733e3adc7690f4defab040ac29d3214fd4e8c3",
+      "scratchpad/build_mint2_balanced_v2.py": "a402daad619ab770a4e33dae92a0e28b7e650ff88a0d0d0ed762d1d1528ae490",
+      "open/scripts/feat.py": "91c419d634a85ad912d3dc43b9c802ddf0f1a31b0a203345cb38779b30b05ca8",
+      "scratchpad/colab_415e4c3e_ref.py": "415e4c3e41b423041f55391dae018d9da7cbcb00ba20e212974ab46933e5692f",
+      "scratchpad/colab_415e_to_dabf_diff.txt": "f82acf59eef79fdf7dd179405cd14ca8afc308b51c201042a695dc72164737f7"
+    },
+    "data_sha256": {
+      "open/data/train_mint2_balanced_v2.jsonl": "17d753527a406085dcb6fa50f6f708b0a265a3d43a1727dde9386f225811022e",
+      "open/data/train_mint2_balanced_v2_gate.jsonl": "05fad50e76545cb499e0fedaf56d8df7edb588a3aa991015575f1c5209f22466",
+      "open/data/train_mint2_balanced_v2_labels.csv": "aea580d3655f4a4c9250e1986b84eb861f958d486e45d337360fce3299fd3bd1",
+      "open/data/train_mint2_balanced_v2_gate_labels.csv": "6bb8c1b1571dfaacb79a5b3f3b62ad850a3eecbdc7d34b3e53caa828a20ef122",
+      "scratchpad/hidx.npy": "e39aae253087b4ac08f2550005e08421584a2dbc273adf64c692a6b0f1b0feae"
+    },
+    "verify_items": [
+      "TB_V2 손실 수학: (per*wt).mean()이 배치독립인지(WT 전역 mean=1 :234 전제 확인), Stage B(WT=1)에서 기존 sum/wt.sum()과 동치라 Stage B env 미설정이 카드1 byte-identical 유지에 문제없는지",
+      "TB_V2 클래스가중: sqrt_weights(yy, WT[idx_tr])가 target가중 반영 카운트인지, 기존 경로(wt=None) 무변경인지",
+      "colab diff: dabf455d vs 415e4c3e가 선언된 변경(temp assert + TB_V2)만인지 — 기타 드리프트 있으면 BLOCK",
+      "빌더 검증: strict 3,162 도출 근거, 내부 dedup의 target-커버리지 tiebreak 타당성, ★모호 input 2건(동일 (history,prompt) 교차라벨 — scratchpad/mint2_v2_label_conflicts.json) 처리(한쪽 유지)가 안전한지",
+      "누수: gate 5,454행에 hidx-holdout 세션 0, budget/elapsed/git_dirty/ci 필드 부재(zero-sentinel 원천 차단), PRETEXT_META=omit 경로가 [META] 라인을 실제로 생략하는지(colab :118)",
+      "발사 env 도출: Stage A = 카드1 gate Stage A에서 {EXTRA_DATA→v2_gate, PRETEXT_META keep→omit, TB_V2=1} / Stage B = 카드1 gate Stage B와 byte-identical. train-launcher용 env 세트 명시",
+      "프레이밍: 묶음 4변수 probe — 밴드 통과해도 'v2 효과/수정이 통한다' 단독효과 호칭 금지 사전공약, 밴드=자격필터",
+      "GPU/디스크: 치타 2장 idle 여부, 신규 데이터·코드 업로드 목록"
+    ],
+    "evidence_paths": [
+      "open/scripts/colab_train_base2.py",
+      "scratchpad/build_mint2_balanced_v2.py",
+      "scratchpad/mint2_v2_label_conflicts.json",
+      "open/data/train_mint2_balanced_v2_gate.jsonl",
+      "open/coordination/results/post_lb-20260714T014500Z-round3.json",
+      "scratchpad/colab_415e4c3e_ref.py",
+      "scratchpad/colab_415e_to_dabf_diff.txt",
+      "open/coordination/results/plan_review-20260714T022450Z-8b0bdf.json"
+    ],
+    "known_caveats": [
+      "묶음 4변수라 어느 수정이 효과인지 분리 불가 — 사전공약: 결과는 '수정축 묶음 probe'로만 기록",
+      "모호 input 2건은 데이터 자체의 모호성(어느 라벨 선택도 자의적) — dedup으로 학습셋 내 모순은 없음",
+      "seed79 1장 probe — seed 스프레드(±0.0015) 안에서 움직일 수 있음",
+      "이 요청은 data-auditor + Codex 외부 감사 병행 대상(07-14 CLAUDE.md 신규 규칙 — 새 학습축 plan_review)",
+      "병행 감사: 동일 계획에 대한 data-auditor(Claude) PASS가 results/plan_review-20260714T020320Z-mint2v2.json에 존재 — 이 Codex 감사는 외부 교차검증(07-14 CLAUDE.md 규칙). Claude 판정에 동조할 의무 없음, 독립 판단.",
+      "재감사(r2): 직전 Codex BLOCK(plan_review-20260714T022450Z-8b0bdf)의 required_fixes 이행 — ①치타 run_mint2b_s79에서 415e4c3e 원본을 scratchpad/colab_415e4c3e_ref.py로 회수(SHA 정확 일치) ②unified diff를 scratchpad/colab_415e_to_dabf_diff.txt로 고정(hunk 6개 = TB_V2 플래그·config 키·temperature assert·sqrt_weights wt분기·loss TB_V2분기·호출부 인자 — 전부 선언 변경, 미선언 drift 없음을 감사자가 diff로 직접 확인 가능) ③nonblocking N1(빌더 문구 'id-min 유지' 부정확) 수정 — tiebreak 실제구현(target-커버리지 우선·동률 id-min)으로 docstring/print 정정, 빌더 SHA a402daad로 변경(문구만·재실행 결과 데이터 SHA 17d75352/05fad50e 불변 재확인) ④N2(안정필드 실질 inert)는 confounders 프레이밍에 이미 반영(메타 활용으로 해석 금지)."
+    ],
+    "proposed_next_action": "data-auditor PASS ∧ Codex PASS 시: 치타 업로드(colab dabf455d·v2 데이터 4파일) → run_mint2v2_s79 gate chain 발사(GPU, A3/B6) → 밴드체크 → 통과 시 full Stage A + 배포 refit → cA 프레임 m2b79 슬롯 교체 포장 → pre_submit → 사용자 제출.",
+    "effective_config_path": null,
+    "deadline": "2026-07-14T04:00:00Z",
+    "user_approval_required": false,
+    "timeout_sec": 900,
+    "request_id": "plan_review-20260714T023334Z-5dde0f",
+    "created_at": "2026-07-14T02:33:34Z",
+    "artifact_paths": []
+  },
+  "result": {
+    "request_id": "plan_review-20260714T023334Z-5dde0f",
+    "objective": "mint2-balanced-v2 seed79 gate 발사 게이트 — 07-14 외부감사 지적 수정판 묶음 probe(4변수 동시변경) 계획 감사",
+    "verdict": "PASS",
+    "auditor_model": "GPT-5 Codex read-only",
+    "completed_at": "2026-07-14T02:37:59Z",
+    "blocking_findings": [],
+    "nonblocking_findings": [
+      {
+        "id": "N1",
+        "summary": "Stage B 'byte-identical' 표현은 엄밀히는 env/수학 경로 동일으로 제한해야 한다.",
+        "evidence": "open/scripts/colab_train_base2.py는 415e4c3e→dabf455d로 바뀌었고 effective_config 키에 TB_V2가 추가된다. 다만 Stage B는 EXTRA_DATA/TARGET_BALANCE/SOFT_TARGET이 없어 wt 미전달, TB_V2 미설정, temp assert 비활성이라 학습 수학은 카드1 Stage B와 동일하다."
+      },
+      {
+        "id": "N2",
+        "summary": "빌더 주석에 id-min 결정론 표현이 일부 남아 있다.",
+        "evidence": "scratchpad/build_mint2_balanced_v2.py:111-116은 target-coverage 우선 후 id 사전순 정렬을 실제 구현하지만, :139 주석은 '라벨 선택은 id-min 결정론'이라고 축약한다. 산출 데이터에는 영향 없는 문구 잔재다."
+      },
+      {
+        "id": "N3",
+        "summary": "안정 메타 4종은 이번 Stage A에서 실질 신호가 아니다.",
+        "evidence": "PRETEXT_META=omit이면 open/scripts/colab_train_base2.py:116에서 [META] 라인이 생략되고 PRETEXT는 :257-258에서 119d meta를 0화한다. 따라서 결과 해석은 '메타 활용'이 아니라 '메타 제거/오염 차단'으로 제한해야 한다."
+      }
+    ],
+    "verified_claims": [
+      "읽기 순서 준수: AGENTS.md → open/docs/HANDOFF.md → 실험로그 관련 07-14 절 → open/docs/대회규칙_채점환경.md → open/docs/checklists/10_pre_training.md 및 70_codex_workflow.md/00_observed_errors.md.",
+      "요청된 code/data SHA를 로컬 재계산해 일치 확인했다: colab dabf455d, builder a402daad, feat 91c419d, 415e ref 415e4c3e, diff f82acf59, v2 데이터/라벨/hidx 모두 요청값과 일치한다.",
+      "scratchpad/colab_415e_to_dabf_diff.txt는 실제 diff와 byte 일치하며, hunk는 TB_V2 env/config, SOFT_TARGET temperature assert, sqrt_weights wt 분기, TB_V2 loss 분기, sqrt_weights 호출부뿐이다. SOFT_TARGET 미설정 학습에서는 temp assert가 비활성이다.",
+      "TB_V2 손실은 WT 전역 mean=1 정규화 뒤 (per*wt).mean()을 사용한다. 기존 TB_V2=0 경로는 (per*wt).sum()/wt.sum()으로 보존되어 기존 런 재현 경로를 바꾸지 않는다.",
+      "TB_V2 클래스가중은 sqrt_weights(y[idx_tr], WT[idx_tr] if TB_V2 else None)와 weighted bincount로 target가중 카운트를 반영한다. wt=None이면 기존 raw count 경로다.",
+      "v2 데이터 실측: full 6,829 rows/3,162 targets, gate 5,454 rows/2,542 targets, labels와 jsonl id 매칭 1:1, 내부 duplicate input 0.",
+      "누수 점검: gate 데이터의 hidx holdout session row는 0이고, budget/elapsed/git_dirty/last_ci_status/open_files/turn_index 필드는 없다. session_meta 잔존 필드는 user_tier/language_pref/workspace.loc/workspace.language_mix뿐이다.",
+      "scratchpad/audit_mint_recoverability.py --json 기준 strict_text_rows=3,162, strict_rows_with_exact_ci_dirty_open=2,863, gate_train_strict_text_rows=2,542로 v2 빌더의 exact-meta 조건 제거 근거와 일치한다.",
+      "모호 input conflict는 2건이며 dedup 후 학습셋 내부 동일 input 교차라벨 모순은 남지 않는다. 다만 어느 쪽 라벨이 의미적으로 맞는지는 데이터만으로 확정할 수 없다.",
+      "HANDOFF §5의 죽은 축인 mint2 직접 동등가중 주입 재시도가 아니라 HANDOFF §6의 balanced-mint 계열 수정 probe다.",
+      "계획은 4변수 묶음 probe라고 명시하고 단독효과 호칭 금지를 사전공약했다. holdout도 우열 판단이 아니라 밴드 자격 필터로만 쓰는 프레이밍이다."
+    ],
+    "unverified_claims": [
+      "치타 GPU 2장 idle 여부, 디스크 여유, 원격 업로드된 colab/feat/v2 데이터 SHA 상태는 로컬 read-only evidence만으로 확인할 수 없다.",
+      "실제 train-launcher가 Stage A/B env를 요청서대로 설정하고 root drift 파일을 피할지는 발사 직전 원격 snapshot/effective_config로만 검증 가능하다.",
+      "향후 gate holdout, band 통과 여부, full refit, T4 runtime, 서버 LB는 아직 발생하지 않은 결과다.",
+      "모호 input 2건에서 유지된 라벨이 의미적으로 더 옳다는 주장은 확인 불가다."
+    ],
+    "confounders": [
+      "이번 계획은 ①TB_V2 배치독립 손실 ②TB_V2 target가중 클래스가중 ③strict 6,829-window v2 데이터 ④PRETEXT_META omit/메타 정리를 동시에 바꾸는 묶음 probe다. 결과를 단독효과로 귀속할 수 없다.",
+      "415e4c3e→dabf455d 코드 변경에는 비활성 temp assert도 포함된다. SOFT_TARGET 미설정에서는 수학 경로에 영향 없지만 코드 diff confound로 명시해야 한다.",
+      "seed79 단일 draw라 결과 해석은 seed·학습 draw·처리 상호작용 범위로 제한해야 한다.",
+      "v2 full 데이터에는 holdout session row가 포함되지만 이는 배포 Stage A용이다. gate 평가에는 holdout session이 0인 gate 파일만 써야 한다.",
+      "stable session_meta 4필드는 PRETEXT_META=omit 및 119d zeroing으로 사실상 inert하므로 '메타 활용 효과'로 해석하면 안 된다."
+    ],
+    "required_fixes": [],
+    "safe_next_action": "PASS — run_mint2v2_s79 gate 발사 계획은 진행 가능하다. 발사 직전에는 원격 SHA/upload, GPU/디스크, ETA/완료감시, Stage A/B effective_config diff를 별도 pre-launch 운영 체크로 닫고, 결과는 반드시 '수정축 묶음 probe'로만 기록한다.",
+    "evidence_references": [
+      "AGENTS.md",
+      "open/docs/HANDOFF.md",
+      "open/docs/실험로그.md:1498",
+      "open/docs/대회규칙_채점환경.md",
+      "open/docs/checklists/10_pre_training.md",
+      "open/docs/checklists/70_codex_workflow.md",
+      "open/docs/checklists/00_observed_errors.md",
+      "open/coordination/README.md",
+      "open/coordination/schemas/audit_result.schema.json",
+      "open/scripts/colab_train_base2.py:78",
+      "open/scripts/colab_train_base2.py:116",
+      "open/scripts/colab_train_base2.py:137",
+      "open/scripts/colab_train_base2.py:227",
+      "open/scripts/colab_train_base2.py:299",
+      "open/scripts/colab_train_base2.py:371",
+      "open/scripts/colab_train_base2.py:403",
+      "scratchpad/build_mint2_balanced_v2.py:61",
+      "scratchpad/build_mint2_balanced_v2.py:111",
+      "scratchpad/build_mint2_balanced_v2.py:142",
+      "scratchpad/colab_415e4c3e_ref.py",
+      "scratchpad/colab_415e_to_dabf_diff.txt",
+      "scratchpad/mint2_v2_label_conflicts.json",
+      "open/data/train_mint2_balanced_v2_gate.jsonl",
+      "open/coordination/logs/mint2b/effective_config_A_s79.json",
+      "open/coordination/logs/mint2b/effective_config_B_s79.json",
+      "open/coordination/results/post_lb-20260714T014500Z-round3.json",
+      "open/coordination/results/plan_review-20260714T022450Z-8b0bdf.json"
+    ],
+    "artifact_sha": [
+      {
+        "path": "open/scripts/colab_train_base2.py",
+        "sha256": "dabf455d3cc93f2185ae9c4bd3733e3adc7690f4defab040ac29d3214fd4e8c3"
+      },
+      {
+        "path": "scratchpad/build_mint2_balanced_v2.py",
+        "sha256": "a402daad619ab770a4e33dae92a0e28b7e650ff88a0d0d0ed762d1d1528ae490"
+      },
+      {
+        "path": "open/scripts/feat.py",
+        "sha256": "91c419d634a85ad912d3dc43b9c802ddf0f1a31b0a203345cb38779b30b05ca8"
+      },
+      {
+        "path": "scratchpad/colab_415e4c3e_ref.py",
+        "sha256": "415e4c3e41b423041f55391dae018d9da7cbcb00ba20e212974ab46933e5692f"
+      },
+      {
+        "path": "scratchpad/colab_415e_to_dabf_diff.txt",
+        "sha256": "f82acf59eef79fdf7dd179405cd14ca8afc308b51c201042a695dc72164737f7"
+      },
+      {
+        "path": "open/data/train_mint2_balanced_v2.jsonl",
+        "sha256": "17d753527a406085dcb6fa50f6f708b0a265a3d43a1727dde9386f225811022e"
+      },
+      {
+        "path": "open/data/train_mint2_balanced_v2_gate.jsonl",
+        "sha256": "05fad50e76545cb499e0fedaf56d8df7edb588a3aa991015575f1c5209f22466"
+      },
+      {
+        "path": "open/data/train_mint2_balanced_v2_labels.csv",
+        "sha256": "aea580d3655f4a4c9250e1986b84eb861f958d486e45d337360fce3299fd3bd1"
+      },
+      {
+        "path": "open/data/train_mint2_balanced_v2_gate_labels.csv",
+        "sha256": "6bb8c1b1571dfaacb79a5b3f3b62ad850a3eecbdc7d34b3e53caa828a20ef122"
+      },
+      {
+        "path": "scratchpad/hidx.npy",
+        "sha256": "e39aae253087b4ac08f2550005e08421584a2dbc273adf64c692a6b0f1b0feae"
+      },
+      {
+        "path": "scratchpad/mint2_v2_label_conflicts.json",
+        "sha256": "5e2eaaf24b3ca6db6b4d407fcdef94ddc4525e3bfc86cda6291aa7b349aaab8a"
+      },
+      {
+        "path": "open/coordination/results/post_lb-20260714T014500Z-round3.json",
+        "sha256": "401c85f8faca01beaa8c86b1b154bb56b4c7d377fb1ec0e6c4de40ad7af7d545"
+      },
+      {
+        "path": "open/coordination/results/plan_review-20260714T022450Z-8b0bdf.json",
+        "sha256": "2651eca2af15f95a0122bf5e1da5b30b454d139e61e903e1e08de56c10b1de7a"
+      }
+    ]
+  }
+}

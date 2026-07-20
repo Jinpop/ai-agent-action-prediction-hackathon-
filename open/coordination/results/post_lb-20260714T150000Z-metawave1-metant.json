@@ -1,0 +1,59 @@
+{
+  "schema_version": "3",
+  "request_id": "post_lb-20260714T150000Z-metawave1-metant",
+  "audit_key": "0000000000000000000000000000000000000000000000000000000000000000",
+  "lineage_id": "official-meta-wave1-partB-post_lb",
+  "stage": "post_lb",
+  "policy_version": "campaign:official-meta-wave1",
+  "objective": "official-meta-wave1 Part B post_lb: metaN/metaT LB 해석, 챔피언 교체(cA→META-T) 검증, matched A/B(metaN vs metaT) 판정. read-only, Codex 미호출.",
+  "gate_state": "PASS",
+  "action_state": "WAITING_USER",
+  "downstream_action": "none",
+  "verdict_source": "internal_cross_check",
+  "auditor_model": "claude-opus-4-8 (lb-interpreter internal cross-check, read-only)",
+  "cache_hit": false,
+  "attempt": 0,
+  "started_at": "2026-07-14T14:45:00Z",
+  "completed_at": "2026-07-14T15:00:00Z",
+  "runner_recorded": {
+    "request_id": "post_lb-20260714T150000Z-metawave1-metant",
+    "model": "claude-opus-4-8",
+    "reasoning": "lb-interpreter read-only post_lb (no Codex). LB는 사용자 보고, 산술·matched는 로컬 코드 대조.",
+    "started_at": "2026-07-14T14:45:00Z",
+    "completed_at": "2026-07-14T15:00:00Z",
+    "attempt": 0,
+    "cache_hit": false,
+    "raw_request_id": null
+  },
+  "raw_result_ref": null,
+  "verified_claims": [
+    {"claim": "metaN-cA=+0.0001608046, metaT-cA=+0.0018075385, metaT-metaN=+0.0016467339", "evidence": "제출 LB 0.7850069558/0.7866536897 vs cA 0.7848461512 직접 뺄셈, 검산 일치"},
+    {"claim": "META-T(0.7866536897)=최고 LB → 신챔피언 자동채택", "evidence": "cA 0.7848461512·metaN 0.7850069558 모두 초과"},
+    {"claim": "metaN vs metaT는 단일 멤버-슬롯 matched 스왑", "evidence": "stage_metaN/metaT script.py 대조: classic/model_s48/model_kf768_81/BLEND_W=0.6/deadlines 동일; s48·kf768_81은 prep meta_columns(119d) reindex로 META_NUM_EXT 여분열 드롭 → 공유멤버 예측 동일; 유일차이=3번째 멤버(kf768_metaN vs kf768_metaT)+ext transcript"},
+    {"claim": "metaT-cA +0.0018 > draw폭 → transcript-meta 정보축 서버 전달", "evidence": "정보축 vs 정규화축 법칙 정합, draw폭 ~0.0015 초과"},
+    {"claim": "runtime metaN 584s / metaT 598s measured < 600", "evidence": "제출 9:44 / 9:58"}
+  ],
+  "unverified_claims": [
+    "transcript-meta > numeric-meta는 n=1 seed·delta(+0.00165)≈draw폭(~0.0015) 경계라 시사까지만, 법칙 아님",
+    "metaN-cA +0.00016은 draw폭 이내 → cA 초과 사실이나 약함"
+  ],
+  "confounders": [
+    "metaN·metaT vs cA는 fresh REFIT_ONLY 6ep + 멤버 스왑 묶음(순수 A/B 아님)",
+    "metaT-metaN의 스왑변수(meta축)가 채널(numeric vs transcript)+필드셋(metaN 6 lang키 vs metaT langpref/budget/elapsed/loc/langmix)을 함께 바꿈 → '순수 채널 A/B' 아님(멤버 전략 비교)",
+    "n=1 seed(seed79 단일)",
+    "metaT runtime 598s=600s벽 2s마진(향후 metaT 프레임 시간리스크)"
+  ],
+  "required_fixes": [],
+  "safe_next_action": "docs-ledger-writer가 실험로그 EOF append + HANDOFF §1(챔피언 META-T)·§9 스냅샷·§6(transcript-meta 살아있는축) 갱신. metaN_w062(마지막 슬롯)는 진 축(numeric-ext) 기반이라 기대이득 낮음(권고: 다음은 metaT 프레임 다중seed·큰 카드, 단 metaT 598s 시간예산 확보). 실행은 사용자 승인.",
+  "escalated": false,
+  "evidence_references": [
+    "scratchpad/stage_metaN/script.py",
+    "scratchpad/stage_metaT/script.py",
+    "open/coordination/results/pre_launch-20260714T111358Z-metawave1-final.json",
+    "open/docs/checklists/60_post_submit.md"
+  ],
+  "artifact_sha": {
+    "submits/submit_metaN.zip": "7210a27116bf165fc12db4296cd2d7f9da018eda8455b1ad0d048673064a88a6",
+    "submits/submit_metaT.zip": "ae0b71a239ecf5e745f42979bed710653dcba0b3b66117b7d24b8581adeaff86"
+  }
+}

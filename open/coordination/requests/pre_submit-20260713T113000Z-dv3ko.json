@@ -1,0 +1,15 @@
+{
+  "request_id": "pre_submit-20260713T113000Z-dv3ko",
+  "created_at": "2026-07-14T01:53:46Z",
+  "stage": "pre_submit",
+  "objective": "카드5·6(dv3ko 2seed) zip 제출 직전 게이트 — CRC전수·SPM 오프라인로드·26검사.",
+  "verify_items": [
+    "CRC 전수",
+    "SPM 토크나이저 오프라인 로드",
+    "verify_zip(dv3ko spec)"
+  ],
+  "proposed_next_action": "PASS 시 사용자 제출.",
+  "user_approval_required": true,
+  "backfilled": true,
+  "backfill_note": "원 요청은 07-13 채팅 프롬프트로만 존재 — 07-14 소급 생성."
+}

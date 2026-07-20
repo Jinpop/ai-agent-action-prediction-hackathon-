@@ -1,0 +1,65 @@
+{
+  "schema_version": "3",
+  "request_id": "post_lb-20260715T030000Z-metawave1-1nn",
+  "audit_key": "0000000000000000000000000000000000000000000000000000000000000000",
+  "lineage_id": "official-meta-wave1-1nn-post_lb",
+  "stage": "post_lb",
+  "policy_version": "campaign:official-meta-wave1",
+  "objective": "official-meta-wave1 진단 post_lb: metaT 1NN+C LB 해석. delta·matched(묶음)·축서열·시간벽·챔피언 불변·목표차·프레이밍 규율. read-only, Codex 미호출.",
+  "gate_state": "PASS",
+  "action_state": "WAITING_USER",
+  "downstream_action": "none",
+  "verdict_source": "internal_cross_check",
+  "auditor_model": "claude-opus-4-8 (lb-interpreter internal cross-check, read-only)",
+  "cache_hit": false,
+  "attempt": 0,
+  "started_at": "2026-07-15T02:50:00Z",
+  "completed_at": "2026-07-15T03:00:00Z",
+  "runner_recorded": {
+    "request_id": "post_lb-20260715T030000Z-metawave1-1nn",
+    "model": "claude-opus-4-8",
+    "reasoning": "lb-interpreter read-only post_lb (no Codex). LB·채점시간은 사용자·서버 보고, 산술·matched는 로컬 선행감사 대조.",
+    "started_at": "2026-07-15T02:50:00Z",
+    "completed_at": "2026-07-15T03:00:00Z",
+    "attempt": 0,
+    "cache_hit": false,
+    "raw_request_id": null
+  },
+  "raw_result_ref": null,
+  "nonblocking_findings": [
+    {"id": "target-gap-live-confirm", "summary": "목표차 0.79307/+0.0063725129는 일관쌍(0.7866974871+0.0063725129=0.79307 정확)이나 docs 기록 전 현 리더보드 12등 스코어 라이브 확정 후 사용(metatsweep 감사 target-gap-inconsistency note 승계).", "evidence": "0.79307-0.7866974871=0.0063725129"}
+  ],
+  "verified_claims": [
+    {"claim": "matched delta(BLEND_W 0.6 고정, 멤버수 3→1) = metaT_1nn-submit_metaT = -0.0530238797; vs 챔피언 metaT_w062 = -0.0530676771", "evidence": "0.73362981-0.7866536897 / 0.73362981-0.7866974871 소수점 전체 뺄셈"},
+    {"claim": "성격=묶음: s48+kf768_81 2멤버 동시제거라 개별기여 미분리. 개별격리는 cA프레임 2NN 별도 확보(cross-frame, 3번째멤버 상이 m2b79 vs kf768_metaT → 직접합성 불가)", "evidence": "post_lb-20260714T112000Z-metawave1-2nn.json · post_lb-20260714T150000Z-metawave1-metant.json"},
+    {"claim": "초가법성: 쌍제거 +0.0530238797 = cA-2NN s48+k81 개별합(0.0110543983+0.0052044955=0.0162588938)의 3.26배 → 1멤버 앙상블 붕괴 효과 지배, s48+k81 품질귀속 아님", "evidence": "0.0530238797/0.0162588938≈3.26"},
+    {"claim": "축서열(관측): 다양성 +0.0530238797 ≫ meta +0.0018075385 ≫ blend-w +0.0000437974 (29.3×·41.3×)", "evidence": "선행 metant·metatsweep 감사 델타 + 본 제출"},
+    {"claim": "시간: 1멤버 192s·3멤버 598s → 멤버당 (598-192)/2=203s(≈200); 4th 동일크기 ~786~800s>600s T4벽 → 큰 카드=최약슬롯 교체 or 더 빠른 백본", "evidence": "제출 채점시간 measured 192/598"},
+    {"claim": "챔피언 metaT_w062 0.7866974871 불변(1nn=0.73362981 -0.053 진단·폐기, 후보 아님)", "evidence": "auto-highest-LB"},
+    {"claim": "목표차 챔피언→12등(0.79307) = +0.0063725129(일관쌍)", "evidence": "0.79307-0.7866974871"}
+  ],
+  "unverified_claims": [
+    "LB·채점시간은 사용자·서버 보고(결정론 서버 오라클 전제).",
+    "'큰 카드는 최약슬롯 교체(m2b79 +0.0014)로 +0.0064 회수'는 전략적 추론(2NN LOO·시간벽 관측 기반, 미래 실측 아님).",
+    "멤버당 원가 ≈203s는 2점(192/598) 선형추정 — 백본별(s48 110M vs kf768 185M) 원가 차이는 미분리."
+  ],
+  "confounders": [
+    "s48+kf768_81 2멤버 동시제거 → 개별기여 이 제출에서 미분리(묶음).",
+    "★ +0.053은 1멤버(무앙상블) base 대비라 'having an ensemble at all'(1→2)이 지배 — 다양성/앙상블-크기 효과, 품질귀속 아님(초가법 3.26×).",
+    "1→3을 3→4로 선형외삽 불가(diminishing); 3-멤버 marginal 현실상한=2NN +0.001~+0.011.",
+    "runtime 192s는 1멤버 config → 3멤버 교체후보 런타임 증명 아님.",
+    "vs-챔피언 -0.0530676771은 멤버수+blend-w 0.6→0.62 묶음(matched 아님).",
+    "n=1 seed(kf768_metaT 단일). 결정론 서버 — '노이즈' 금지."
+  ],
+  "required_fixes": [],
+  "safe_next_action": "docs-ledger-writer가 실험로그 EOF append + HANDOFF §6(다양성축 정량화: 1→3=+0.0530238797, 최대 레버지만 회수가능값 아님·2NN 마진 상한) 갱신. 챔피언 metaT_w062 불변이라 §1 무변경. (권고, 실행권 아님) 주력은 최약슬롯 교체형 큰 카드(non-kf 백본)·타임벽 회피. 발사·제출은 사용자 명시 승인.",
+  "escalated": false,
+  "evidence_references": [
+    "open/coordination/results/post_lb-20260714T150000Z-metawave1-metant.json",
+    "open/coordination/results/post_lb-20260715T024500Z-metawave1-metatsweep.json",
+    "open/docs/checklists/60_post_submit.md"
+  ],
+  "artifact_sha": {
+    "submits/submit_metaT_1nn.zip": "ae8b6cf66861cea281139659775a43aa06a82928662b35526c6bc2efbec4ae09"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "stage": "pre_launch",
+  "timeout_sec": 1200,
+  "objective": "신규 백본 deberta-v3-base-korean 2seed(카드5·6) 학습 발사 직전 감사 — v58 k81 슬롯 교체용, 백본 외 레시피 matched 여부·누수·envelope·미검증 항목 확인. mint2b 배포 완주 후 GPU free 시 발사.",
+  "direct_control": "v58(classic+s48+k79+k81)에서 kf768_81 슬롯을 dv3ko 멤버로 단일교체. 대조군 = k81(kf-deberta-base·768·6ep·16×3·2e-5·EXTRA=train_mint.jsonl·holdout=hidx).",
+  "intended_change": "★백본만 변경 (MODEL_NAME kakaobank/kf-deberta-base → team-lucid/deberta-v3-base-korean). 나머지 전부 k81과 동일 = 단일단계·EPOCHS 6(★mint2b의 2단계 A3/B6 아님)·BATCH16·GRAD_ACCUM3·LR2e-5·GRAD_CKPT0·MAX_LEN768·EXTRA_DATA=train_mint.jsonl(direct mint, balanced mint2 아님)·HOLDOUT_IDX=hidx(밴드체크 정렬).",
+  "launch_spec": {
+    "per_seed_env": "MODEL_NAME=team-lucid/deberta-v3-base-korean MAX_LEN=768 EPOCHS=6 BATCH=16 GRAD_ACCUM=3 SEED=<79|81> LR=2e-5 GRAD_CKPT=0 EXTRA_DATA=data/train_mint.jsonl HOLDOUT_IDX=data/hidx.npy",
+    "stage": "단일단계 (홀드아웃 eval on hidx + refit → model_sub 배포팩). PRETEXT/INIT_BACKBONE 없음.",
+    "seeds": "79=GPU0, 81=GPU1 (배포 full-refit 완주로 free된 lane)",
+    "colab": "치타 colab_mint2b.py (415e4c3e, 비-distill이라 temperature assert 무관). effective_config에 MODEL_NAME=team-lucid 기록",
+    "deploy_after_band": "v58 프레임 k81→dv3ko, verify_zip type=dv3ko(일반화판). dv3ko<kf768이라 zip 축소(≈886MB)."
+  },
+  "code_sha256": {
+    "open/scripts/colab_train_base2.py(local 44aa810b, 치타 415e4c3e)": "치타 colab_mint2b.py=415e4c3e 사용",
+    "train_mint.jsonl": "eac21323fc0ebe1bd92657ddfe5f92dd6ff4722a7b878a00f40dc1c231e11408",
+    "hidx.npy": "e39aae253087b4ac08f2550005e08421584a2dbc273adf64c692a6b0f1b0feae"
+  },
+  "verify_items": [
+    "★matched-control(epoch 교훈): dv3ko는 단일단계 EPOCHS=6 (k81과 동일). mint2b의 A3/B6와 혼동 금지 — PRETEXT/INIT_BACKBONE 미설정 확인.",
+    "★데이터 matched: EXTRA_DATA=train_mint.jsonl(mint1 direct, k81과 동일). balanced mint2가 아님(그러면 백본+데이터 이중변경 confound).",
+    "HOLDOUT_IDX=hidx: k81도 hidx split(F1 0.7567 재현 확인)이므로 정렬 일치. direct-mint leak-guard(:244-248)가 hidx-holdout 세션 mint 제외 → 누수0.",
+    "GRAD_CKPT=0 필수(deberta-v3 backward-twice 크래시), batch16×accum3(768). 캐시 offline·768-forward canary OK(hidden768·CLS).",
+    "10_pre_training: set_seed 모델생성 전·effective_config 자동저장·direct-mint 계보(70000 real + 3180 mint, holdout hidx 제외).",
+    "envelope: dv3ko(fp16 269MB<kf768 371MB) → v58 k81 슬롯 교체 시 zip 축소(≈886MB<1GB). verify_zip 일반화(member-spec dv3ko) v58 회귀 ALL PASS 확인됨."
+  ],
+  "known_caveats": [
+    "★unverified(카나리/pre_submit): T4 runtime(estimated ~9:46, A5000 measured 불가)·SPM 토크나이저 save→오프라인 reload 라운드트립(현행 멤버 전부 WordPiece라 미실증)·dv3ko 멤버 E2E(학습 후).",
+    "밴드통과해도 우열·챔피언은 LB로만. dv3ko는 '오류집합 바꾸는 큰 카드'지만 서버 성능 미보장.",
+    "k81은 manifest 없는 v1 파이프라인 draw — dv3ko(415e4c3e)와 콜랩 SHA는 다르나 레시피(768/6ep/16×3/2e-5/EXTRA=train_mint) 동일. 백본만 변경이 핵심."
+  ],
+  "proposed_next_action": "PASS 시 dv3ko 2seed 발사(비위험 무료GPU 학습, 워처 부착). 밴드통과분만 포장→zip-verifier(type=dv3ko)→pre_submit 감사→사용자 제출. BLOCK 시 수정 후 재감사.",
+  "user_approval_required": false,
+  "request_id": "pre_launch-20260713T054730Z-dv3ko",
+  "created_at": "2026-07-13T05:47:30Z"
+}

@@ -1,0 +1,35 @@
+{
+  "schema_version": "3",
+  "request_id": "post_lb-20260715T030000Z-metawave1-1nn",
+  "created_at": "2026-07-15T02:50:00Z",
+  "stage": "post_lb",
+  "policy_version": "campaign:official-meta-wave1",
+  "objective": "official-meta-wave1 진단 post_lb: metaT 1NN+C(submit_metaT_1nn) LB 해석 — delta 재계산·matched(멤버수 3→1)·축서열(다양성 vs meta vs blend)·시간벽·챔피언(불변)·목표차·프레이밍 규율 내부 교차검증. Codex 미호출.",
+  "verify_items": [
+    "delta: metaT_1nn-submit_metaT(3NN 0.6)=-0.0530238797; vs 챔피언 metaT_w062=-0.0530676771",
+    "matched: BLEND_W 0.6 고정, 유일차이 멤버수 3→1(s48+k81 동시제거=묶음)",
+    "초가법: 쌍제거 +0.0530 = cA-2NN s48+k81 개별합(+0.0162588938)의 3.26배 → 앙상블 붕괴 지배",
+    "축서열: 다양성 +0.0530 ≫ meta +0.0018 ≫ blend-w +0.00004",
+    "시간벽: 1멤버 192s·3멤버 598s → 멤버당 ~203s, 4th ~786~800s>600s",
+    "챔피언: metaT_w062 0.7866974871 불변, 1nn 진단·폐기",
+    "프레이밍: '다양성 최대 레버' 유지, '+0.053 회수가능' 과대추정 금지, '노이즈' 금지"
+  ],
+  "downstream_action": "none",
+  "proposed_next_action": "PASS 시 docs-ledger-writer가 실험로그 EOF append + HANDOFF §6(다양성축 정량화) 갱신. §1 무변경(챔피언 불변). 발사·제출은 별도 사용자 승인.",
+  "lineage_id": "official-meta-wave1-1nn-post_lb",
+  "direct_control": "submit_metaT (3NN+C, BLEND_W 0.6, 0.7866536897) — 동일 프레임에서 s48·kf768_81 2멤버 제거해 1NN+C 빌드",
+  "intended_change": "관측 대상: metaT 1NN+C 서버 LB(멤버수 3→1 ablation). 코드/데이터/멤버품질 변경 아님 — LB 해석만.",
+  "evidence_paths": [
+    "submits/submit_metaT_1nn.zip",
+    "open/coordination/results/post_lb-20260714T150000Z-metawave1-metant.json",
+    "open/coordination/results/post_lb-20260715T024500Z-metawave1-metatsweep.json"
+  ],
+  "effective_config_path": null,
+  "known_caveats": [
+    "LB·채점시간은 사용자·서버 보고.",
+    "audit_key는 internal_cross_check all-zeros placeholder.",
+    "s48+k81 2멤버 동시제거 → 개별기여 미분리(묶음). 개별격리는 cA프레임 2NN(cross-frame).",
+    "+0.053은 1멤버 base 대비라 앙상블-크기 효과 지배(초가법 3.26×), 품질귀속·회수가능값 아님.",
+    "target_gap ref(12등)는 리더보드 변동값 — 기록 전 라이브 확정."
+  ]
+}

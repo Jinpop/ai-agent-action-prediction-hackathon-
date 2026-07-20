@@ -1,0 +1,14 @@
+[
+  {
+    "kept_id": "sess_sim_20260522_040088-step_02m00",
+    "kept_label": "run_bash",
+    "dropped_id": "sess_sim_20260522_000479-step_09m00",
+    "dropped_label": "run_tests"
+  },
+  {
+    "kept_id": "sess_sim_20260522_031597-step_08m00",
+    "kept_label": "read_file",
+    "dropped_id": "sess_sim_20260522_004125-step_11m00",
+    "dropped_label": "grep_search"
+  }
+]

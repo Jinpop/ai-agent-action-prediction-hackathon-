@@ -1,0 +1,35 @@
+{
+  "schema_version": "3",
+  "request_id": "pre_submit-20260714T192500Z-allinfo",
+  "created_at": "2026-07-14T19:15:00Z",
+  "stage": "pre_submit",
+  "policy_version": "campaign:all-info-h100-final-0715",
+  "objective": "campaign all-info-h100-final-0715 pre_submit: submit_allinfo_3nn·1nnc 배포계약 검증(verify_zip+5행 E2E). ★소급 영속화(사용자 지적 '최종 pre_submit 파일 미저장' 정정). Codex 미호출.",
+  "verify_items": [
+    "크기<1e9·CRC·경로위생·금지엔트리0",
+    "공유멤버(classic/s48/k81/req) submit_metaT byte-identical",
+    "backbone fp16·finite·185,290,752·head893·meta125·scaler125",
+    "125d 계약: feat.py f65e9d91·META_NUM_EXT=1 import전·+6키",
+    "모델별 transcript 분기(META_T_DIR=allinfo)·train/serve parity",
+    "5행 E2E: 3NN seed3.00·1NN+C seed1.00·고전단독0·유효14class",
+    "runtime estimated(3NN 600s벽 고위험 명시)"
+  ],
+  "downstream_action": "submit",
+  "proposed_next_action": "PASS 시 사용자 직접 제출(완료: 3nn·1nnc). post_lb 별도 기록.",
+  "lineage_id": "all-info-h100-final-0715-presubmit",
+  "direct_control": "submit_metaT.zip(챔피언 프레임 ref) — metaT 멤버를 ALL-INFO(125d+ext transcript 하이브리드)로 교체, feat.py 119d→125d, script META_NUM_EXT=1 추가",
+  "intended_change": "ALL-INFO 콤보 zip 배포계약 검증 후 제출. 학습 산출물 포장만 — 재학습 아님.",
+  "evidence_paths": [
+    "submits/submit_allinfo_3nn.zip",
+    "submits/submit_allinfo_1nnc.zip",
+    "scratchpad/stage_allinfo_3nn",
+    "scratchpad/stage_allinfo_1nnc"
+  ],
+  "effective_config_path": "scratchpad/harvest_allinfo/stage_a_effective_config.reconstructed.json",
+  "known_caveats": [
+    "소급 영속화 — 검증은 제출 전 수행, 파일은 사후 저장.",
+    "runtime estimated(제출시점) — 서버 실측 598s/191s는 post_lb.",
+    "하이브리드라 verify_zip 자동 2FAIL(예상)→수동 동등검증.",
+    "3NN BLEND_W=0.60(≠챔피언 0.62), 명칭 ALL-REAL+STABLE-MINT."
+  ]
+}

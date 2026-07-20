@@ -1,0 +1,32 @@
+{
+ "kind": "raw_logits",
+ "shape": [
+  14000,
+  14
+ ],
+ "dtype": "float32",
+ "class_order": [
+  "edit_file",
+  "grep_search",
+  "read_file",
+  "glob_pattern",
+  "respond_only",
+  "run_bash",
+  "apply_patch",
+  "run_tests",
+  "list_directory",
+  "ask_user",
+  "plan_task",
+  "lint_or_typecheck",
+  "write_file",
+  "web_search"
+ ],
+ "split": "cheetah GroupKFold(5) fold0 == hidx.npy",
+ "eval_rule": "per-member softmax -> mean -> argmax",
+ "source_run": "cheetah ~/dacon/run_kf768_80 (refit 03:58 사고로 중단 — 홀드아웃만 유효)",
+ "seed": 80,
+ "env": "EXTRA_DATA=data/train_mint.jsonl (챔피언 레시피 seed-only)",
+ "holdout_macro_f1": 0.7521,
+ "band_check": "s48+s80+k78 core = 0.7633/0.7705 -> BAND-PASS (게이트 0.7580). 복권표 유효 — 복구는 refit 재실행 필요(사용자 결정 대기 상태로 보류됨).",
+ "created": "2026-07-11T04:25 KST"
+}

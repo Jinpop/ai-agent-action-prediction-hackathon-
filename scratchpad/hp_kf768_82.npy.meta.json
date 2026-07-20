@@ -1,0 +1,31 @@
+{
+ "kind": "raw_logits",
+ "shape": [
+  14000,
+  14
+ ],
+ "dtype": "float32",
+ "class_order": [
+  "edit_file",
+  "grep_search",
+  "read_file",
+  "glob_pattern",
+  "respond_only",
+  "run_bash",
+  "apply_patch",
+  "run_tests",
+  "list_directory",
+  "ask_user",
+  "plan_task",
+  "lint_or_typecheck",
+  "write_file",
+  "web_search"
+ ],
+ "split": "cheetah GroupKFold(5) fold0 == hidx.npy",
+ "eval_rule": "per-member softmax -> mean -> argmax",
+ "source_run": "cheetah ~/dacon/run_kf768_82",
+ "seed": 82,
+ "env": "챔피언 레시피 + pipeline-v2(set_seed) 첫 런 — 구 draw와 RNG궤적 비교불가",
+ "holdout_macro_f1": 0.7523,
+ "created": "2026-07-11T17:00 KST"
+}

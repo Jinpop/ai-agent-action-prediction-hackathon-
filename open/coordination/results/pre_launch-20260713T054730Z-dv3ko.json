@@ -1,0 +1,49 @@
+{
+  "request_id": "pre_launch-20260713T054730Z-dv3ko",
+  "objective": "신규 백본 deberta-v3-base-korean 2seed(카드5·6) 발사 직전 pre_launch 감사 — v58 k81 슬롯 교체, 백본 외 레시피 matched·누수·envelope 확인",
+  "verdict": "PASS",
+  "auditor_model": "data-auditor (claude-opus subagent, read-only)",
+  "completed_at": "2026-07-13T07:22:00Z",
+  "blocking_findings": [],
+  "nonblocking_findings": [
+    {
+      "id": "conductor-actions",
+      "summary": "발사 시 비차단 지휘자 액션: 실험로그 사전등록 1줄(10_pre_training item1)·발사 전 치타 colab_mint2b.py SHA==415e4c3e 즉답확인·train-launcher 워처 부착.",
+      "evidence": "10_pre_training.md item1/item13"
+    }
+  ],
+  "verified_claims": [
+    "단일단계 EPOCHS=6·PRETEXT/INIT_BACKBONE/TARGET_BALANCE/SOFT_TARGET 미설정 → mint2b 2단계 아님, k81 레시피(768/6ep/16×3/2e-5) matched. colab:197-209 direct concat 경로(train=train+extra)",
+    "EXTRA_DATA=train_mint.jsonl(SHA eac21323 일치, 3180행 mint1 direct, target_key 부재→TARGET_BALANCE assert 미트리거→balanced 아님). k81과 동일 데이터",
+    "HOLDOUT_IDX=hidx(SHA e39aae25, shape 14000/1D/max69993<70000, unique). va=hidx→홀드세션 1885, mint 3180중 621행(홀드세션) 학습배제·2559 편입=누수0. leak-guard가 va(hidx)로 통일",
+    "백본 params 산술: kf768(185,290,752)−dv3ko(134,679,552)=50,611,200=(130000−64100)×768=vocab 임베딩차→FLOPs 동일. hidden768→HybridNet head 887 무변경. deberta extend_positions no-op(:307-309). GRAD_CKPT=0. WordPiece 패치 스킵(:479-480)→SPM 네이티브 저장",
+    "set_seed(SEED)(:390)가 HybridNet 생성(:391) 직전. effective_config 자동저장(:136-167, SHA+20플래그+버전). direct-mint 계보 홀드 56000real+2559mint / full refit 70000+3180",
+    "verify_zip.py:18-21 MEMBER_SPECS[dv3ko] 실재·config 게이트(:141). dv3ko(fp16 269MB)<kf768(371MB)→v58 k81교체 zip 축소(≈886MB<1GB). v58 회귀 ALL PASS(model_notes §4; dv3ko spec 자체는 유닛테스트만, 실 zip 없음)"
+  ],
+  "unverified_claims": [
+    "T4 600초 runtime = estimated(~9:46, A5000 로컬 measured 불가). 서버 제출 1회만 measured, 마진 ~14s",
+    "SPM 토크나이저 save→오프라인 reload 라운드트립 = 현행 멤버 전부 WordPiece라 미실증. save시 WordPiece 패치 스킵은 코드확인, reload E2E는 pre_submit 5행 스모크",
+    "dv3ko 멤버 E2E·실 zip·밴드통과·verify_zip dv3ko spec 실증 = 학습 후",
+    "치타 415e4c3e 재해시 = 나는 로컬 44aa810b 검증(둘 차이는 SOFT_TARGET-only DISTILL_T assert, dv3ko 비-distill이라 실행경로 동일). 발사 직전 치타 SHA 즉답확인 권고 → 실측 415e4c3e 확인됨"
+  ],
+  "confounders": [
+    "★k81 = HANDOFF §9 명시 'manifest 없는 v1 파이프라인 draw'(set_seed-before-model·HOLDOUT_IDX pin·effective_config 없던 구버전 콜랩) vs dv3ko = v2 파이프라인(415e4c3e). 따라서 dv3ko vs k81 = 'recipe-matched v2 backbone draw'이지 순수 백본 A/B가 아님(RNG계보·set_seed배치 상이, s82를 v2 probe로 기록한 것과 동형). ★post_lb에서 '단독효과'·'백본만' 호칭 금지. 레시피(768/6ep/16×3/2e-5/EXTRA=train_mint)는 matched."
+  ],
+  "required_fixes": [],
+  "safe_next_action": "dv3ko 2seed 발사 가능(비위험 무료GPU). 밴드통과분만 포장→zip-verifier(type=dv3ko)→pre_submit 감사→사용자 제출. 실제 제출·유료GPU·원격kill은 사용자 승인. 밴드=자격필터, 우열은 LB.",
+  "evidence_references": [
+    "open/scripts/colab_train_base2.py (:136-167,197-209,264,269-273,307-309,390-391,475,479-480)",
+    "scratchpad/verify_zip.py (:18-21,141)",
+    "open/data/train_mint.jsonl (SHA eac21323)",
+    "scratchpad/hidx.npy (SHA e39aae25)",
+    "open/docs/model_notes/deberta_v3_korean_deploy_prep.md",
+    "open/docs/HANDOFF.md §6/§9"
+  ],
+  "artifact_sha": {
+    "cheetah colab_mint2b.py": "415e4c3e (발사 직전 실측 확인)",
+    "local colab_train_base2.py": "44aa810b38f033bd5cc9c4f147f3ca34a1f8b80ccb2ffbd2d61a2fd911b3ca22",
+    "open/data/train_mint.jsonl": "eac21323fc0ebe1bd92657ddfe5f92dd6ff4722a7b878a00f40dc1c231e11408",
+    "scratchpad/hidx.npy": "e39aae253087b4ac08f2550005e08421584a2dbc273adf64c692a6b0f1b0feae"
+  },
+  "post_audit_correction": "2026-07-13T07:2xZ(16:2x KST) 발사 실행: 치타 colab SHA 415e4c3e 실측 확인(감사 권고), dv3ko seed79=GPU0/81=GPU1 단일단계 발사. effective_config MODEL_NAME=team-lucid·EPOCHS=6·EXTRA=train_mint·HOLDOUT_IDX=hidx·PRETEXT=False·GRAD_CKPT=0 확인, train.log HOLDOUT va=14000·train=58559(56000real+2559mint) = 감사 누수계산 일치."
+}

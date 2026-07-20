@@ -1,0 +1,73 @@
+{
+  "request_id": "pre_submit-20260713T180500Z-distill",
+  "objective": "카드7 증류 probe zip(submit_distill.zip) 제출대기 승격 직전 감사 — 밴드 자격·포장 무결성·표현규율·증거체인 상호정합 독립 확인. probe 1장 한정.",
+  "verdict": "PASS",
+  "auditor_model": "data-auditor (claude-opus subagent, read-only)",
+  "completed_at": "2026-07-13T18:22:00Z",
+  "blocking_findings": [],
+  "verified_claims": [
+    {
+      "claim": "zip SHA256·크기 = 요청서 기재값",
+      "evidence": "shasum -a256 submits/submit_distill.zip = c450aeebc6ac94b5e77e6918089f919335480e5fb5ef0048a36f9e40330a1bc6, size=982,200,110B. 요청서 artifact.sha256/size_bytes와 완전 일치. <1e9(1GB decimal), 마진 17,799,890B(≈17.8MB)."
+    },
+    {
+      "claim": "밴드 산술 독립 재확인 — probe in-band Y",
+      "evidence": "distill_band.py(open/.venv) 재실행: 챔피언(s48+k79+mint2b_s79) plain=0.773710(recon 0.7737 일치), 밴드하한=0.773710−0.0058=0.767910, probe(distill+k79+m2b79) plain=0.775027 ≥ 0.767910 → IN-BAND Y(sess-eq도 0.781960≥0.774171 Y). margin +0.007117. 단일멤버 distill F1=0.752099(요청 0.7521 일치). distill idx==hidx(sha e39aae25) same_order=True."
+    },
+    {
+      "claim": "블렌드 계약 — 멤버별 softmax 후 합성, logit/prob 혼용 없음",
+      "evidence": "distill_band.py CONTRACT: classic OOF rowsum=1.0(재softmax 안 함), 5 transformer 멤버(s48/k79/k81/mint2b_s79/distill) 전부 rowsum≠1·min<0 = RAW LOGITS→멤버별 softmax 적용. blend=0.4*classic+0.6*mean(3TF softmax). 5멤버 idx 전부 k79 idx와 same_order=True, s48 idx set==hidx set."
+    },
+    {
+      "claim": "script.py diff = docstring+멤버주석+SEED_DIRS만(로직 불변)",
+      "evidence": "diff stage_m2b79/script.py stage_distill/script.py = 4개 hunk: docstring 제목/본문, 멤버목록 주석, SEED_DIRS. 실행 로직 변경 0."
+    },
+    {
+      "claim": "zip↔staging 전수 SHA 정합 + 단일멤버 교체 무결성",
+      "evidence": "zip 28파일 전수 SHA256 = staging(scratchpad/stage_distill) 28/28 일치, 누락·잉여 0. 공유멤버(feat.py/requirements.txt/model/artifacts.pkl/model_kf768_79/model_kf768_m2b79)가 챔피언 card1(stage_m2b79)과 byte-identical → 진짜 단일멤버 스왑."
+    },
+    {
+      "claim": "distill 멤버 비복사(distill ≠ 원본 s48)",
+      "evidence": "model_distill_s48 backbone/head/prep 3파일 SHA 전부 stage_m2b79/model_s48와 상이(backbone 743b2ba0≠c12c4a6c, head 35ece0d6≠431e0abb, prep b5e47f26≠be921cb0) → 실제 다른 학습 산출물."
+    },
+    {
+      "claim": "s48 슬롯 계약 유지 — 아키텍처·head 차원·fp16 불변",
+      "evidence": "distill backbone config = roberta·max_pos=514·vocab=32000(klue/roberta-base 동구조). head 887→256→14 동일(배포 head 불변). backbone 199텐서 전부 float16·finite. head fp32(원 s48와 동일 계약 — net.half()가 추론시 캐스트, 회귀 아님)."
+    },
+    {
+      "claim": "★temperature match(v26 T=1 버그 가드) 독립 재확인",
+      "evidence": "soft_distillA.npz SHA=3b9302b8…(plan_review artifact_sha 일치). stored temperature=2.0. max|soft − avg(softmax(oof74/2),softmax(oof79/2))| = 2.98e-08(T=2로 구움 확정), T=1 파생과는 0.411 이탈. soft rowsum 1.0·finite·min>0."
+    },
+    {
+      "claim": "teacher 커버리지 — student 학습셋 ⊆ soft ids(KeyError 위험 0)",
+      "evidence": "soft (73180,14), ids=oof74∩oof79=real70000∪mint3180. student real-only 학습셋(홀드세션 mint 621행 제외)은 부분집합 → 완전 커버."
+    },
+    {
+      "claim": "증거체인 4단계 수치·SHA 상호 모순 없음",
+      "evidence": "plan_review → 발사게이트 → 밴드체크 → zip-verifier. 로컬 재현으로 soft SHA·T=2·밴드 3수치·단일멤버 F1 0.752099·idx정렬 전부 교차일치."
+    },
+    {
+      "claim": "미해결 3항목 등급 적정 — 전부 non-blocking",
+      "evidence": "①T4 runtime=estimated: 원 s48 동구조·512-len compute-identical 스왑이라 추정 견고하나 이 zip 자체 서버 미측정 = estimated 라벨 정당. ②teacher-saw-hidx 2차편향: 라벨누수 아닌 일반 teacher 확산 — 홀드 자격필터로만 해석으로 대응. ③probe 1장·'증류 성공' 호칭 금지: KD 델타는 코드버전차 confound 있는 관찰치 — 프레이밍 규율 정당."
+    }
+  ],
+  "unverified_claims": [
+    "T4 600초 runtime = estimated(서버 제출로만 measured). 챔피언 card1 실측 9:29~9:47급 추정이나 이 정확한 zip은 서버 미측정.",
+    "발사게이트 effective_config 13항은 train-launcher 실측 주장(로컬 read-only 감사는 치타 직접 미검증 — 간접 방증: 로컬 soft SHA·T=2 일치, 44aa810b assert 통과=run 완주, student holdout 0.752099 재현).",
+    "5행 E2E·verify_zip 27검사는 zip-verifier 게이트 PASS 결과(본 감사 재실행 안 함). 단 포장 무결성 코어는 본 감사가 독립 재현."
+  ],
+  "confounders": [
+    "KD 델타(카드1프레임 +0.001317 / v58프레임 +0.002659 홀드 관찰치)는 s48=v1-파이프라인 옛 draw vs distill=44aa810b 코드버전차 때문에 순수 KD A/B 아님 — '증류가 통한다/증류 성공' 단정 금지.",
+    "teacher-saw-hidx 2차편향(plan_review nonblocking): student hidx 홀드 미세 낙관편향 가능 → 홀드는 자격필터로만."
+  ],
+  "required_fixes": [],
+  "safe_next_action": "submit_distill.zip을 '아침 제출대기 probe(1장 한정)'로 승격 가능. 실험로그 append + HANDOFF §9 갱신은 이 PASS 후 진행. 실제 제출은 사용자 직접. 브리핑에 홀드=자격필터·runtime=estimated·'증류 성공' 호칭 금지 명시. LB 미달 시 card1 유지, 확장 없음.",
+  "artifact_sha": {
+    "submits/submit_distill.zip": "c450aeebc6ac94b5e77e6918089f919335480e5fb5ef0048a36f9e40330a1bc6",
+    "scratchpad/soft_distillA.npz": "3b9302b8be26159b742dba72c70768c46e8038b6a357d235103c27a116f0aa8f",
+    "scratchpad/hidx.npy": "e39aae253087b4ac08f2550005e08421584a2dbc273adf64c692a6b0f1b0feae",
+    "zip_vs_staging": "28/28 files SHA256 identical (scratchpad/stage_distill)",
+    "shared_members_vs_champion_card1": "byte-identical to scratchpad/stage_m2b79",
+    "cheetah colab_distill.py": "44aa810b (temperature assert-bearing)"
+  }
+}

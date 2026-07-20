@@ -1,0 +1,32 @@
+{
+ "kind": "raw_logits",
+ "shape": [
+  14000,
+  14
+ ],
+ "dtype": "float32",
+ "class_order": [
+  "edit_file",
+  "grep_search",
+  "read_file",
+  "glob_pattern",
+  "respond_only",
+  "run_bash",
+  "apply_patch",
+  "run_tests",
+  "list_directory",
+  "ask_user",
+  "plan_task",
+  "lint_or_typecheck",
+  "write_file",
+  "web_search"
+ ],
+ "split": "cheetah GroupKFold(5) fold0 == hidx.npy",
+ "eval_rule": "per-member softmax -> mean -> argmax",
+ "source_run": "cheetah ~/dacon/run_kf768m74 (refit은 03:54 중단 — 홀드아웃만 유효)",
+ "seed": 74,
+ "env": "MASK_MINT_META=1 EXTRA_DATA=data/train_mint.jsonl (원본 mint + mask만)",
+ "holdout_macro_f1": 0.7555,
+ "caution": "2x2 분리실험의 mask-only 칸. 배포 후보 아님(74 0.7579보다 약함). 마스크 단독 = -0.0024 해악 판정 근거.",
+ "created": "2026-07-11T04:00 KST"
+}

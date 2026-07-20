@@ -1,0 +1,38 @@
+{
+  "stage": "plan_review",
+  "timeout_sec": 1200,
+  "objective": "mint2 balanced 카드② stage A→B 발사 직전 감사 — build_mint2_balanced.py + colab TARGET_BALANCE/HOLDOUT_IDX 변경의 누수·가중·split·sentinel·stage구조 검증",
+  "direct_control": "v58(s48+k79+k81)에서 kf768 슬롯을 mint2-balanced pretext→real-only 멤버로 단일 교체(밴드 통과 시)",
+  "intended_change": "mint 데이터 = mint2 balanced gate(5097 window/2314 target·target총가중1·exact keep meta) + HOLDOUT_IDX=hidx pin. Stage A=3ep matched(prior pretext) / Stage B=6ep matched(prior real-only). 레시피(kf768·16×3·2e-5) 불변.",
+  "artifact_paths": [
+    "scratchpad/build_mint2_balanced.py",
+    "open/scripts/colab_train_base2.py",
+    "open/data/train_mint2_balanced.jsonl",
+    "open/data/train_mint2_balanced_gate.jsonl"
+  ],
+  "code_sha256": {
+    "scratchpad/build_mint2_balanced.py": "99d3630801fa0b3878b650ffb52bbc352f8600fe932d16d0bcce428dc830051c",
+    "open/scripts/colab_train_base2.py": "415e4c3e41b423041f55391dae018d9da7cbcb00ba20e212974ab46933e5692f",
+    "open/scripts/feat.py": "91c419d634a85ad912d3dc43b9c802ddf0f1a31b0a203345cb38779b30b05ca8"
+  },
+  "data_sha256": {
+    "open/data/train_mint2_balanced_gate.jsonl": "6f866c822b3f37059dcb97c5aee0235aaff5a59a3ca08a5bd176f94cd70369c2",
+    "scratchpad/hidx.npy": "e39aae253087b4ac08f2550005e08421584a2dbc273adf64c692a6b0f1b0feae"
+  },
+  "effective_config_path": null,
+  "evidence_paths": [
+    "open/docs/HANDOFF.md",
+    "open/coordination/snapshots/recon_0713_restart_handoff.md",
+    "open/docs/checklists/10_pre_training.md"
+  ],
+  "known_caveats": [
+    "배포 stage A는 full(6354) 별도 재수행(gate=밴드체크 프록시)",
+    "비-v49 zip은 pre_submit에서 v58 ref로 검증",
+    "★Stage A epoch matched-control(3ep)이 핵심 — 6ep면 confound"
+  ],
+  "proposed_next_action": "stage A(3ep)→B(6ep) 발사(비위험 학습). 배포·제출·유료GPU·kill은 사용자 승인.",
+  "user_approval_required": false,
+  "request_id": "plan_review-20260712T170000Z-mint2b",
+  "created_at": "2026-07-12T16:45:00Z",
+  "deadline": "2026-07-12T17:05:00Z"
+}

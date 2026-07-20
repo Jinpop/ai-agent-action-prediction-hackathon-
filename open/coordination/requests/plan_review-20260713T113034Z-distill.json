@@ -1,0 +1,35 @@
+{
+  "stage": "plan_review",
+  "timeout_sec": 1200,
+  "objective": "수정 증류 student(카드7) 발사 직전 감사 — temperature/split/id/class-order 정렬·matched-control(s48+KD 1변수)·teacher 커버리지 확인. 카드3 완주로 GPU free 시 발사.",
+  "direct_control": "v58(classic+s48+k79+k81)에서 s48 슬롯을 distill student로 단일교체. 대조군 = s48(klue/roberta-base·512·6ep·16×3·seed48·EXTRA=train_mint).",
+  "intended_change": "★s48 레시피에 KD만 추가(1변수). student env: MODEL_NAME=klue/roberta-base MAX_LEN=512 EPOCHS=6 BATCH=16 GRAD_ACCUM=3 SEED=48 LR=2e-5 GRAD_CKPT=0 EXTRA_DATA=data/train_mint.jsonl HOLDOUT_IDX=data/hidx.npy SOFT_TARGET=data/soft_distillA.npz DISTILL_T=2.0 DISTILL_ALPHA=0.5. s48 대비 유일 변경 = KD term.",
+  "teacher": "★옵션 A: oof74+oof79만(각 73180 real+mint 커버), classic 제외. make_soft_target --T 2.0 → softmax(logits/2) temper 후 평균, temperature=2.0을 npz에 저장. classic 제외 이유: classic OOF는 real 70000만 커버 → 포함시 student가 real-only가 되어 s48(real+mint)과 데이터도 달라지는 2변수 confound. 옵션 A는 mint커버 teacher로 student가 s48처럼 real+mint 학습 → KD 1변수 깨끗.",
+  "code_sha256": {
+    "make_soft_target.py": "temp-match 재작성(softmax(logits/T)·T를 npz저장)",
+    "colab_train_base2.py(치타 415e4c3e)": "SOFT 로드시 temperature==DISTILL_T assert는 로컬 44aa810b에만 — ★치타 415e4c3e엔 assert 없음(업로드 필요 확인)"
+  },
+  "data_sha256": {
+    "soft_distillA.npz": "3b9302b8be26159b742dba72c70768c46e8038b6a357d235103c27a116f0aa8f",
+    "train_mint.jsonl": "eac21323fc0ebe1bd92657ddfe5f92dd6ff4722a7b878a00f40dc1c231e11408",
+    "hidx.npy": "e39aae253087b4ac08f2550005e08421584a2dbc273adf64c692a6b0f1b0feae"
+  },
+  "verify_items": [
+    "matched-control: student = s48 정확 레시피(base_seed48.md = klue/roberta-base·512·6ep·seed48·batch16×accum3·EXTRA=train_mint) + KD만. 유일 변경 KD term(SOFT_TARGET/DISTILL_T2/ALPHA0.5)",
+    "★temperature match(v26 버그): soft_distillA.npz temperature=2.0 == DISTILL_T=2.0. teacher tempered softmax(logits/2). ★치타 colab 415e4c3e엔 temperature assert 없음(44aa810b에만) → 발사 전 44aa810b 업로드 or 수동 T확인 필요",
+    "teacher 커버리지/id정렬: soft 73180 커버(oof74+79 공통=real+mint). student EXTRA=train_mint=73180 ids ⊆ teacher → colab _sid2row 정렬시 KeyError 없음",
+    "class-order: oof74/79 logits가 feat.ACTIONS 순(colab lab2id). soft.npz 동. student 동일 열순서",
+    "in-sample/split: teacher OOF=5-fold out-of-fold(in-sample 없음). student holdout=hidx: 홀드행의 teacher soft는 out-of-fold라 student 홀드 eval 누수 없음",
+    "hard CE 유지: DISTILL_ALPHA=0.5(0<a<1). colab loss=a*CE+(1-a)*KD*T²(라인 366-370)",
+    "classic 제외(옵션A) = KD 1변수 깨끗화. 계획 원안(oof74+79+classic)에서 이탈이나 real-only confound 회피 위한 근거있는 변경",
+    "deploy: student가 s48 슬롯 교체(RoBERTa 512). probe 1장 한정, 밴드통과해도 '증류 성공' 호칭 금지"
+  ],
+  "known_caveats": [
+    "★치타 colab_mint2b.py=415e4c3e는 temperature assert 없음(44aa810b에만) — 발사 전 44aa810b 업로드 또는 T수동확인 필수",
+    "밴드통과=자격필터, 우열 LB. 증류는 서버 실패전력(v26)·probe 1장 제한"
+  ],
+  "proposed_next_action": "PASS 시 카드3 완주(GPU free ~22:45) 후 발사. 밴드통과분만 포장(s48 슬롯 교체)→zip-verifier(s48/roberta 계약)→pre_submit. BLOCK 시 수정 후 재감사.",
+  "user_approval_required": false,
+  "request_id": "plan_review-20260713T113034Z-distill",
+  "created_at": "2026-07-13T11:30:34Z"
+}

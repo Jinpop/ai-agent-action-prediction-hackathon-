@@ -1,0 +1,62 @@
+{
+  "schema_version": "3",
+  "request_id": "pre_submit-20260714T192500Z-allinfo",
+  "audit_key": "0000000000000000000000000000000000000000000000000000000000000000",
+  "lineage_id": "all-info-h100-final-0715-presubmit",
+  "stage": "pre_submit",
+  "policy_version": "campaign:all-info-h100-final-0715",
+  "objective": "campaign all-info-h100-final-0715 pre_submit: submit_allinfo_3nn·1nnc zip 배포계약 검증(verify_zip + 5행 E2E). ★소급 영속화 — 검증(zip-verifier)은 제출 전 수행됐으나 감사 파일이 당시 저장 안 됨(사용자 지적 결함 정정). read-only, Codex 미호출.",
+  "gate_state": "PASS",
+  "action_state": "WAITING_USER",
+  "downstream_action": "submit",
+  "verdict_source": "internal_cross_check",
+  "auditor_model": "claude-opus-4-8 (zip-verifier internal cross-check, read-only)",
+  "cache_hit": false,
+  "attempt": 0,
+  "started_at": "2026-07-14T19:15:00Z",
+  "completed_at": "2026-07-14T19:25:00Z",
+  "runner_recorded": {
+    "request_id": "pre_submit-20260714T192500Z-allinfo",
+    "model": "claude-opus-4-8",
+    "reasoning": "zip-verifier read-only. verify_zip.py member-spec kf768 + 하이브리드(feat.py+META_NUM_EXT+ext transcript) 수동 동등검증 + 로컬 venv 5행 E2E. ★소급 기록.",
+    "started_at": "2026-07-14T19:15:00Z",
+    "completed_at": "2026-07-14T19:25:00Z",
+    "attempt": 0,
+    "cache_hit": false,
+    "raw_request_id": null
+  },
+  "raw_result_ref": null,
+  "post_audit_correction": "이 파일은 제출(2026-07-14T19:37Z경) 후 소급 영속화됨 — 검증 자체는 제출 전 zip-verifier가 수행. '최종 pre_submit 감사 파일 미영속화'(사용자 지적) 정정용.",
+  "nonblocking_findings": [
+    {"id": "runtime-3nn-highrisk", "summary": "3NN runtime=estimated(measured 아님, 검증시점). metaT 프레임 598~600s(w062=600s 정각·마진0)와 동형 → 타임아웃 위험 높음 명시. ※사후 서버 실측=598s 완주(post_lb 기록).", "evidence": "SEED_DEADLINES=[(170,185),(370,390),(575,592)] metaT와 동일"},
+    {"id": "blendw-0.60-not-champion", "summary": "3NN BLEND_W=0.60(manifest)이나 챔피언은 metaT_w062=0.62 → 'champion 프레임 그대로' 부정확. metaT(0.6) 프레임+ALL-INFO가 정확.", "evidence": "manifest BLEND_W=0.6"},
+    {"id": "naming-allinfo", "summary": "명칭: ALL-INFO는 실제 ALL-REAL+STABLE-MINT(복원가능 CI/dirty/open 제외).", "evidence": "stable_meta 5필드"}
+  ],
+  "verified_claims": [
+    {"claim": "3nn: 크기 978,565,763B<1e9, CRC/경로위생/금지엔트리0, 공유멤버(model/·s48/·k81/·req) submit_metaT와 전수SHA byte-identical, backbone fp16·finite·185,290,752·head893·prep meta125·scaler125, feat.py f65e9d91(125d), META_NUM_EXT=1 import전, META_T_DIR=allinfo ext transcript(학습 META_TRANS_EXT과 줄단위 일치), BLEND_W0.6·CLASSIC(0.45,0.40,0.15)·truncation_left·net.half()", "evidence": "zip-verifier verify_zip + 수동 동등검증"},
+    {"claim": "3nn 5행 E2E(로컬 venv): seed참여 평균 3.00·고전단독 0·5/5 유효 14-class, allinfo가 ext transcript(125d) 수신", "evidence": "open/.venv 격리실행 [7s]"},
+    {"claim": "1nnc: 크기 430,014,059B, 공유멤버 byte-identical, allinfo 멤버 3nn과 동일파일(SHA일치), SEED_DIRS 1, 5행 E2E seed참여 1.00·고전단독 0", "evidence": "zip-verifier"},
+    {"claim": "하이브리드 자동FAIL 2건(feat.py 추가diff·다중멤버제거)은 설계상 예상 → 수동 동등검증 해소, 미해소 FAIL 0", "evidence": "verify_zip 단일멤버 계약 밖 항목 수동재현"}
+  ],
+  "unverified_claims": [
+    "runtime measured 아님(검증시점 estimated) — 서버 실측은 post_lb에서 3nn 598s·1nnc 191s로 확인.",
+    "T4 배포 시간마진(3nn 600s벽 2s)은 지속 리스크."
+  ],
+  "confounders": [
+    "verify_zip 단일멤버 계약이 하이브리드(feat.py+script.py 다중변경)를 완전 커버 못함 → 수동 동등검증 병행(방법론 한계 명시).",
+    "5행 E2E는 기능 스모크이지 T4 런타임 검증 아님."
+  ],
+  "required_fixes": [],
+  "safe_next_action": "제출은 사용자 직접(완료: 3nn·1nnc 2제출). post_lb는 별도 기록(post_lb-20260715T090000Z-allinfo). 순수 1nn(BLEND_W1.0)은 빌드·E2E됐으나 별도 제출 판단.",
+  "escalated": false,
+  "evidence_references": [
+    "scratchpad/verify_zip.py",
+    "scratchpad/allinfo_frozen/colab_train_base2.py",
+    "submits/submit_metaT.zip",
+    "open/docs/checklists/40_zip_self.md"
+  ],
+  "artifact_sha": {
+    "submits/submit_allinfo_3nn.zip": "42c8affd1a802859a4c4a54dabf3ba7b9eeaaad7a1f94886ecf67c258ff81934",
+    "submits/submit_allinfo_1nnc.zip": "27a11d82df4805e7d5fdb2f7e94f9912850de2901fce22982884b56ae9006c1f"
+  }
+}

@@ -1,0 +1,35 @@
+# ===== 대회 데이터 (Dacon 라이선스 — 저장소에 포함 금지) =====
+open/data/
+colab_data.zip
+
+# ===== 대형 모델 산출물 =====
+open/artifacts/
+open/baseline_submit/
+submits/
+*.safetensors
+*.pkl
+*.pt
+*.tgz
+
+# ===== 가상환경 / 캐시 =====
+open/.venv/
+kgl_env/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# ===== 임시 스테이징 / 하베스트 (재생성 가능) =====
+scratchpad/stage_*/
+scratchpad/harvest_*/
+scratchpad/kfdeberta_st/
+scratchpad/allinfo_bundle/
+
+# ===== OS / 에디터 =====
+.DS_Store
+Thumbs.db
+
+# ===== 로컬 전용 설정 (권한 등) =====
+.claude/settings.local.json
+
+# ===== 예외: 소형 재현성 산출물은 포함 =====
+!scratchpad/hidx.npy

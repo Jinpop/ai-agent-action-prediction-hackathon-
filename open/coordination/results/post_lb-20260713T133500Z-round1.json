@@ -1,0 +1,45 @@
+{
+  "request_id": "post_lb-20260713T133500Z-round1",
+  "objective": "카드1·2·5·6 서버 LB 결과 기록 직전 게이트 — 챔피언 비교 산술·zip→카드 매핑·표현규율 검증",
+  "verdict": "PASS",
+  "auditor_model": "data-auditor (claude-opus subagent, read-only)",
+  "completed_at": "2026-07-13T13:35:00Z",
+  "blocking_findings": [],
+  "nonblocking_findings": [
+    {
+      "id": "upload-code-link-unverifiable",
+      "summary": "Dacon 업로드코드(4icgv9/68b94m/drh1th/u2mopr)↔파일 링크는 서버측이라 레포서 직접대조 불가 — 사용자 업로드 로그 신뢰. 단 사용자 SHA 프리픽스가 실파일과 전수일치라 파일→카드 매핑은 확정.",
+      "evidence": "submit_*.zip SHA256 vs 사용자 제공 프리픽스"
+    }
+  ],
+  "verified_claims": [
+    "챔피언 산술(독립 재계산 일치): 카드1 0.784156489 − v58 0.7840764953 = +0.0000799937 → 카드1 현 최고 LB(결정론). 카드2 −0.0014134844·카드5 −0.0066348696·카드6 −0.0052769647 전부 v58 미달",
+    "zip→카드 매핑 SHA256 4/4 일치(디스크=pre_submit JSON=사용자 프리픽스): m2b79 c7180c41(카드1)·m2b81 7b89b356(카드2)·dv79 8c10f96b(카드5)·dv81 426753ab(카드6)",
+    "배포 무결성 제출 전 게이트됨: mint2b pre_submit(k81 단일교체·타멤버 바이트동일·verify_zip 27검사)·dv3ko pre_submit(CRC전수·SPM 오프라인로드·26검사) 둘 다 PASS",
+    "60_post_submit item1(전소수점·노이즈금지)·item2(챔피언 LB로만) 충족"
+  ],
+  "unverified_claims": [
+    "Dacon 업로드코드→파일 대조는 서버측이라 불가(사용자 로그 신뢰, 파일→카드는 SHA로 확정)"
+  ],
+  "confounders": [],
+  "required_fixes": [],
+  "safe_next_action": "지휘자 append-only 로그·HANDOFF §1·§9 갱신 가능 — 단 표현규율 4항(슬림갱신·seed드로우의존·홀드무예측/v1-vs-v2·노이즈금지) 문구 그대로 반영.",
+  "표현규율_강제": [
+    "①카드1=박한 결정론적 갱신(margin +0.00008 = seed 스프레드 +0.00149의 5.4%). '대박/큰개선/balanced 성공' 금지. 허용: '카드1이 v58를 +0.0000799937 넘어 현 최고 LB(결정론적 슬림 갱신)'",
+    "②mint2b=seed 드로우 의존(seed79 +0.00008/seed81 −0.00141). 'balanced 단독효과/rolling-window 통한다' 금지. rolling-window 자체효과는 카드3 대조군 미귀환이라 미분리. 허용: 'seed79 draw 안착, seed81 −0.00141, margin이 seed 스프레드 내'",
+    "③dv3ko=홀드아웃 무예측 재확인(홀드 in-band였으나 LB 둘 다 v58 미달)+v1-vs-v2 draw. '순수 백본 A/B/dv3ko 약하다' 금지. 허용: 'recipe-matched v2 백본 draw가 이 프레임서 v58 k81 미달'",
+    "④'노이즈' 전면금지(서버 결정론). 대체: 'seed 드로우·처리 상호작용 범위'"
+  ],
+  "후속_방향": "카드4(Stage A 6ep dose) 트리거 '3ep가 v58 근접/승'은 카드1로 형식충족이나 '단일 seed 승·스프레드 내' 근거 → 'seed79 draw 한정 근접, dose A/B는 draw 분산 탐색'으로 프레이밍. dv3ko 2seed 미달 → 확장재고는 LB 근거라 타당.",
+  "evidence_references": [
+    "open/coordination/results/pre_submit-20260713T080000Z-mint2b.json",
+    "open/coordination/results/pre_submit-20260713T113000Z-dv3ko.json",
+    "submits/submit_{m2b79,m2b81,dv79,dv81}.zip"
+  ],
+  "artifact_sha": {
+    "submit_m2b79.zip(카드1 신챔피언)": "c7180c4186e89bc389a31face9e59c84eba8729124c15494f477d553c0826550",
+    "submit_m2b81.zip(카드2)": "7b89b356a18b43b0434e361570f7ed01aa9df8c9033271a0220982708c0f6015",
+    "submit_dv79.zip(카드5)": "8c10f96bbbef37640322e99498f22132af5b39c78d5953dd40a9b0613a59868d",
+    "submit_dv81.zip(카드6)": "426753ab6b6740d1edf088460adbc06130728afd0451d18eb831a5f8b76e0824"
+  }
+}

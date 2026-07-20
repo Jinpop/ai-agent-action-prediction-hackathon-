@@ -1,0 +1,63 @@
+{
+  "request_id": "pre_launch-20260713T193500Z-card4dose-deploy",
+  "stage": "pre_launch",
+  "objective": "카드4 dose6 배포 체인(full 6,354-window Stage A 6ep → REFIT_ONLY Stage B) 발사 직전 감사 — 카드1 배포(run_mint2bdep_s79)와 완전 matched(유일변수 Stage A EPOCHS 3→6) 확인 + 발사 env 세트 도출.",
+  "verdict": "PASS",
+  "auditor_model": "data-auditor (claude-opus subagent, read-only)",
+  "completed_at": "2026-07-13T20:05:00Z",
+  "verified_claims": [
+    "★배포 대조군 config 실측(치타 run_mint2bdep_s79/effective_config_A/_B 직접 read): Stage A = kf-deberta-base·768·EPOCHS 3·16×3·LR2e-5·SEED79·PRETEXT keep·TARGET_BALANCE·EXTRA_DATA=data/train_mint2_balanced.jsonl(FULL, sha a8e7e7d2)·HOLDOUT_IDX ''. Stage B = EPOCHS 6·PRETEXT false·real-only·INIT_BACKBONE ./pretext_backbone·HOLDOUT_IDX ''·★REFIT_ONLY true(무홀드아웃 full refit = 배포 모드). 나머지 플래그 기본값.",
+    "★배포 vs 게이트 구조차 실측: DEPLOY = FULL 6,354(a8e7e7d2)+REFIT_ONLY true — GATE(5,097 6f866c82 + HOLDOUT_IDX=hidx) 아님. 밴드 자격은 게이트 체인이 이미 확보(0.773437 in-band Y), 배포는 포장 재료 생성.",
+    "코드 격리 실측: run_mint2bdep_s79/colab_train_base2.py = 415e4c3e·feat 91c419d6, dose6 게이트 런도 동일(계열 일관), config 기록 SHA와 파일 실측 일치(미변조).",
+    "★[LANDMINE 재확인] root colab = cb3ce5d8(H100 frozen drift 여전) ≠ matched 415e4c3e — G1 회피 필수.",
+    "데이터 무결성: train_mint2_balanced.jsonl = a8e7e7d2…(6,354행 wc -l 실측)·labels 24f75f4e — 현 챔피언(카드1 배포)이 학습한 데이터와 동일 SHA.",
+    "GPU/디스크: GPU0·1 둘 다 idle(0%·1MiB)·colab 프로세스 없음·디스크 34G 여유. run_mint2bdep_dose6_s79 이름 충돌 없음.",
+    "체인 구조: run_mint2bdep_chain.sh는 EPOCHS per-stage(COMMON 미포함) — Stage A EPOCHS=3→6 한 줄 수정이면 dose 단독변수(02:00 confound 구조 회피).",
+    "matched-control 성립(배포 레벨): 유일변수 Stage A EPOCHS 3→6, Stage B byte-identical. pretext_backbone 가중치 차이는 의도된 downstream."
+  ],
+  "unverified_claims": [
+    "배포 산출물은 REFIT_ONLY라 홀드아웃 없음 = 배포판 자체 F1 재검증 불가(정상 — 밴드 자격은 게이트가 확보).",
+    "카드4 배포 LB probe 결과는 서버 실측 몫. 게이트 홀드 0.7590·블렌드 δ−0.000274는 관찰치.",
+    "T4 runtime = estimated(kf768→kf768 동급교체, 챔피언 프레임 동일).",
+    "ETA: 카드1 배포 실측(Stage A 3ep 4.5분 + REFIT_ONLY ≈1h54m) 기준 dose6 ≈2h → 04:50 발사 시 완주 ≈06:50-07:00 KST(백스톱 08:30)."
+  ],
+  "confounders": [
+    "★root colab cb3ce5d8 드리프트 미해소 — G1로 회피(run_mint2bdep_s79 코드 복사).",
+    "디스크 100% 인디케이터·34G 여유(38G→34G 감소 추세) — pack 직전 df 재확인.",
+    "프레이밍: 게이트 홀드 0.7590(−0.0060)·블렌드 δ−0.000274 = dose6 홀드 개선 아님 — 'dose 단독효과/6ep 우위' 호칭 금지, LB는 card1 배포 대비로만 해석(clean matched). card4 게이트 대비 해석 금지(2변수)."
+  ],
+  "required_fixes": [],
+  "launch_guardrails": [
+    "G1(critical): colab_train_base2.py = run_mint2bdep_s79/(415e4c3e) 복사 — root(cb3ce5d8) 금지. feat.py 91c419d6.",
+    "G2: Stage B env = run_mint2bdep_s79 Stage B byte-identical(EPOCHS=6·REFIT_ONLY=1·real-only·INIT_BACKBONE·HOLDOUT 없음).",
+    "G3: Stage A env = run_mint2bdep_s79 Stage A에서 EPOCHS만 3→6(FULL 데이터 a8e7e7d2 유지).",
+    "G4: EPOCHS per-stage 유지(COMMON 이동 금지) — chain.sh 클론 시 Stage A 한 줄만 수정.",
+    "G5(발사 후 강제검증): effective_config_A diff 유일차이=EPOCHS, effective_config_B byte-identical — 2번째 차이 발견 시 즉시 pkill·재감사.",
+    "G6: GPU0 또는 1(둘 다 idle). pack 직전 df 재확인(≥2G)."
+  ],
+  "launch_env_stage_A": {
+    "run_dir": "run_mint2bdep_dose6_s79 (colab/feat = run_mint2bdep_s79 복사)",
+    "EPOCHS": "6 (유일 변경, card1 배포=3)",
+    "EXTRA_DATA": "data/train_mint2_balanced.jsonl (FULL 6,354, a8e7e7d2)",
+    "나머지": "MODEL kf-deberta-base·768·16×3·LR2e-5·SEED79·GRAD_CKPT0·PRETEXT1·PRETEXT_META keep·TARGET_BALANCE1·INIT/HOLDOUT/REFIT_ONLY 미설정 → ./pretext_backbone"
+  },
+  "launch_env_stage_B": {
+    "EPOCHS": "6 (변경 없음)",
+    "REFIT_ONLY": "1 (배포 모드)",
+    "나머지": "PRETEXT0·EXTRA_DATA ''·INIT_BACKBONE=./pretext_backbone·HOLDOUT_IDX ''·SKIP_REFIT0 — card1 배포 Stage B와 byte-identical"
+  },
+  "framing_discipline": [
+    "'dose draw 분산 탐색'으로만 기록, 'dose 단독효과/6ep 우위' 호칭 금지",
+    "LB 해석은 card1 배포(챔피언 submit_m2b79 0.784156489) 대비로만",
+    "'노이즈' 금지 — 'seed 드로우·학습 draw·처리 상호작용 범위'"
+  ],
+  "safe_next_action": "train-launcher 발사(G1~G6) → G5 diff → fp16 포장 → zip-verifier(kf768 spec·E2E·estimated) → pre_submit → 아침 제출대기 2호. 제출은 사용자.",
+  "artifact_sha": {
+    "run_mint2bdep_s79/colab_train_base2.py (MUST use)": "415e4c3e41b423041f55391dae018d9da7cbcb00ba20e212974ab46933e5692f",
+    "root colab (DRIFTED — DO NOT USE)": "cb3ce5d8522b0d115a1ec49ffae074d8706477579cfd3769d3593360bcf8a998",
+    "feat.py": "91c419d634a85ad912d3dc43b9c802ddf0f1a31b0a203345cb38779b30b05ca8",
+    "data/train_mint2_balanced.jsonl (FULL)": "a8e7e7d2784bce9383396c311b67298b32368b14de95af19a4c8fae2f7565504",
+    "data/train_mint2_balanced_labels.csv": "24f75f4ef2c012771d5501155a619b859a4c79642085c84d9623a2ad7ae4c92f",
+    "card1 배포 Stage B INIT_BACKBONE_weights (dose로 달라짐=의도)": "e98b368193ace3425727b7c0a760d2c94e9de4f94a98309b43988653eae04f01"
+  }
+}

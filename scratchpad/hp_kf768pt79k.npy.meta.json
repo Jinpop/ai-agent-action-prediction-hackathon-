@@ -1,0 +1,15 @@
+{
+ "kind": "raw_logits",
+ "shape": [
+  14000,
+  14
+ ],
+ "class_order": "feat.ACTIONS",
+ "split": "hidx",
+ "source_run": "run_kf768pt79k",
+ "seed": 79,
+ "env": "pt79k = pretext79k(keep@2,863 exact) INIT + real-only full, pipeline v2",
+ "holdout_macro_f1": 0.7572,
+ "note": "blank@3162 형제(pt79 0.7621)와는 pretext 크기 교란으로 직접비교 불가 — 서버 판정",
+ "created": "2026-07-12T04:00 KST"
+}
