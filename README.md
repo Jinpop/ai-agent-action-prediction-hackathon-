@@ -134,8 +134,6 @@ PLANNED → PREFLIGHT → GATE_RUNNING → BAND_EVAL → DEPLOY_REFIT → PACKAG
     └── hooks/                   # checklist_guard(체크리스트 자동주입) · bg_hygiene(백그라운드 위생)
 ```
 
-> 대회 데이터(`open/data/`)와 학습된 모델 아티팩트는 라이선스·용량 문제로 저장소에서 제외(.gitignore). 원격 서버 주소·계정 등은 `<CHEETAH_IP>` 류 플레이스홀더로 마스킹됨.
-
 ## 4. 읽는 순서 (추천)
 
 1. [open/docs/HANDOFF.md](open/docs/HANDOFF.md) — 최종 상태·법칙 요약
